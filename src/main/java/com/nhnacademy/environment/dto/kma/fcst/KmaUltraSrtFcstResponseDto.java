@@ -1,8 +1,12 @@
-package com.nhnacademy.environment.dto.kma;
+package com.nhnacademy.environment.dto.kma.fcst;
 
 import java.util.List;
 
-public record KmaUltraSrtNcstResponseDto(
+/**
+ * 초단기예보조회 응답 DTO
+ * @param response
+ */
+public record KmaUltraSrtFcstResponseDto(
         Response response
 ) {
     public record Response(
@@ -12,8 +16,9 @@ public record KmaUltraSrtNcstResponseDto(
         public record Header(
                 String resultCode,
                 String resultMsg
-        ){
+        ) {
         }
+
         public record Body(
                 String dataType,
                 Items items,
@@ -30,9 +35,11 @@ public record KmaUltraSrtNcstResponseDto(
                     String baseDate,
                     String baseTime,
                     String category,
+                    String fcstDate,
+                    String fcstTime,
+                    String fcstValue,
                     Integer nx,
-                    Integer ny,
-                    String obsrValue
+                    Integer ny
             ) {
             }
         }
