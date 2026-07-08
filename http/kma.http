@@ -1,0 +1,2 @@
+### UltraSrtNcst 초단기실황조회
+GET http://localhost:8080/ultraSrtNcst
