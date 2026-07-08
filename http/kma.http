@@ -1,2 +1,2 @@
 ### UltraSrtNcst 초단기실황조회
-GET http://localhost:8080/ultraSrtNcst
+GET http://localhost:8080/ultraSrtNcst?regionName=광주 동구 서석동
