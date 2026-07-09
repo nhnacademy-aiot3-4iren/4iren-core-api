@@ -1,5 +1,9 @@
 package com.nhnacademy.environment.controller;
 
+import com.nhnacademy.environment.dto.kma.llm.KmaCurrentWeatherResponseDto;
+import com.nhnacademy.environment.dto.kma.llm.KmaForecastWeatherResponseDto;
+import com.nhnacademy.environment.dto.kma.weather.KmaCurrentWeatherDto;
+import com.nhnacademy.environment.dto.kma.weather.KmaForecastWeatherDto;
 import com.nhnacademy.environment.service.KmaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,8 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,8 +24,26 @@ public class KmaController {
      * @return 현재 날씨
      */
     @GetMapping("/ultraSrtNcst")
-    public ResponseEntity<Map<String, String>> getKma(@RequestParam String regionName) {
-        Map<String, String> response = kmaService.getCurrentSimpleUltraSrtNcstForLLM(regionName);
+    public ResponseEntity<KmaCurrentWeatherResponseDto> getKma(@RequestParam String regionName) {
+        KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstForLLM(regionName);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/ultraSrtFcst")
+    public ResponseEntity<KmaForecastWeatherResponseDto> getFcst(@RequestParam String regionName){
+        KmaForecastWeatherResponseDto response = kmaService.getUltraSrtFcstForLLM(regionName);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/internal/ultraSrtNcst")
+    public ResponseEntity<KmaCurrentWeatherDto> getInternalKma(@RequestParam String regionName) {
+        KmaCurrentWeatherDto response = kmaService.getCurrentUltraSrtNcst(regionName);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/internal/ultraSrtFcst")
+    public ResponseEntity<KmaForecastWeatherDto> getInternalFcst(@RequestParam String regionName) {
+        KmaForecastWeatherDto response = kmaService.getUltraSrtFcst(regionName);
         return ResponseEntity.ok(response);
     }
 }
