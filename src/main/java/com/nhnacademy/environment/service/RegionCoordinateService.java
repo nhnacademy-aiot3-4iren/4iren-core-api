@@ -52,7 +52,7 @@ public class RegionCoordinateService {
             Sheet sheet = workbook.getSheetAt(0);
             Map<String, RegionCoordinate> coordinates = readCoordinates(sheet);
             coordinateByNormalizedRegionName = Map.copyOf(coordinates);
-            log.info("Loaded {} KMA location coordinates", coordinateByNormalizedRegionName.size());
+            log.info("기상청 제공 지역 좌표 로드: {}건", coordinateByNormalizedRegionName.size());
         } catch (IOException e) {
             throw new IllegalStateException("기상청 좌표 엑셀 파일을 읽을 수 없습니다.", e);
         }
