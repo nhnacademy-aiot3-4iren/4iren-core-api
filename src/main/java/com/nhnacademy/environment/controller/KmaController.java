@@ -24,7 +24,7 @@ public class KmaController {
      * @return 현재 날씨
      */
     @GetMapping("/ultraSrtNcst")
-    public ResponseEntity<KmaCurrentWeatherResponseDto> getKma(@RequestParam String regionName) {
+    public ResponseEntity<KmaCurrentWeatherResponseDto> getNcst(@RequestParam String regionName) {
         KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstForLLM(regionName);
         return ResponseEntity.ok(response);
     }
@@ -36,7 +36,7 @@ public class KmaController {
     }
 
     @GetMapping("/internal/ultraSrtNcst")
-    public ResponseEntity<KmaCurrentWeatherDto> getInternalKma(@RequestParam String regionName) {
+    public ResponseEntity<KmaCurrentWeatherDto> getInternalNcst(@RequestParam String regionName) {
         KmaCurrentWeatherDto response = kmaService.getCurrentUltraSrtNcst(regionName);
         return ResponseEntity.ok(response);
     }
