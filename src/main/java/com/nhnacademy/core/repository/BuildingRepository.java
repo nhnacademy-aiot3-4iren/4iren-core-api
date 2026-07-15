@@ -1,6 +1,6 @@
-package com.nhnacademy.environment.repository;
+package com.nhnacademy.core.repository;
 
-import com.nhnacademy.environment.domain.Building;
+import com.nhnacademy.core.domain.Building;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BuildingRepository extends JpaRepository<Building, Long> {
