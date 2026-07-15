@@ -1,10 +1,10 @@
-package com.nhnacademy.environment.config;
+package com.nhnacademy.core.config;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.InfluxDBClientOptions;
 import com.influxdb.client.QueryApi;
-import com.nhnacademy.environment.property.InfluxDbProperties;
+import com.nhnacademy.core.property.InfluxDbProperties;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
