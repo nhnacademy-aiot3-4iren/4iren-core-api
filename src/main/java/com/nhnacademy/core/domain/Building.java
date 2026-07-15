@@ -1,4 +1,4 @@
-package com.nhnacademy.environment.domain;
+package com.nhnacademy.core.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -32,7 +32,7 @@ public class Building {
         this.buildingName = buildingName;
     }
 
-    public void updateBuildingName(String buildingName) {
+    public void changeName(String buildingName) {
         this.buildingName = buildingName;
     }
 }

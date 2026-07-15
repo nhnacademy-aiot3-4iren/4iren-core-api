@@ -1,4 +1,4 @@
-package com.nhnacademy.environment.domain;
+package com.nhnacademy.core.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -33,7 +33,11 @@ public class Device {
         this.deviceName = deviceName;
     }
 
-    public void updateDeviceName(String deviceName) {
+    public void changeName(String deviceName) {
         this.deviceName = deviceName;
+    }
+
+    public void moveTo(Room room) {
+        this.room = room;
     }
 }

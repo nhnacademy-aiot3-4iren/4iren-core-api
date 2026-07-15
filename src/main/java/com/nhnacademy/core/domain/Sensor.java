@@ -32,4 +32,8 @@ public class Sensor {
         this.room = room;
         this.devEui = devEui;
     }
+
+    public void moveTo(Room room) {
+        this.room = room;
+    }
 }

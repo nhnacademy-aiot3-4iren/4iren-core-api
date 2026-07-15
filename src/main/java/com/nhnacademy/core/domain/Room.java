@@ -33,7 +33,7 @@ public class Room {
         this.roomName = roomName;
     }
 
-    public void updateRoomName(String roomName) {
+    public void changeName(String roomName) {
         this.roomName = roomName;
     }
 }
