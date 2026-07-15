@@ -6,7 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "sensors")
+@Table(
+        name = "sensors",
+        indexes = @Index(
+                name = "idx_sensors_room_id",
+                columnList = "room_id"
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Sensor {
@@ -27,6 +33,10 @@ public class Sensor {
 
     @Column(name = "dev_eui", nullable = false, unique = true, length = 16)
     private String devEui;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public Sensor(Room room, String devEui) {
         this.room = room;

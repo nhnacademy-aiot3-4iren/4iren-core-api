@@ -6,7 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "devices")
+@Table(
+        name = "devices",
+        indexes = @Index(
+                name = "idx_devices_room_id",
+                columnList = "room_id"
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Device {
@@ -28,13 +34,17 @@ public class Device {
     @Column(name = "device_name", nullable = false, length = 100)
     private String deviceName;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     public Device(Room room, String deviceName) {
         this.room = room;
-        this.deviceName = deviceName;
+        this.deviceName = deviceName.strip();
     }
 
     public void changeName(String deviceName) {
-        this.deviceName = deviceName;
+        this.deviceName = deviceName.strip();
     }
 
     public void moveTo(Room room) {

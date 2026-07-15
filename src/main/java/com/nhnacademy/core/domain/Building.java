@@ -6,7 +6,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "buildings")
+@Table(
+        name = "buildings",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_buildings_team_id_building_name",
+                columnNames = {"team_id", "building_name"}
+        ),
+        indexes = @Index(
+                name = "idx_buildings_team_id",
+                columnList = "team_id"
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Building {
@@ -27,12 +37,16 @@ public class Building {
     @Column(name = "building_name", nullable = false, length = 100)
     private String buildingName;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     public Building(Long teamId, String buildingName) {
         this.teamId = teamId;
-        this.buildingName = buildingName;
+        this.buildingName = buildingName.strip();
     }
 
     public void changeName(String buildingName) {
-        this.buildingName = buildingName;
+        this.buildingName = buildingName.strip();
     }
 }
