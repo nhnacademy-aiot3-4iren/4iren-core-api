@@ -2,8 +2,8 @@ package com.nhnacademy.core.dto.sensor;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 
 public record SensorCreateRequest(
         @NotNull
@@ -11,7 +11,7 @@ public record SensorCreateRequest(
         Long roomId,
 
         @NotBlank
-        @Size(max = 16)
+        @Pattern(regexp = "^[0-9A-Fa-f]{16}$")
         String devEui
 ) {
 }
