@@ -1,0 +1,142 @@
+@api = http://localhost:8765/api
+@teamId = 1
+@buildingId = 1
+@roomId = 1
+@targetRoomId = 2
+@sensorId = 1
+@deviceId = 1
+
+### Building 생성
+POST {{api}}/buildings
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "buildingName": "테스트 건물"
+}
+
+### Building 목록 조회
+GET {{api}}/buildings?page=0&size=20&sort=id,asc
+X-Team-Id: {{teamId}}
+
+### Building 단건 조회
+GET {{api}}/buildings/{{buildingId}}
+X-Team-Id: {{teamId}}
+
+### Building 이름 변경
+PATCH {{api}}/buildings/{{buildingId}}/name
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "buildingName": "수정된 테스트 건물"
+}
+
+### Building 삭제
+DELETE {{api}}/buildings/{{buildingId}}
+X-Team-Id: {{teamId}}
+
+
+### Room 생성
+POST {{api}}/rooms
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "buildingId": {{buildingId}},
+  "roomName": "테스트 방"
+}
+
+### Room 목록 조회
+GET {{api}}/rooms?page=0&size=20&sort=id,asc
+X-Team-Id: {{teamId}}
+
+### Room 단건 조회
+GET {{api}}/rooms/{{roomId}}
+X-Team-Id: {{teamId}}
+
+### Room 이름 변경
+PATCH {{api}}/rooms/{{roomId}}/name
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "roomName": "수정된 테스트 방"
+}
+
+### Room 삭제
+DELETE {{api}}/rooms/{{roomId}}
+X-Team-Id: {{teamId}}
+
+
+### Sensor 생성
+POST {{api}}/sensors
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "roomId": {{roomId}},
+  "devEui": "a1b2c3d4e5f60708"
+}
+
+### Sensor 목록 조회
+GET {{api}}/sensors?page=0&size=20&sort=id,asc
+X-Team-Id: {{teamId}}
+
+### Sensor 단건 조회
+GET {{api}}/sensors/{{sensorId}}
+X-Team-Id: {{teamId}}
+
+### Sensor 방 이동
+PATCH {{api}}/sensors/{{sensorId}}/room
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "roomId": {{targetRoomId}}
+}
+
+### Sensor 삭제
+DELETE {{api}}/sensors/{{sensorId}}
+X-Team-Id: {{teamId}}
+
+
+### Device 생성
+POST {{api}}/devices
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "roomId": {{roomId}},
+  "deviceName": "테스트 기기"
+}
+
+### Device 목록 조회
+GET {{api}}/devices?page=0&size=20&sort=id,asc
+X-Team-Id: {{teamId}}
+
+### Device 단건 조회
+GET {{api}}/devices/{{deviceId}}
+X-Team-Id: {{teamId}}
+
+### Device 이름 변경
+PATCH {{api}}/devices/{{deviceId}}/name
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "deviceName": "수정된 테스트 기기"
+}
+
+### Device 방 이동
+PATCH {{api}}/devices/{{deviceId}}/room
+Content-Type: application/json
+X-Team-Id: {{teamId}}
+
+{
+  "roomId": {{targetRoomId}}
+}
+
+### Device 삭제
+DELETE {{api}}/devices/{{deviceId}}
+X-Team-Id: {{teamId}}
