@@ -15,28 +15,19 @@ import lombok.NoArgsConstructor;
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Device {
+public class Device extends VersionedEntity {
 
     @Id
     @Column(name = "device_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "devices_device_id_generator")
-    @SequenceGenerator(
-            name = "devices_device_id_generator",
-            sequenceName = "devices_device_id_seq",
-            allocationSize = 50
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @Column(name = "device_name", nullable = false, length = 100)
+    @Column(name = "device_name", nullable = false, length = 50)
     private String deviceName;
-
-    @Version
-    @Column(name = "version", nullable = false)
-    private Long version;
 
     public Device(Room room, String deviceName) {
         this.room = room;

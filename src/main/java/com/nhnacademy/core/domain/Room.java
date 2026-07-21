@@ -8,39 +8,38 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "rooms",
-        indexes = @Index(
-                name = "idx_rooms_building_id",
-                columnList = "building_id"
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_rooms_building_id_room_name",
+                columnNames = {"building_id", "room_name"}
         )
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Room {
+public class Room extends VersionedEntity {
 
     @Id
     @Column(name = "room_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "rooms_room_id_generator")
-    @SequenceGenerator(
-            name = "rooms_room_id_generator",
-            sequenceName = "rooms_room_id_seq",
-            allocationSize = 50
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "building_id", nullable = false)
     private Building building;
 
-    @Column(name = "room_name", nullable = false, length = 100)
+    @Column(name = "room_name", nullable = false, length = 50)
     private String roomName;
 
-    @Version
-    @Column(name = "version", nullable = false)
-    private Long version;
+    @Column(name = "description", length = 200)
+    private String description;
 
     public Room(Building building, String roomName) {
+        this(building, roomName, null);
+    }
+
+    public Room(Building building, String roomName, String description) {
         this.building = building;
         this.roomName = roomName.strip();
+        this.description = description == null ? null : description.strip();
     }
 
     public void changeName(String roomName) {
