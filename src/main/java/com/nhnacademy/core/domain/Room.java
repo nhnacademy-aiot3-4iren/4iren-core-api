@@ -18,8 +18,8 @@ import lombok.NoArgsConstructor;
 public class Room extends VersionedEntity {
 
     @Id
-    @Column(name = "room_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "room_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -32,10 +32,6 @@ public class Room extends VersionedEntity {
     @Column(name = "description", length = 200)
     private String description;
 
-    public Room(Building building, String roomName) {
-        this(building, roomName, null);
-    }
-
     public Room(Building building, String roomName, String description) {
         this.building = building;
         this.roomName = roomName.strip();
@@ -44,5 +40,9 @@ public class Room extends VersionedEntity {
 
     public void changeName(String roomName) {
         this.roomName = roomName.strip();
+    }
+
+    public void changeDescription(String description) {
+        this.description = description == null ? null : description.strip();
     }
 }

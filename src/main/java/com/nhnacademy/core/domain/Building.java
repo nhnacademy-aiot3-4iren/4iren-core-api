@@ -18,12 +18,13 @@ import lombok.NoArgsConstructor;
 public class Building extends VersionedEntity {
 
     @Id
-    @Column(name = "building_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "building_id")
     private Long id;
 
-    @Column(name = "team_id", nullable = false)
-    private Long teamId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
+    private Team team;
 
     @Column(name = "building_name", nullable = false, length = 100)
     private String buildingName;
@@ -31,17 +32,17 @@ public class Building extends VersionedEntity {
     @Column(name = "description", length = 200)
     private String description;
 
-    public Building(Long teamId, String buildingName) {
-        this(teamId, buildingName, null);
-    }
-
-    public Building(Long teamId, String buildingName, String description) {
-        this.teamId = teamId;
+    public Building(Team team, String buildingName, String description) {
+        this.team = team;
         this.buildingName = buildingName.strip();
         this.description = description == null ? null : description.strip();
     }
 
     public void changeName(String buildingName) {
         this.buildingName = buildingName.strip();
+    }
+
+    public void changeDescription(String description) {
+        this.description = description == null ? null : description.strip();
     }
 }

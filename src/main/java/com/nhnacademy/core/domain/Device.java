@@ -18,8 +18,8 @@ import lombok.NoArgsConstructor;
 public class Device extends VersionedEntity {
 
     @Id
-    @Column(name = "device_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "device_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
