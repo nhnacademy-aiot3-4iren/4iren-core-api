@@ -2,7 +2,7 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.TeamRole;
 import com.nhnacademy.core.exception.ForbiddenException;
-import com.nhnacademy.core.repository.TeamMemberRepository;
+import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

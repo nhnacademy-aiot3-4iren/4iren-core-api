@@ -1,86 +1,115 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Building;
+import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.building.BuildingCreateRequest;
-import com.nhnacademy.core.dto.building.BuildingNameChangeRequest;
 import com.nhnacademy.core.dto.building.BuildingResponse;
+import com.nhnacademy.core.dto.building.BuildingUpdateRequest;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.repository.BuildingRepository;
-import com.nhnacademy.core.repository.RoomRepository;
+import com.nhnacademy.core.repository.building.BuildingRepository;
+import com.nhnacademy.core.repository.room.RoomRepository;
+import com.nhnacademy.core.repository.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BuildingService {
 
+    private final TeamRepository teamRepository;
     private final BuildingRepository buildingRepository;
     private final RoomRepository roomRepository;
+    private final TeamAuthorizationService teamAuthorizationService;
 
+    // 건물 생성
     @Transactional
-    public BuildingResponse createBuilding(Long teamId, BuildingCreateRequest request) {
+    public BuildingResponse createBuilding(Long userId, Long teamId, BuildingCreateRequest request) {
+        teamAuthorizationService.requireTeamManager(userId, teamId);
+
+        Team team = getTeamOrThrow(teamId);
         String buildingName = request.buildingName().strip();
-        if (buildingRepository.existsByTeamIdAndBuildingName(teamId, buildingName)) {
+
+        if (buildingRepository.existsByTeam_IdAndBuildingName(teamId, buildingName)) {
             throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
         }
-
-        Building building = buildingRepository.save(new Building(teamId, buildingName));
+        Building building = buildingRepository.save(
+                new Building(team, buildingName, normalizeDescription(request.description()))
+        );
 
         return BuildingResponse.from(building);
     }
 
-    public PageResponse<BuildingResponse> getBuildings(Long teamId, Pageable pageable) {
+    // 건물 목록 조회
+    public PageResponse<BuildingResponse> getBuildings(Long userId, Long teamId, Pageable pageable) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
         return PageResponse.from(
-                buildingRepository.findAllByTeamId(teamId, pageable)
+                buildingRepository.findAllByTeam_Id(teamId, pageable)
                         .map(BuildingResponse::from)
         );
     }
 
-    public BuildingResponse getBuilding(Long teamId, Long buildingId) {
+    // 건물 상세 조회
+    public BuildingResponse getBuilding(Long userId, Long teamId, Long buildingId) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
         Building building = getBuildingOrThrow(buildingId, teamId);
 
         return BuildingResponse.from(building);
     }
 
+    // 건물 이름, 설명 수정
     @Transactional
-    public BuildingResponse updateBuildingName(
-            Long teamId,
-            Long buildingId,
-            BuildingNameChangeRequest request
-    ) {
+    public BuildingResponse updateBuilding(Long userId, Long teamId, Long buildingId, BuildingUpdateRequest request) {
+        teamAuthorizationService.requireTeamManager(userId, teamId);
+
         Building building = getBuildingOrThrow(buildingId, teamId);
-        String buildingName = request.buildingName().strip();
-        if (buildingRepository.existsByTeamIdAndBuildingNameAndIdNot(
-                teamId,
-                buildingName,
-                buildingId
-        )) {
-            throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
+
+        if (request.hasBuildingName()) {
+            String buildingName = request.getBuildingName().strip();
+            if (buildingRepository.existsByTeam_IdAndBuildingNameAndIdNot(teamId, buildingName, buildingId)) {
+                throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
+            }
+
+            building.changeName(buildingName);
+        }
+        if (request.hasDescription()) {
+            building.changeDescription(normalizeDescription(request.getDescription()));
         }
 
-        building.changeName(buildingName);
-
         return BuildingResponse.from(building);
     }
 
+    // 건물 삭제
     @Transactional
-    public void deleteBuilding(Long teamId, Long buildingId) {
+    public void deleteBuilding(Long userId, Long teamId, Long buildingId) {
+        teamAuthorizationService.requireTeamManager(userId, teamId);
+
         Building building = getBuildingOrThrow(buildingId, teamId);
 
         if (roomRepository.existsByBuilding(building)) {
-            throw new ResourceConflictException("건물에 등록된 방이 있어 삭제할 수 없습니다.");
+            throw new ResourceConflictException("건물에 등록된 공간이 있어 삭제할 수 없습니다.");
         }
-
         buildingRepository.delete(building);
     }
 
     private Building getBuildingOrThrow(Long buildingId, Long teamId) {
-        return buildingRepository.findByIdAndTeamId(buildingId, teamId)
+        return buildingRepository.findByIdAndTeam_Id(buildingId, teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("건물", buildingId));
+    }
+
+    private Team getTeamOrThrow(Long teamId) {
+        return teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
+    }
+
+    private String normalizeDescription(String description) {
+        return StringUtils.hasText(description) ? description : null;
     }
 }
