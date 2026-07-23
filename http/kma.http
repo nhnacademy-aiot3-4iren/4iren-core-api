@@ -1,5 +1,5 @@
 ### UltraSrtNcst 초단기실황조회 llm
-GET http://localhost:8765/api/kma/ultraSrtNcst?regionName=서울
+GET http://localhost:8765/api/kma/ultraSrtNcst?regionName=광주 동구 서석동
 
 ### UltraSrtFcst 초단기예보조회 llm
 GET http://localhost:8765/api/kma/ultraSrtFcst?regionName=광주 동구 서석동

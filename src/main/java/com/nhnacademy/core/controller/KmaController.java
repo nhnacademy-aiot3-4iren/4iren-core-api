@@ -28,12 +28,14 @@ public class KmaController {
     @GetMapping("/ultraSrtNcst")
     public ResponseEntity<KmaCurrentWeatherResponseDto> getNcst(@RequestParam String regionName) {
         KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstForLLM(regionName);
+        log.info("초단기실황조회 호출결과: {}", response);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/ultraSrtFcst")
     public ResponseEntity<KmaForecastWeatherResponseDto> getFcst(@RequestParam String regionName){
         KmaForecastWeatherResponseDto response = kmaService.getUltraSrtFcstForLLM(regionName);
+        log.info("초단기예보조회 호출결과: {}", response);
         return ResponseEntity.ok(response);
     }
 
