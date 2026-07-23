@@ -1,10 +1,11 @@
 package com.nhnacademy.core.controller;
 
+import com.nhnacademy.core.config.AuthenticatedUser;
+import com.nhnacademy.core.config.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.device.DeviceCreateRequest;
-import com.nhnacademy.core.dto.device.DeviceNameChangeRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;
-import com.nhnacademy.core.dto.device.DeviceRoomChangeRequest;
+import com.nhnacademy.core.dto.device.DeviceUpdateRequest;
 import com.nhnacademy.core.service.DeviceService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -21,68 +22,66 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/devices")
+@RequestMapping("/api/teams/{teamId}")
 public class DeviceController {
 
     private final DeviceService deviceService;
 
-    @PostMapping
+    @PostMapping("/rooms/{roomId}/devices")
     public ResponseEntity<DeviceResponse> createDevice(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long roomId,
             @Valid @RequestBody DeviceCreateRequest request
     ) {
-        DeviceResponse response = deviceService.createDevice(teamId, request);
+        DeviceResponse response = deviceService.createDevice(user.id(), teamId, roomId, request);
 
         URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{deviceId}")
-                .buildAndExpand(response.id())
+                .fromCurrentContextPath()
+                .path("/api/teams/{teamId}/devices/{deviceId}")
+                .buildAndExpand(teamId, response.deviceId())
                 .toUri();
 
         return ResponseEntity.created(location)
                 .body(response);
     }
 
-    @GetMapping
+    @GetMapping("/rooms/{roomId}/devices")
     public PageResponse<DeviceResponse> getDevices(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long roomId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
-        return deviceService.getDevices(teamId, pageable);
+        return deviceService.getDevices(user.id(), teamId, roomId, pageable);
     }
 
-    @GetMapping("/{deviceId}")
+    @GetMapping("/devices/{deviceId}")
     public DeviceResponse getDevice(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long deviceId
     ) {
-        return deviceService.getDevice(teamId, deviceId);
+        return deviceService.getDevice(user.id(), teamId, deviceId);
     }
 
-    @PatchMapping("/{deviceId}/name")
-    public DeviceResponse updateDeviceName(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+    @PatchMapping("/devices/{deviceId}")
+    public DeviceResponse updateDevice(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long deviceId,
-            @Valid @RequestBody DeviceNameChangeRequest request
+            @Valid @RequestBody DeviceUpdateRequest request
     ) {
-        return deviceService.updateDeviceName(teamId, deviceId, request);
+        return deviceService.updateDevice(user.id(), teamId, deviceId, request);
     }
 
-    @PatchMapping("/{deviceId}/room")
-    public DeviceResponse moveDeviceToRoom(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
-            @PathVariable @Positive Long deviceId,
-            @Valid @RequestBody DeviceRoomChangeRequest request
-    ) {
-        return deviceService.moveDeviceToRoom(teamId, deviceId, request);
-    }
-
-    @DeleteMapping("/{deviceId}")
+    @DeleteMapping("/devices/{deviceId}")
     public ResponseEntity<Void> deleteDevice(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long deviceId
     ) {
-        deviceService.deleteDevice(teamId, deviceId);
+        deviceService.deleteDevice(user.id(), teamId, deviceId);
 
         return ResponseEntity.noContent()
                 .build();

@@ -1,0 +1,89 @@
+package com.nhnacademy.core.controller;
+
+import com.nhnacademy.core.config.AuthenticatedUser;
+import com.nhnacademy.core.config.CurrentUser;
+import com.nhnacademy.core.dto.PageResponse;
+import com.nhnacademy.core.dto.sensor.location.SensorLocationCreateRequest;
+import com.nhnacademy.core.dto.sensor.location.SensorLocationResponse;
+import com.nhnacademy.core.dto.sensor.location.SensorLocationUpdateRequest;
+import com.nhnacademy.core.service.SensorLocationService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
+
+@RestController
+@RequiredArgsConstructor
+@Validated
+@RequestMapping("/api/teams/{teamId}")
+public class SensorLocationController {
+
+    private final SensorLocationService sensorLocationService;
+
+    @PostMapping("/rooms/{roomId}/sensor-locations")
+    public ResponseEntity<SensorLocationResponse> createSensorLocation(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long roomId,
+            @Valid @RequestBody SensorLocationCreateRequest request
+    ) {
+        SensorLocationResponse response = sensorLocationService.createSensorLocation(user.id(), teamId, roomId, request);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .path("/api/teams/{teamId}/sensor-locations/{sensorLocationId}")
+                .buildAndExpand(teamId, response.sensorLocationId())
+                .toUri();
+
+        return ResponseEntity.created(location)
+                .body(response);
+    }
+
+    @GetMapping("/rooms/{roomId}/sensor-locations")
+    public PageResponse<SensorLocationResponse> getSensorLocations(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long roomId,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable
+    ) {
+        return sensorLocationService.getSensorLocations(user.id(), teamId, roomId, pageable);
+    }
+
+    @GetMapping("/sensor-locations/{sensorLocationId}")
+    public SensorLocationResponse getSensorLocation(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long sensorLocationId
+    ) {
+        return sensorLocationService.getSensorLocation(user.id(), teamId, sensorLocationId);
+    }
+
+    @PatchMapping("/sensor-locations/{sensorLocationId}")
+    public SensorLocationResponse updateSensorLocation(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long sensorLocationId,
+            @Valid @RequestBody SensorLocationUpdateRequest request
+    ) {
+        return sensorLocationService.updateSensorLocation(user.id(), teamId, sensorLocationId, request);
+    }
+
+    @DeleteMapping("/sensor-locations/{sensorLocationId}")
+    public ResponseEntity<Void> deleteSensorLocation(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long sensorLocationId
+    ) {
+        sensorLocationService.deleteSensorLocation(user.id(), teamId, sensorLocationId);
+
+        return ResponseEntity.noContent()
+                .build();
+    }
+}
