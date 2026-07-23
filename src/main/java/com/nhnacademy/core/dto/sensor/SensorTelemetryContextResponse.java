@@ -1,17 +1,17 @@
 package com.nhnacademy.core.dto.sensor;
 
-import com.nhnacademy.core.domain.Sensor;
+import com.nhnacademy.core.domain.SensorLocation;
 
 public record SensorTelemetryContextResponse(
         String devEui,
         Long roomId,
         Long teamId
 ) {
-    public static SensorTelemetryContextResponse from(Sensor sensor) {
+    public static SensorTelemetryContextResponse from(SensorLocation sensorLocation) {
         return new SensorTelemetryContextResponse(
-                sensor.getDevEui(),
-                sensor.getRoom().getId(),
-                sensor.getRoom().getBuilding().getTeamId()
+                sensorLocation.getDevEui(),
+                sensorLocation.getRoom().getId(),
+                sensorLocation.getRoom().getBuilding().getTeam().getId()
         );
     }
 }

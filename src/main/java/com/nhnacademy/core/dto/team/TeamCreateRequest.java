@@ -1,12 +1,12 @@
-package com.nhnacademy.core.dto.building;
+package com.nhnacademy.core.dto.team;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record BuildingCreateRequest(
+public record TeamCreateRequest(
         @NotBlank
-        @Size(max = 100)
-        String buildingName,
+        @Size(max = 50)
+        String teamName,
 
         @Size(max = 200)
         String description
