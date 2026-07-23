@@ -53,7 +53,7 @@ public class KmaService {
                 coordinate.regionName(),
                 coordinate.nx(),
                 coordinate.ny(),
-                parseDateTime(request.base_date(), request.base_time()),
+                parseDateTime(request.getBase_date(), request.getBase_time()),
                 values
         );
     }
@@ -110,7 +110,7 @@ public class KmaService {
                 coordinate.regionName(),
                 coordinate.nx(),
                 coordinate.ny(),
-                parseDateTime(request.base_date(), request.base_time()),
+                parseDateTime(request.getBase_date(), request.getBase_time()),
                 valuesByDateTime.entrySet().stream()
                         .map(entry -> new KmaForecastWeatherDto.Forecast(entry.getKey(), List.copyOf(entry.getValue())))
                         .toList()

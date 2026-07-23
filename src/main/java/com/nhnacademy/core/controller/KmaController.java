@@ -9,10 +9,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api/kma")
 @RequiredArgsConstructor
 @Slf4j
 public class KmaController {
@@ -26,12 +28,14 @@ public class KmaController {
     @GetMapping("/ultraSrtNcst")
     public ResponseEntity<KmaCurrentWeatherResponseDto> getNcst(@RequestParam String regionName) {
         KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstForLLM(regionName);
+        log.info("초단기실황조회 호출결과: {}", response);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/ultraSrtFcst")
     public ResponseEntity<KmaForecastWeatherResponseDto> getFcst(@RequestParam String regionName){
         KmaForecastWeatherResponseDto response = kmaService.getUltraSrtFcstForLLM(regionName);
+        log.info("초단기예보조회 호출결과: {}", response);
         return ResponseEntity.ok(response);
     }
 

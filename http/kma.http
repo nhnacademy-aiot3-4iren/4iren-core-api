@@ -1,11 +1,11 @@
 ### UltraSrtNcst 초단기실황조회 llm
-GET http://localhost:8080/ultraSrtNcst?regionName=서울
+GET http://localhost:8765/api/kma/ultraSrtNcst?regionName=광주 동구 서석동
 
 ### UltraSrtFcst 초단기예보조회 llm
-GET http://localhost:8080/ultraSrtFcst?regionName=광주 동구 서석동
+GET http://localhost:8765/api/kma/ultraSrtFcst?regionName=광주 동구 서석동
 
 ### UltraSrtNcst 초단기실황조회
-GET http://localhost:8080/internal/ultraSrtNcst?regionName=광주 동구 서석동
+GET http://localhost:8765/api/kma/internal/ultraSrtNcst?regionName=서울
 
 ### UltraSrtFcst 초단기예보조회
-GET http://localhost:8080/internal/ultraSrtFcst?regionName=광주 동구 서석동
+GET http://localhost:8765/api/kma/internal/ultraSrtFcst?regionName=광주 동구 서석동
