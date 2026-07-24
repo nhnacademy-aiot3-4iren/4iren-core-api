@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -30,7 +32,12 @@ public class TeamInvitationCode extends VersionedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "team_id", nullable = false)
+    @JoinColumn(
+            name = "team_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_team_invitation_codes_team")
+    )
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Team team;
 
     @Column(name = "code", nullable = false, length = 8, columnDefinition = "CHAR(8)")

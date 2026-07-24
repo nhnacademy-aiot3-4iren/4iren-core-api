@@ -29,7 +29,11 @@ public class SensorLocation extends VersionedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(
+            name = "room_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_sensor_locations_room")
+    )
     private Room room;
 
     @Column(name = "dev_eui", nullable = false, length = 16, columnDefinition = "CHAR(16)")

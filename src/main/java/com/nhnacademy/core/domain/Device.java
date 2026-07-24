@@ -23,7 +23,11 @@ public class Device extends VersionedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(
+            name = "room_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_devices_room")
+    )
     private Room room;
 
     @Column(name = "device_name", nullable = false, length = 50)

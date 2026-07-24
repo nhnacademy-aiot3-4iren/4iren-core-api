@@ -23,7 +23,11 @@ public class Room extends VersionedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "building_id", nullable = false)
+    @JoinColumn(
+            name = "building_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_rooms_building")
+    )
     private Building building;
 
     @Column(name = "room_name", nullable = false, length = 50)

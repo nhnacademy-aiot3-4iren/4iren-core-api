@@ -23,7 +23,10 @@ public class Building extends VersionedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id")
+    @JoinColumn(
+            name = "team_id",
+            foreignKey = @ForeignKey(name = "fk_buildings_team")
+    )
     private Team team;
 
     @Column(name = "building_name", nullable = false, length = 100)

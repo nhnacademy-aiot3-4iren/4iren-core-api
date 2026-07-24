@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
@@ -27,7 +29,12 @@ public class TeamMember extends VersionedEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "team_id", nullable = false)
+    @JoinColumn(
+            name = "team_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_team_members_team")
+    )
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Team team;
 
     @Column(name = "user_id", nullable = false)
