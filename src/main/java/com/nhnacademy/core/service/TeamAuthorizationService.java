@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
@@ -15,8 +16,9 @@ public class TeamAuthorizationService {
     private final TeamMemberRepository teamMemberRepository;
 
     // 팀 구성원 권한 확인
-    public void requireTeamMember(Long userId, Long teamId) {
-        getTeamRole(userId, teamId);
+    public TeamMember requireTeamMember(Long userId, Long teamId) {
+        return teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
+                .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
     }
 
     // 팀 관리자 권한 확인
@@ -34,8 +36,6 @@ public class TeamAuthorizationService {
     }
 
     public TeamRole getTeamRole(Long userId, Long teamId) {
-        return teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
-                .map(teamMember -> teamMember.getTeamRole())
-                .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
+        return requireTeamMember(userId, teamId).getTeamRole();
     }
 }

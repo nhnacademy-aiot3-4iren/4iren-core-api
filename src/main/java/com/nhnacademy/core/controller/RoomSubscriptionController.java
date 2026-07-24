@@ -33,12 +33,12 @@ public class RoomSubscriptionController {
     }
 
     @GetMapping("/room-subscriptions")
-    public PageResponse<RoomSubscriptionResponse> getSubscriptions(
+    public PageResponse<RoomSubscriptionResponse> getRoomSubscriptions(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
-        return roomSubscriptionService.getSubscriptions(user.id(), teamId, pageable);
+        return roomSubscriptionService.getRoomSubscriptions(user.id(), teamId, pageable);
     }
 
     @PatchMapping("/rooms/{roomId}/subscription")

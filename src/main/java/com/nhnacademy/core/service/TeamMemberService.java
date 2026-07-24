@@ -12,7 +12,6 @@ import com.nhnacademy.core.dto.team.member.TeamOwnerChangeRequest;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.repository.subscription.RoomSubscriptionRepository;
 import com.nhnacademy.core.repository.team.TeamInvitationCodeRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
@@ -33,7 +32,6 @@ public class TeamMemberService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final TeamInvitationCodeRepository teamInvitationCodeRepository;
-    private final RoomSubscriptionRepository roomSubscriptionRepository;
     private final TeamAuthorizationService teamAuthorizationService;
     private final EntityManager entityManager;
 
@@ -111,7 +109,6 @@ public class TeamMemberService {
             throw new ForbiddenException("팀 구성원 삭제 권한이 없습니다.");
         }
 
-        deleteMemberResources(targetMember);
         teamMemberRepository.delete(targetMember);
     }
 
@@ -128,7 +125,6 @@ public class TeamMemberService {
         TeamMember teamMember = teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
                 .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
 
-        deleteMemberResources(teamMember);
         teamMemberRepository.delete(teamMember);
     }
 
@@ -160,14 +156,6 @@ public class TeamMemberService {
     private TeamMember getTeamMemberOrThrow(Long teamMemberId, Long teamId) {
         return teamMemberRepository.findByIdAndTeam_Id(teamMemberId, teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("팀 구성원", teamMemberId));
-    }
-
-    // 팀 탈퇴 또는 구성원 삭제 시, 구성원의 구독한 공간의 정보 삭제
-    private void deleteMemberResources(TeamMember teamMember) {
-        roomSubscriptionRepository.deleteAllByUserIdAndRoom_Building_Team_Id(
-                teamMember.getUserId(),
-                teamMember.getTeam().getId()
-        );
     }
 
     private String normalizeInvitationCode(String invitationCode) {

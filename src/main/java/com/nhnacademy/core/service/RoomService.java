@@ -12,8 +12,6 @@ import com.nhnacademy.core.repository.building.BuildingRepository;
 import com.nhnacademy.core.repository.device.DeviceRepository;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.sensor.SensorLocationRepository;
-import com.nhnacademy.core.repository.subscription.RoomSubscriptionRepository;
-import com.nhnacademy.core.repository.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,10 +23,8 @@ import org.springframework.util.StringUtils;
 @Transactional(readOnly = true)
 public class RoomService {
 
-    private final TeamRepository teamRepository;
     private final BuildingRepository buildingRepository;
     private final RoomRepository roomRepository;
-    private final RoomSubscriptionRepository roomSubscriptionRepository;
     private final SensorLocationRepository sensorLocationRepository;
     private final DeviceRepository deviceRepository;
     private final TeamAuthorizationService teamAuthorizationService;
@@ -98,7 +94,6 @@ public class RoomService {
     // 공간 삭제
     @Transactional
     public void deleteRoom(Long userId, Long teamId, Long roomId) {
-        lockTeamOrThrow(teamId);
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
@@ -106,13 +101,7 @@ public class RoomService {
         if (sensorLocationRepository.existsByRoom(room) || deviceRepository.existsByRoom(room)) {
             throw new ResourceConflictException("공간에 등록된 센서 또는 기기가 있어 삭제할 수 없습니다.");
         }
-        roomSubscriptionRepository.deleteAllByRoom_Id(roomId);
         roomRepository.delete(room);
-    }
-
-    private void lockTeamOrThrow(Long teamId) {
-        teamRepository.findLockedById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
     }
 
     private Building getBuildingOrThrow(Long buildingId, Long teamId) {

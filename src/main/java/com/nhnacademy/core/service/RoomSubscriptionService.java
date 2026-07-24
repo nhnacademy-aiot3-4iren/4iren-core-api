@@ -2,14 +2,15 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Room;
 import com.nhnacademy.core.domain.RoomSubscription;
-import com.nhnacademy.core.domain.Team;
+import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionUpdateRequest;
+import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.subscription.RoomSubscriptionRepository;
-import com.nhnacademy.core.repository.team.TeamRepository;
+import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,32 +21,36 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class RoomSubscriptionService {
 
-    private final TeamRepository teamRepository;
     private final RoomRepository roomRepository;
     private final RoomSubscriptionRepository roomSubscriptionRepository;
+    private final TeamMemberRepository teamMemberRepository;
     private final TeamAuthorizationService teamAuthorizationService;
 
     // 공간 구독
     @Transactional
     public RoomSubscriptionResponse subscribe(Long userId, Long teamId, Long roomId) {
-        lockTeamOrThrow(teamId);
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        TeamMember teamMember = getLockedTeamMemberOrThrow(userId, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
 
         // 이미 구독 중인 경우, 기존 구독 정보를 반환
-        RoomSubscription subscription = roomSubscriptionRepository.findByRoom_IdAndUserId(roomId, userId)
-                .orElseGet(() -> roomSubscriptionRepository.save(new RoomSubscription(room, userId)));
+        RoomSubscription subscription = roomSubscriptionRepository
+                .findByRoom_IdAndTeamMember_Id(roomId, teamMember.getId())
+                .orElseGet(() -> roomSubscriptionRepository.save(new RoomSubscription(room, teamMember)));
 
         return RoomSubscriptionResponse.from(subscription);
     }
 
     // 구독 목록 조회
-    public PageResponse<RoomSubscriptionResponse> getSubscriptions(Long userId, Long teamId, Pageable pageable) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+    public PageResponse<RoomSubscriptionResponse> getRoomSubscriptions(Long userId, Long teamId, Pageable pageable) {
+        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
 
         return PageResponse.from(
-                roomSubscriptionRepository.findAllByUserIdAndRoom_Building_Team_Id(userId, teamId, pageable)
+                roomSubscriptionRepository.findAllByTeamMember_IdAndRoom_Building_Team_Id(
+                                teamMember.getId(),
+                                teamId,
+                                pageable
+                        )
                         .map(RoomSubscriptionResponse::from)
         );
     }
@@ -53,11 +58,10 @@ public class RoomSubscriptionService {
     // 알림 설정 변경
     @Transactional
     public RoomSubscriptionResponse updateSubscription(Long userId, Long teamId, Long roomId, RoomSubscriptionUpdateRequest request) {
-        lockTeamOrThrow(teamId);
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
 
         getRoomOrThrow(roomId, teamId);
-        RoomSubscription subscription = getSubscriptionOrThrow(roomId, userId);
+        RoomSubscription subscription = getSubscriptionOrThrow(roomId, teamMember.getId());
 
         if (request.notificationEnabled()) {
             subscription.enableNotifications();
@@ -71,18 +75,12 @@ public class RoomSubscriptionService {
     // 구독 해제
     @Transactional
     public void unsubscribe(Long userId, Long teamId, Long roomId) {
-        lockTeamOrThrow(teamId);
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
 
         getRoomOrThrow(roomId, teamId);
-        RoomSubscription subscription = getSubscriptionOrThrow(roomId, userId);
+        RoomSubscription subscription = getSubscriptionOrThrow(roomId, teamMember.getId());
 
         roomSubscriptionRepository.delete(subscription);
-    }
-
-    private Team lockTeamOrThrow(Long teamId) {
-        return teamRepository.findLockedById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
     }
 
     private Room getRoomOrThrow(Long roomId, Long teamId) {
@@ -90,8 +88,13 @@ public class RoomSubscriptionService {
                 .orElseThrow(() -> new ResourceNotFoundException("공간", roomId));
     }
 
-    private RoomSubscription getSubscriptionOrThrow(Long roomId, Long userId) {
-        return roomSubscriptionRepository.findByRoom_IdAndUserId(roomId, userId)
+    private RoomSubscription getSubscriptionOrThrow(Long roomId, Long teamMemberId) {
+        return roomSubscriptionRepository.findByRoom_IdAndTeamMember_Id(roomId, teamMemberId)
                 .orElseThrow(() -> new ResourceNotFoundException("공간 구독", roomId));
+    }
+
+    private TeamMember getLockedTeamMemberOrThrow(Long userId, Long teamId) {
+        return teamMemberRepository.findLockedByTeam_IdAndUserId(teamId, userId)
+                .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
     }
 }

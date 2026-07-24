@@ -9,11 +9,11 @@ import java.util.Optional;
 
 public interface RoomSubscriptionRepository extends JpaRepository<RoomSubscription, Long> {
 
-    Optional<RoomSubscription> findByRoom_IdAndUserId(Long roomId, Long userId);
+    Optional<RoomSubscription> findByRoom_IdAndTeamMember_Id(Long roomId, Long teamMemberId);
 
-    Page<RoomSubscription> findAllByUserIdAndRoom_Building_Team_Id(Long userId, Long teamId, Pageable pageable);
-
-    void deleteAllByUserIdAndRoom_Building_Team_Id(Long userId, Long teamId);
-
-    void deleteAllByRoom_Id(Long roomId);
+    Page<RoomSubscription> findAllByTeamMember_IdAndRoom_Building_Team_Id(
+            Long teamMemberId,
+            Long teamId,
+            Pageable pageable
+    );
 }

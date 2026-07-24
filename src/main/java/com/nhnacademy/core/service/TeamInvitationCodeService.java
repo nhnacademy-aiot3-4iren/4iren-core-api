@@ -26,7 +26,7 @@ public class TeamInvitationCodeService {
     // 팀 초대 코드 생성
     @Transactional
     public TeamInvitationCodeResponse createInvitationCode(Long userId, Long teamId, TeamInvitationCodeCreateRequest request) {
-        Team team = lockTeamOrThrow(teamId);
+        Team team = getTeamOrThrow(teamId);
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         TeamInvitationCode invitationCode = teamInvitationCodeRepository.save(
@@ -39,10 +39,10 @@ public class TeamInvitationCodeService {
     // 팀 초대 코드 비활성화
     @Transactional
     public void deactivateInvitationCode(Long userId, Long teamId, Long invitationCodeId) {
-        lockTeamOrThrow(teamId);
+        getTeamOrThrow(teamId);
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
-        TeamInvitationCode invitationCode = teamInvitationCodeRepository.findByIdAndTeam_Id(invitationCodeId, teamId)
+        TeamInvitationCode invitationCode = teamInvitationCodeRepository.findLockedByIdAndTeam_Id(invitationCodeId, teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("초대 코드", invitationCodeId));
 
         invitationCode.deactivate();
@@ -60,8 +60,8 @@ public class TeamInvitationCodeService {
         throw new ResourceConflictException("초대 코드를 생성하지 못했습니다. 다시 시도해 주세요.");
     }
 
-    private Team lockTeamOrThrow(Long teamId) {
-        return teamRepository.findLockedById(teamId)
+    private Team getTeamOrThrow(Long teamId) {
+        return teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
     }
 }
