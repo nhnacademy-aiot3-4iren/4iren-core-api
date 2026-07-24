@@ -1,5 +1,6 @@
 package com.nhnacademy.core.config;
 
+import com.nhnacademy.core.config.auth.CurrentUserArgumentResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;

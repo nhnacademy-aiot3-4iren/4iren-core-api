@@ -1,4 +1,4 @@
-package com.nhnacademy.core.config;
+package com.nhnacademy.core.config.auth;
 
 public enum UserRole {
     ADMIN,

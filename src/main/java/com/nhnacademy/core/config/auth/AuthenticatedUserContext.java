@@ -1,4 +1,4 @@
-package com.nhnacademy.core.config;
+package com.nhnacademy.core.config.auth;
 
 import com.nhnacademy.core.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;

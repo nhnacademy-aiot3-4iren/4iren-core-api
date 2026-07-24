@@ -1,4 +1,4 @@
-package com.nhnacademy.core.config;
+package com.nhnacademy.core.config.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.core.dto.ErrorResponse;

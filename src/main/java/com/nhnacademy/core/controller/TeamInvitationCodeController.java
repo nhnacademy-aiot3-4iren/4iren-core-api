@@ -1,7 +1,7 @@
 package com.nhnacademy.core.controller;
 
-import com.nhnacademy.core.config.AuthenticatedUser;
-import com.nhnacademy.core.config.CurrentUser;
+import com.nhnacademy.core.config.auth.AuthenticatedUser;
+import com.nhnacademy.core.config.auth.CurrentUser;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeCreateRequest;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeResponse;
 import com.nhnacademy.core.service.TeamInvitationCodeService;

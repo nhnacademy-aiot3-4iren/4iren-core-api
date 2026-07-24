@@ -1,6 +1,6 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.config.UserRole;
+import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;

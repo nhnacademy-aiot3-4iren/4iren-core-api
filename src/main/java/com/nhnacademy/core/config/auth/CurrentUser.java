@@ -1,4 +1,4 @@
-package com.nhnacademy.core.config;
+package com.nhnacademy.core.config.auth;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
