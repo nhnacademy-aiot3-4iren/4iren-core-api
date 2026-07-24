@@ -31,24 +31,19 @@ public class AuthenticatedUserFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        AuthenticatedUser authenticatedUser;
         try {
-            AuthenticatedUser authenticatedUser;
-            try {
-                authenticatedUser = parseUser(request);
-            } catch (IllegalArgumentException e) {
-                writeBadRequestResponse(response, "사용자 정보를 확인할 수 없습니다.");
-                return;
-            }
-
-            if (authenticatedUser != null) {
-                request.setAttribute(CURRENT_USER_ATTRIBUTE, authenticatedUser);
-                AuditActorContext.set(authenticatedUser);
-            }
-
-            filterChain.doFilter(request, response);
-        } finally {
-            AuditActorContext.clear();
+            authenticatedUser = parseUser(request);
+        } catch (IllegalArgumentException e) {
+            writeBadRequestResponse(response, "사용자 정보를 확인할 수 없습니다.");
+            return;
         }
+
+        if (authenticatedUser != null) {
+            request.setAttribute(CURRENT_USER_ATTRIBUTE, authenticatedUser);
+        }
+
+        filterChain.doFilter(request, response);
     }
 
     private AuthenticatedUser parseUser(HttpServletRequest request) {
