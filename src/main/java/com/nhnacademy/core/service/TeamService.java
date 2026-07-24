@@ -6,12 +6,14 @@ import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.TeamCreateRequest;
+import com.nhnacademy.core.dto.team.TeamDetailResponse;
 import com.nhnacademy.core.dto.team.TeamResponse;
 import com.nhnacademy.core.dto.team.TeamUpdateRequest;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.repository.building.BuildingRepository;
+import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final BuildingRepository buildingRepository;
+    private final RoomRepository roomRepository;
     private final TeamAuthorizationService teamAuthorizationService;
 
     // 팀 생성, 생성자는 팀 소유자 권한 부여
@@ -77,8 +80,8 @@ public class TeamService {
         );
     }
 
-    // 팀 기본 정보와 현재 사용자의 팀 Role 조회
-    public TeamResponse getTeam(Long userId, UserRole userRole, Long teamId) {
+    // 팀 상세 정보와 현재 사용자의 팀 Role 및 리소스 수 조회
+    public TeamDetailResponse getTeam(Long userId, UserRole userRole, Long teamId) {
         TeamRole myRole = userRole == UserRole.ADMIN
                 ? teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
                 .map(TeamMember::getTeamRole)
@@ -87,8 +90,11 @@ public class TeamService {
                 : teamAuthorizationService.getTeamRole(userId, teamId);
 
         Team team = getTeamOrThrow(teamId);
+        long memberCount = teamMemberRepository.countByTeam_Id(teamId);
+        long buildingCount = buildingRepository.countByTeam_Id(teamId);
+        long roomCount = roomRepository.countByBuilding_Team_Id(teamId);
 
-        return TeamResponse.from(team, myRole);
+        return TeamDetailResponse.from(team, myRole, memberCount, buildingCount, roomCount);
     }
 
     // 팀 이름과 설명 수정

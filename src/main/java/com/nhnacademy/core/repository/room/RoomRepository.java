@@ -22,4 +22,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     boolean existsByBuilding_IdAndRoomNameAndIdNot(Long buildingId, String roomName, Long roomId);
 
     boolean existsByBuilding(Building building);
+
+    long countByBuilding_Team_Id(Long teamId);
 }

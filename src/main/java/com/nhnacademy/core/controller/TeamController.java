@@ -4,6 +4,7 @@ import com.nhnacademy.core.config.AuthenticatedUser;
 import com.nhnacademy.core.config.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.TeamCreateRequest;
+import com.nhnacademy.core.dto.team.TeamDetailResponse;
 import com.nhnacademy.core.dto.team.TeamResponse;
 import com.nhnacademy.core.dto.team.TeamUpdateRequest;
 import com.nhnacademy.core.service.TeamService;
@@ -53,7 +54,7 @@ public class TeamController {
     }
 
     @GetMapping("/{teamId}")
-    public TeamResponse getTeam(
+    public TeamDetailResponse getTeam(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId
     ) {
