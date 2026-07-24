@@ -5,15 +5,11 @@ import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.team.TeamCreateRequest;
-import com.nhnacademy.core.dto.team.TeamDetailResponse;
-import com.nhnacademy.core.dto.team.TeamResponse;
-import com.nhnacademy.core.dto.team.TeamUpdateRequest;
+import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.repository.building.BuildingRepository;
-import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +31,6 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final BuildingRepository buildingRepository;
-    private final RoomRepository roomRepository;
     private final TeamAuthorizationService teamAuthorizationService;
 
     // 팀 생성, 생성자는 팀 소유자 권한 부여
@@ -89,12 +84,10 @@ public class TeamService {
                 // 관리자 권한이 없는 경우, 팀 권한 확인
                 : teamAuthorizationService.getTeamRole(userId, teamId);
 
-        Team team = getTeamOrThrow(teamId);
-        long memberCount = teamMemberRepository.countByTeam_Id(teamId);
-        long buildingCount = buildingRepository.countByTeam_Id(teamId);
-        long roomCount = roomRepository.countByBuilding_Team_Id(teamId);
+        TeamDetailQueryResult result = teamRepository.findDetailById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
 
-        return TeamDetailResponse.from(team, myRole, memberCount, buildingCount, roomCount);
+        return TeamDetailResponse.from(myRole, result);
     }
 
     // 팀 이름과 설명 수정

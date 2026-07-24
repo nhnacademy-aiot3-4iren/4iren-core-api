@@ -1,6 +1,5 @@
 package com.nhnacademy.core.dto.team;
 
-import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamRole;
 
 public record TeamDetailResponse(
@@ -10,23 +9,24 @@ public record TeamDetailResponse(
         TeamRole myRole,
         long memberCount,
         long buildingCount,
-        long roomCount
+        long roomCount,
+        long sensorCount,
+        long deviceCount
 ) {
     public static TeamDetailResponse from(
-            Team team,
             TeamRole myRole,
-            long memberCount,
-            long buildingCount,
-            long roomCount
+            TeamDetailQueryResult result
     ) {
         return new TeamDetailResponse(
-                team.getId(),
-                team.getTeamName(),
-                team.getDescription(),
+                result.teamId(),
+                result.teamName(),
+                result.description(),
                 myRole,
-                memberCount,
-                buildingCount,
-                roomCount
+                result.memberCount(),
+                result.buildingCount(),
+                result.roomCount(),
+                result.sensorCount(),
+                result.deviceCount()
         );
     }
 }
