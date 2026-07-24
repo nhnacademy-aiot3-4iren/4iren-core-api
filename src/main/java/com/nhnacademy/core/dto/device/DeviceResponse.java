@@ -3,7 +3,7 @@ package com.nhnacademy.core.dto.device;
 import com.nhnacademy.core.domain.Device;
 
 public record DeviceResponse(
-        Long id,
+        Long deviceId,
         Long roomId,
         String deviceName
 ) {

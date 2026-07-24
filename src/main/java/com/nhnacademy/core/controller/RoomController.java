@@ -1,9 +1,11 @@
 package com.nhnacademy.core.controller;
 
+import com.nhnacademy.core.config.AuthenticatedUser;
+import com.nhnacademy.core.config.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.room.RoomCreateRequest;
-import com.nhnacademy.core.dto.room.RoomNameChangeRequest;
 import com.nhnacademy.core.dto.room.RoomResponse;
+import com.nhnacademy.core.dto.room.RoomUpdateRequest;
 import com.nhnacademy.core.service.RoomService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -20,59 +22,66 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/rooms")
+@RequestMapping("/api/teams/{teamId}")
 public class RoomController {
 
     private final RoomService roomService;
 
-    @PostMapping
+    @PostMapping("/buildings/{buildingId}/rooms")
     public ResponseEntity<RoomResponse> createRoom(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long buildingId,
             @Valid @RequestBody RoomCreateRequest request
     ) {
-        RoomResponse response = roomService.createRoom(teamId, request);
+        RoomResponse response = roomService.createRoom(user.id(), teamId, buildingId, request);
 
         URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{roomId}")
-                .buildAndExpand(response.id())
+                .fromCurrentContextPath()
+                .path("/api/teams/{teamId}/rooms/{roomId}")
+                .buildAndExpand(teamId, response.roomId())
                 .toUri();
 
         return ResponseEntity.created(location)
                 .body(response);
     }
 
-    @GetMapping
+    @GetMapping("/buildings/{buildingId}/rooms")
     public PageResponse<RoomResponse> getRooms(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long buildingId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
-        return roomService.getRooms(teamId, pageable);
+        return roomService.getRooms(user.id(), teamId, buildingId, pageable);
     }
 
-    @GetMapping("/{roomId}")
+    @GetMapping("/rooms/{roomId}")
     public RoomResponse getRoom(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long roomId
     ) {
-        return roomService.getRoom(teamId, roomId);
+        return roomService.getRoom(user.id(), teamId, roomId);
     }
 
-    @PatchMapping("/{roomId}/name")
-    public RoomResponse updateRoomName(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+    @PatchMapping("/rooms/{roomId}")
+    public RoomResponse updateRoom(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long roomId,
-            @Valid @RequestBody RoomNameChangeRequest request
+            @Valid @RequestBody RoomUpdateRequest request
     ) {
-        return roomService.updateRoomName(teamId, roomId, request);
+        return roomService.updateRoom(user.id(), teamId, roomId, request);
     }
 
-    @DeleteMapping("/{roomId}")
+    @DeleteMapping("/rooms/{roomId}")
     public ResponseEntity<Void> deleteRoom(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long roomId
     ) {
-        roomService.deleteRoom(teamId, roomId);
+        roomService.deleteRoom(user.id(), teamId, roomId);
 
         return ResponseEntity.noContent()
                 .build();

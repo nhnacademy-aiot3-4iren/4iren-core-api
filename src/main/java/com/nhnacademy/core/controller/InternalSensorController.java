@@ -1,7 +1,7 @@
 package com.nhnacademy.core.controller;
 
 import com.nhnacademy.core.dto.sensor.SensorTelemetryContextResponse;
-import com.nhnacademy.core.service.SensorService;
+import com.nhnacademy.core.service.SensorLocationService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/internal/sensors")
 public class InternalSensorController {
 
-    private final SensorService sensorService;
+    private final SensorLocationService sensorLocationService;
 
     @GetMapping("/{devEui}/telemetry-context")
     public SensorTelemetryContextResponse getSensorTelemetryContext(
@@ -26,6 +26,6 @@ public class InternalSensorController {
             @Pattern(regexp = "[0-9a-fA-F]{16}", message = "DevEUI는 16자리 16진수여야 합니다.")
             String devEui
     ) {
-        return sensorService.getSensorTelemetryContext(devEui);
+        return sensorLocationService.getSensorTelemetryContext(devEui);
     }
 }

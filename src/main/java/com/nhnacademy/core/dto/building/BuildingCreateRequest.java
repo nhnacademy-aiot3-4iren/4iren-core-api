@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Size;
 public record BuildingCreateRequest(
         @NotBlank
         @Size(max = 100)
-        String buildingName
+        String buildingName,
+
+        @Size(max = 200)
+        String description
 ) {
 }

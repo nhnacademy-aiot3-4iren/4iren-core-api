@@ -1,15 +1,16 @@
 package com.nhnacademy.core.controller;
 
+import com.nhnacademy.core.config.AuthenticatedUser;
+import com.nhnacademy.core.config.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.building.BuildingCreateRequest;
-import com.nhnacademy.core.dto.building.BuildingNameChangeRequest;
 import com.nhnacademy.core.dto.building.BuildingResponse;
+import com.nhnacademy.core.dto.building.BuildingUpdateRequest;
 import com.nhnacademy.core.service.BuildingService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -21,22 +22,23 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/buildings")
+@RequestMapping("/api/teams/{teamId}/buildings")
 public class BuildingController {
 
     private final BuildingService buildingService;
 
     @PostMapping
     public ResponseEntity<BuildingResponse> createBuilding(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @Valid @RequestBody BuildingCreateRequest request
     ) {
-        BuildingResponse response = buildingService.createBuilding(teamId, request);
+        BuildingResponse response = buildingService.createBuilding(user.id(), teamId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{buildingId}")
-                .buildAndExpand(response.id())
+                .buildAndExpand(response.buildingId())
                 .toUri();
 
         return ResponseEntity.created(location)
@@ -45,39 +47,39 @@ public class BuildingController {
 
     @GetMapping
     public PageResponse<BuildingResponse> getBuildings(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
-            @PageableDefault(
-                    size = 20,
-                    sort = {"buildingName", "id"},
-                    direction = Sort.Direction.ASC
-            ) Pageable pageable
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
-        return buildingService.getBuildings(teamId, pageable);
+        return buildingService.getBuildings(user.id(), teamId, pageable);
     }
 
     @GetMapping("/{buildingId}")
     public BuildingResponse getBuilding(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long buildingId
     ) {
-        return buildingService.getBuilding(teamId, buildingId);
+        return buildingService.getBuilding(user.id(), teamId, buildingId);
     }
 
-    @PatchMapping("/{buildingId}/name")
-    public BuildingResponse updateBuildingName(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+    @PatchMapping("/{buildingId}")
+    public BuildingResponse updateBuilding(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long buildingId,
-            @Valid @RequestBody BuildingNameChangeRequest request
+            @Valid @RequestBody BuildingUpdateRequest request
     ) {
-        return buildingService.updateBuildingName(teamId, buildingId, request);
+        return buildingService.updateBuilding(user.id(), teamId, buildingId, request);
     }
 
     @DeleteMapping("/{buildingId}")
     public ResponseEntity<Void> deleteBuilding(
-            @RequestHeader("X-Team-Id") @Positive Long teamId,
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long buildingId
     ) {
-        buildingService.deleteBuilding(teamId, buildingId);
+        buildingService.deleteBuilding(user.id(), teamId, buildingId);
 
         return ResponseEntity.noContent()
                 .build();

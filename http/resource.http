@@ -1,142 +1,262 @@
 @api = http://localhost:8765/api
 @teamId = 1
+@teamMemberId = 2
+@userId = 1
+@user1Id = 2
+@userRole = ADMIN
+@user1Role = NORMAL
 @buildingId = 1
 @roomId = 1
-@targetRoomId = 2
-@sensorId = 1
+@moveRoomId = 1
+@sensorLocationId = 1
 @deviceId = 1
 
-### Building 생성
-POST {{api}}/buildings
+### TEAM
+### Team 생성
+POST {{api}}/teams
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "buildingName": "테스트 건물"
+  "teamName": "테스트 팀",
+  "description": "테스트 팀 설명"
+}
+
+### Team 목록 조회
+GET {{api}}/teams
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### Team 단건 조회
+GET {{api}}/teams/{{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### Team 수정
+PATCH {{api}}/teams/{{teamId}}
+Content-Type: application/json
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+{
+  "teamName": "수정된 테스트 팀",
+  "description": "수정된 팀 설명"
+}
+
+### Team 삭제
+DELETE {{api}}/teams/{{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### Team 초대 코드 생성
+POST {{api}}/teams/1/invitation-codes
+Content-Type: application/json
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+{
+  "expiresAt": "2026-12-31T00:00:00"
+}
+
+
+### TEAM MEMBERS
+### Team 가입
+POST {{api}}/team-memberships
+Content-Type: application/json
+X-User-Id: {{user1Id}}
+X-User-Role: {{user1Role}}
+
+{
+  "invitationCode": "6AYX4M2T"
+}
+
+### Team Member 목록 조회
+GET {{api}}/teams/{{teamId}}/members
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### Team Member 역할 변경
+PATCH {{api}}/teams/{{teamId}}/members/{{teamMemberId}}/role
+Content-Type: application/json
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+{
+  "teamRole": "ADMIN"
+}
+
+### Team Member 삭제
+DELETE {{api}}/teams/{{teamId}}/members/{{teamMemberId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### Team Member 탈퇴
+DELETE {{api}}/teams/{{teamId}}/members/me
+X-User-Id: {{user1Id}}
+X-User-Role: {{user1Role}}
+
+### Team Member 소유권 이전
+PATCH {{api}}/teams/{{teamId}}/owner
+Content-Type: application/json
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+{
+  "teamMemberId": {{teamMemberId}}
+}
+
+
+### BUILDING
+### Building 생성
+POST {{api}}/teams/{{teamId}}/buildings
+Content-Type: application/json
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+{
+  "buildingName": "테스트 건물",
+  "description": "테스트 건물 설명"
 }
 
 ### Building 목록 조회
-GET {{api}}/buildings?page=0&size=20&sort=id,asc
-X-Team-Id: {{teamId}}
+GET {{api}}/teams/{{teamId}}/buildings?page=0&size=20
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 ### Building 단건 조회
-GET {{api}}/buildings/{{buildingId}}
-X-Team-Id: {{teamId}}
+GET {{api}}/teams/{{teamId}}/buildings/{{buildingId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
-### Building 이름 변경
-PATCH {{api}}/buildings/{{buildingId}}/name
+### Building 수정
+PATCH {{api}}/teams/{{teamId}}/buildings/{{buildingId}}
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "buildingName": "수정된 테스트 건물"
+  "buildingName": "수정된 테스트 건물",
+  "description": "수정된 건물 설명"
 }
 
 ### Building 삭제
-DELETE {{api}}/buildings/{{buildingId}}
-X-Team-Id: {{teamId}}
+DELETE {{api}}/teams/{{teamId}}/buildings/{{buildingId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 
+### ROOM
 ### Room 생성
-POST {{api}}/rooms
+POST {{api}}/teams/{{teamId}}/buildings/{{buildingId}}/rooms
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "buildingId": {{buildingId}},
-  "roomName": "테스트 방"
+  "roomName": "테스트 공간",
+  "description": "테스트 공간 설명"
 }
 
 ### Room 목록 조회
-GET {{api}}/rooms?page=0&size=20&sort=id,asc
-X-Team-Id: {{teamId}}
+GET {{api}}/teams/{{teamId}}/buildings/{{buildingId}}/rooms?page=0&size=20
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 ### Room 단건 조회
-GET {{api}}/rooms/{{roomId}}
-X-Team-Id: {{teamId}}
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
-### Room 이름 변경
-PATCH {{api}}/rooms/{{roomId}}/name
+### Room 수정
+PATCH {{api}}/teams/{{teamId}}/rooms/{{roomId}}
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "roomName": "수정된 테스트 방"
+  "roomName": "수정된 테스트 공간",
+  "description": "수정된 공간 설명"
 }
 
 ### Room 삭제
-DELETE {{api}}/rooms/{{roomId}}
-X-Team-Id: {{teamId}}
+DELETE {{api}}/teams/{{teamId}}/rooms/{{roomId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 
-### Sensor 생성
-POST {{api}}/sensors
+### SENSOR LOCATION
+### SensorLocation 생성
+POST {{api}}/teams/{{teamId}}/rooms/{{roomId}}/sensor-locations
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "roomId": {{roomId}},
-  "devEui": "a1b2c3d4e5f60708"
+  "devEui": "24e124128c067999",
+  "locationDetail": "후면 오른쪽"
 }
 
-### Sensor 목록 조회
-GET {{api}}/sensors?page=0&size=20&sort=id,asc
-X-Team-Id: {{teamId}}
+### SensorLocation 목록 조회
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}/sensor-locations?page=0&size=20
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
-### Sensor 단건 조회
-GET {{api}}/sensors/{{sensorId}}
-X-Team-Id: {{teamId}}
+### SensorLocation 단건 조회
+GET {{api}}/teams/{{teamId}}/sensor-locations/{{sensorLocationId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
-### Sensor 방 이동
-PATCH {{api}}/sensors/{{sensorId}}/room
+### SensorLocation 상세 위치, 공간 변경
+PATCH {{api}}/teams/{{teamId}}/sensor-locations/{{sensorLocationId}}
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "roomId": {{targetRoomId}}
+  "locationDetail": "출입구",
+  "roomId": {{moveRoomId}}
 }
 
-### Sensor 삭제
-DELETE {{api}}/sensors/{{sensorId}}
-X-Team-Id: {{teamId}}
+### SensorLocation 삭제
+DELETE {{api}}/teams/{{teamId}}/sensor-locations/{{sensorLocationId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 
+### DEVICE
 ### Device 생성
-POST {{api}}/devices
+POST {{api}}/teams/{{teamId}}/rooms/{{roomId}}/devices
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "roomId": {{roomId}},
   "deviceName": "테스트 기기"
 }
 
 ### Device 목록 조회
-GET {{api}}/devices?page=0&size=20&sort=id,asc
-X-Team-Id: {{teamId}}
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}/devices?page=0&size=20
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 ### Device 단건 조회
-GET {{api}}/devices/{{deviceId}}
-X-Team-Id: {{teamId}}
+GET {{api}}/teams/{{teamId}}/devices/{{deviceId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
-### Device 이름 변경
-PATCH {{api}}/devices/{{deviceId}}/name
+### Device 이름, 공간 변경
+PATCH {{api}}/teams/{{teamId}}/devices/{{deviceId}}
 Content-Type: application/json
-X-Team-Id: {{teamId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
 
 {
-  "deviceName": "수정된 테스트 기기"
-}
-
-### Device 방 이동
-PATCH {{api}}/devices/{{deviceId}}/room
-Content-Type: application/json
-X-Team-Id: {{teamId}}
-
-{
-  "roomId": {{targetRoomId}}
+  "deviceName": "수정된 테스트 기기",
+  "roomId": {{moveRoomId}}
 }
 
 ### Device 삭제
-DELETE {{api}}/devices/{{deviceId}}
-X-Team-Id: {{teamId}}
+DELETE {{api}}/teams/{{teamId}}/devices/{{deviceId}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}

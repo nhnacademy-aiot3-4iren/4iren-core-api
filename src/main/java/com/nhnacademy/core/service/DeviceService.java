@@ -4,12 +4,11 @@ import com.nhnacademy.core.domain.Device;
 import com.nhnacademy.core.domain.Room;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.device.DeviceCreateRequest;
-import com.nhnacademy.core.dto.device.DeviceNameChangeRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;
-import com.nhnacademy.core.dto.device.DeviceRoomChangeRequest;
+import com.nhnacademy.core.dto.device.DeviceUpdateRequest;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.repository.DeviceRepository;
-import com.nhnacademy.core.repository.RoomRepository;
+import com.nhnacademy.core.repository.device.DeviceRepository;
+import com.nhnacademy.core.repository.room.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,69 +21,77 @@ public class DeviceService {
 
     private final RoomRepository roomRepository;
     private final DeviceRepository deviceRepository;
+    private final TeamAuthorizationService teamAuthorizationService;
 
+    // 기기 생성
     @Transactional
-    public DeviceResponse createDevice(Long teamId, DeviceCreateRequest request) {
-        Room room = getRoomOrThrow(request.roomId(), teamId);
-        Device device = deviceRepository.save(new Device(room, request.deviceName()));
+    public DeviceResponse createDevice(Long userId, Long teamId, Long roomId, DeviceCreateRequest request) {
+        teamAuthorizationService.requireTeamManager(userId, teamId);
+
+        Room room = getRoomOrThrow(roomId, teamId);
+        Device device = deviceRepository.save(
+                new Device(room, request.deviceName())
+        );
 
         return DeviceResponse.from(device);
     }
 
-    public PageResponse<DeviceResponse> getDevices(Long teamId, Pageable pageable) {
+    // 기기 목록 조회
+    public PageResponse<DeviceResponse> getDevices(Long userId, Long teamId, Long roomId, Pageable pageable) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
+        getRoomOrThrow(roomId, teamId);
+
         return PageResponse.from(
-                deviceRepository.findAllByRoom_Building_TeamId(teamId, pageable)
+                deviceRepository.findAllByRoom_Id(roomId, pageable)
                         .map(DeviceResponse::from)
         );
     }
 
-    public DeviceResponse getDevice(Long teamId, Long deviceId) {
+    // 기기 상세 조회
+    public DeviceResponse getDevice(Long userId, Long teamId, Long deviceId) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
         Device device = getDeviceOrThrow(deviceId, teamId);
 
         return DeviceResponse.from(device);
     }
 
+    // 기기 이름 변경 및 방 이동
     @Transactional
-    public DeviceResponse updateDeviceName(
-            Long teamId,
-            Long deviceId,
-            DeviceNameChangeRequest request
-    ) {
+    public DeviceResponse updateDevice(Long userId, Long teamId, Long deviceId, DeviceUpdateRequest request) {
+        teamAuthorizationService.requireTeamManager(userId, teamId);
+
         Device device = getDeviceOrThrow(deviceId, teamId);
 
-        device.changeName(request.deviceName());
+        if (request.hasDeviceName()) {
+            device.changeName(request.getDeviceName());
+        }
+        if (request.hasRoomId()) {
+            Room room = getRoomOrThrow(request.getRoomId(), teamId);
+            device.moveTo(room);
+        }
 
         return DeviceResponse.from(device);
     }
 
+    // 기기 삭제
     @Transactional
-    public DeviceResponse moveDeviceToRoom(
-            Long teamId,
-            Long deviceId,
-            DeviceRoomChangeRequest request
-    ) {
-        Device device = getDeviceOrThrow(deviceId, teamId);
-        Room room = getRoomOrThrow(request.roomId(), teamId);
+    public void deleteDevice(Long userId, Long teamId, Long deviceId) {
+        teamAuthorizationService.requireTeamManager(userId, teamId);
 
-        device.moveTo(room);
-
-        return DeviceResponse.from(device);
-    }
-
-    @Transactional
-    public void deleteDevice(Long teamId, Long deviceId) {
         Device device = getDeviceOrThrow(deviceId, teamId);
 
         deviceRepository.delete(device);
     }
 
     private Device getDeviceOrThrow(Long deviceId, Long teamId) {
-        return deviceRepository.findByIdAndRoom_Building_TeamId(deviceId, teamId)
+        return deviceRepository.findByIdAndRoom_Building_Team_Id(deviceId, teamId)
                 .orElseThrow(() -> new ResourceNotFoundException("기기", deviceId));
     }
 
     private Room getRoomOrThrow(Long roomId, Long teamId) {
-        return roomRepository.findByIdAndBuilding_TeamId(roomId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("방", roomId));
+        return roomRepository.findByIdAndBuilding_Team_Id(roomId, teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("공간", roomId));
     }
 }
