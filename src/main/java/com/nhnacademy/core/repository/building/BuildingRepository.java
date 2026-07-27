@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface BuildingRepository extends JpaRepository<Building, Long> {
+public interface BuildingRepository extends JpaRepository<Building, Long>, BuildingRepositoryCustom {
 
     Page<Building> findAllByTeam_Id(Long teamId, Pageable pageable);
 

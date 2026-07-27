@@ -3,12 +3,12 @@ package com.nhnacademy.core.controller;
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.room.RoomCreateRequest;
-import com.nhnacademy.core.dto.room.RoomResponse;
-import com.nhnacademy.core.dto.room.RoomUpdateRequest;
+import com.nhnacademy.core.dto.room.*;
 import com.nhnacademy.core.service.RoomService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -57,12 +58,31 @@ public class RoomController {
     }
 
     @GetMapping("/rooms/{roomId}")
-    public RoomResponse getRoom(
+    public RoomDetailResponse getRoom(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long roomId
     ) {
         return roomService.getRoom(user.id(), teamId, roomId);
+    }
+
+    @GetMapping("/buildings/{buildingId}/rooms/by-name")
+    public RoomMatchResponse getRoomByName(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @PathVariable @Positive Long buildingId,
+            @RequestParam @NotBlank @Size(max = 50) String roomName
+    ) {
+        return roomService.getRoomByName(user.id(), teamId, buildingId, roomName);
+    }
+
+    @GetMapping("/rooms/by-name")
+    public List<RoomMatchResponse> getRoomsByName(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @RequestParam @NotBlank @Size(max = 50) String roomName
+    ) {
+        return roomService.getRoomsByName(user.id(), teamId, roomName);
     }
 
     @PatchMapping("/rooms/{roomId}")

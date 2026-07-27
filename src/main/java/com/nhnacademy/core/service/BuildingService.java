@@ -3,9 +3,7 @@ package com.nhnacademy.core.service;
 import com.nhnacademy.core.domain.Building;
 import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.building.BuildingCreateRequest;
-import com.nhnacademy.core.dto.building.BuildingResponse;
-import com.nhnacademy.core.dto.building.BuildingUpdateRequest;
+import com.nhnacademy.core.dto.building.*;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.repository.building.BuildingRepository;
@@ -39,7 +37,14 @@ public class BuildingService {
             throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
         }
         Building building = buildingRepository.save(
-                new Building(team, buildingName, normalizeDescription(request.description()))
+                new Building(
+                        team,
+                        buildingName,
+                        normalizeString(request.description()),
+                        normalizeString(request.roadAddress()),
+                        normalizeString(request.detailAddress()),
+                        normalizeString(request.regionName())
+                )
         );
 
         return BuildingResponse.from(building);
@@ -56,15 +61,16 @@ public class BuildingService {
     }
 
     // 건물 상세 조회
-    public BuildingResponse getBuilding(Long userId, Long teamId, Long buildingId) {
+    public BuildingDetailResponse getBuilding(Long userId, Long teamId, Long buildingId) {
         teamAuthorizationService.requireTeamMember(userId, teamId);
 
-        Building building = getBuildingOrThrow(buildingId, teamId);
+        BuildingDetailQueryResult result = buildingRepository.findDetailByIdAndTeamId(buildingId, teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("건물", buildingId));
 
-        return BuildingResponse.from(building);
+        return BuildingDetailResponse.from(result);
     }
 
-    // 건물 이름, 설명 수정
+    // 건물 이름, 설명, 주소 수정
     @Transactional
     public BuildingResponse updateBuilding(Long userId, Long teamId, Long buildingId, BuildingUpdateRequest request) {
         teamAuthorizationService.requireTeamManager(userId, teamId);
@@ -80,7 +86,16 @@ public class BuildingService {
             building.changeName(buildingName);
         }
         if (request.hasDescription()) {
-            building.changeDescription(normalizeDescription(request.getDescription()));
+            building.changeDescription(normalizeString(request.getDescription()));
+        }
+        if (request.hasRoadAddress()) {
+            building.changeRoadAddress(normalizeString(request.getRoadAddress()));
+        }
+        if (request.hasDetailAddress()) {
+            building.changeDetailAddress(normalizeString(request.getDetailAddress()));
+        }
+        if (request.hasRegionName()) {
+            building.changeRegionName(normalizeString(request.getRegionName()));
         }
 
         return BuildingResponse.from(building);
@@ -109,7 +124,7 @@ public class BuildingService {
                 .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
     }
 
-    private String normalizeDescription(String description) {
-        return StringUtils.hasText(description) ? description : null;
+    private String normalizeString(String value) {
+        return StringUtils.hasText(value) ? value : null;
     }
 }

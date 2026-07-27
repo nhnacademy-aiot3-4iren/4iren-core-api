@@ -19,8 +19,23 @@ public final class BuildingUpdateRequest {
     @Size(max = 200)
     private String description;
 
+    @Getter
+    @Size(max = 200)
+    private String roadAddress;
+
+    @Getter
+    @Size(max = 100)
+    private String detailAddress;
+
+    @Getter
+    @Size(max = 100)
+    private String regionName;
+
     private boolean buildingNamePresent;
     private boolean descriptionPresent;
+    private boolean roadAddressPresent;
+    private boolean detailAddressPresent;
+    private boolean regionNamePresent;
 
     @JsonSetter("buildingName")
     public void setBuildingName(String buildingName) {
@@ -34,6 +49,24 @@ public final class BuildingUpdateRequest {
         this.descriptionPresent = true;
     }
 
+    @JsonSetter("roadAddress")
+    public void setRoadAddress(String roadAddress) {
+        this.roadAddress = roadAddress;
+        this.roadAddressPresent = true;
+    }
+
+    @JsonSetter("detailAddress")
+    public void setDetailAddress(String detailAddress) {
+        this.detailAddress = detailAddress;
+        this.detailAddressPresent = true;
+    }
+
+    @JsonSetter("regionName")
+    public void setRegionName(String regionName) {
+        this.regionName = regionName;
+        this.regionNamePresent = true;
+    }
+
     @JsonIgnore
     public boolean hasBuildingName() {
         return buildingNamePresent;
@@ -44,10 +77,29 @@ public final class BuildingUpdateRequest {
         return descriptionPresent;
     }
 
+    @JsonIgnore
+    public boolean hasRoadAddress() {
+        return roadAddressPresent;
+    }
+
+    @JsonIgnore
+    public boolean hasDetailAddress() {
+        return detailAddressPresent;
+    }
+
+    @JsonIgnore
+    public boolean hasRegionName() {
+        return regionNamePresent;
+    }
+
     @AssertTrue
     @JsonIgnore
     public boolean isAnyFieldPresent() {
-        return buildingNamePresent || descriptionPresent;
+        return buildingNamePresent
+                || descriptionPresent
+                || roadAddressPresent
+                || detailAddressPresent
+                || regionNamePresent;
     }
 
     @AssertTrue

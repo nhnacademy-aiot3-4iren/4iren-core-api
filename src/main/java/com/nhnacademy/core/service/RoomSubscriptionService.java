@@ -6,6 +6,7 @@ import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionUpdateRequest;
+import com.nhnacademy.core.dto.subscription.UserRoomSubscriptionsResponse;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.repository.room.RoomRepository;
@@ -35,7 +36,7 @@ public class RoomSubscriptionService {
 
         // 이미 구독 중인 경우, 기존 구독 정보를 반환
         RoomSubscription subscription = roomSubscriptionRepository
-                .findByRoom_IdAndTeamMember_Id(roomId, teamMember.getId())
+                .findByRoomIdAndMemberId(roomId, teamMember.getId())
                 .orElseGet(() -> roomSubscriptionRepository.save(new RoomSubscription(room, teamMember)));
 
         return RoomSubscriptionResponse.from(subscription);
@@ -46,12 +47,28 @@ public class RoomSubscriptionService {
         TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
 
         return PageResponse.from(
-                roomSubscriptionRepository.findAllByTeamMember_IdAndRoom_Building_Team_Id(
+                roomSubscriptionRepository.findPageByMemberIdAndTeamId(
                                 teamMember.getId(),
                                 teamId,
                                 pageable
                         )
                         .map(RoomSubscriptionResponse::from)
+        );
+    }
+
+    // 사용자 ID로 전체 구독 공간 조회
+    public UserRoomSubscriptionsResponse getRoomSubscriptionsByUserId(Long userId) {
+        return UserRoomSubscriptionsResponse.from(
+                userId,
+                roomSubscriptionRepository.findAllByUserId(userId)
+        );
+    }
+
+    // 사용자 ID와 팀 ID로 구독 공간 조회
+    public UserRoomSubscriptionsResponse getRoomSubscriptionsByUserIdAndTeamId(Long userId, Long teamId) {
+        return UserRoomSubscriptionsResponse.from(
+                userId,
+                roomSubscriptionRepository.findAllByUserIdAndTeamId(userId, teamId)
         );
     }
 
@@ -89,7 +106,7 @@ public class RoomSubscriptionService {
     }
 
     private RoomSubscription getSubscriptionOrThrow(Long roomId, Long teamMemberId) {
-        return roomSubscriptionRepository.findByRoom_IdAndTeamMember_Id(roomId, teamMemberId)
+        return roomSubscriptionRepository.findByRoomIdAndMemberId(roomId, teamMemberId)
                 .orElseThrow(() -> new ResourceNotFoundException("공간 구독", roomId));
     }
 
