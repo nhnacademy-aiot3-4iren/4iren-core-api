@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface BuildingRepository extends JpaRepository<Building, Long> {
+public interface BuildingRepository extends JpaRepository<Building, Long>, BuildingRepositoryCustom {
 
     Page<Building> findAllByTeam_Id(Long teamId, Pageable pageable);
 
@@ -18,4 +18,6 @@ public interface BuildingRepository extends JpaRepository<Building, Long> {
     boolean existsByTeam_IdAndBuildingNameAndIdNot(Long teamId, String buildingName, Long buildingId);
 
     boolean existsByTeam_Id(Long teamId);
+
+    long countByTeam_Id(Long teamId);
 }

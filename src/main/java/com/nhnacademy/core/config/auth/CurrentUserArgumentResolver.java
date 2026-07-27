@@ -1,7 +1,6 @@
-package com.nhnacademy.core.config;
+package com.nhnacademy.core.config.auth;
 
-import com.nhnacademy.core.exception.UnauthorizedException;
-import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -10,7 +9,10 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 @Component
+@RequiredArgsConstructor
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
+
+    private final AuthenticatedUserContext authenticatedUserContext;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -25,16 +27,6 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             NativeWebRequest webRequest,
             WebDataBinderFactory binderFactory
     ) {
-        HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-        if (request == null) {
-            throw new UnauthorizedException("현재 사용자 정보가 없습니다.");
-        }
-
-        Object currentUser = request.getAttribute(AuthenticatedUserFilter.CURRENT_USER_ATTRIBUTE);
-        if (currentUser instanceof AuthenticatedUser authenticatedUser) {
-            return authenticatedUser;
-        }
-
-        throw new UnauthorizedException("현재 사용자 정보가 없습니다.");
+        return authenticatedUserContext.getRequired();
     }
 }

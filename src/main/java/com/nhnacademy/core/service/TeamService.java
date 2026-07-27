@@ -1,13 +1,11 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.config.UserRole;
+import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.team.TeamCreateRequest;
-import com.nhnacademy.core.dto.team.TeamResponse;
-import com.nhnacademy.core.dto.team.TeamUpdateRequest;
+import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
@@ -77,8 +75,8 @@ public class TeamService {
         );
     }
 
-    // 팀 기본 정보와 현재 사용자의 팀 Role 조회
-    public TeamResponse getTeam(Long userId, UserRole userRole, Long teamId) {
+    // 팀 상세 정보와 현재 사용자의 팀 Role 및 리소스 수 조회
+    public TeamDetailResponse getTeam(Long userId, UserRole userRole, Long teamId) {
         TeamRole myRole = userRole == UserRole.ADMIN
                 ? teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
                 .map(TeamMember::getTeamRole)
@@ -86,9 +84,10 @@ public class TeamService {
                 // 관리자 권한이 없는 경우, 팀 권한 확인
                 : teamAuthorizationService.getTeamRole(userId, teamId);
 
-        Team team = getTeamOrThrow(teamId);
+        TeamDetailQueryResult result = teamRepository.findDetailById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
 
-        return TeamResponse.from(team, myRole);
+        return TeamDetailResponse.from(myRole, result);
     }
 
     // 팀 이름과 설명 수정

@@ -9,6 +9,15 @@ public record BuildingCreateRequest(
         String buildingName,
 
         @Size(max = 200)
-        String description
+        String description,
+
+        @Size(max = 200)
+        String roadAddress,
+
+        @Size(max = 100)
+        String detailAddress,
+
+        @Size(max = 100)
+        String regionName
 ) {
 }

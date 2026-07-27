@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface RoomRepository extends JpaRepository<Room, Long> {
+public interface RoomRepository extends JpaRepository<Room, Long>, RoomRepositoryCustom {
 
     Page<Room> findAllByBuilding_Id(Long buildingId, Pageable pageable);
 
@@ -22,4 +22,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     boolean existsByBuilding_IdAndRoomNameAndIdNot(Long buildingId, String roomName, Long roomId);
 
     boolean existsByBuilding(Building building);
+
+    long countByBuilding_Team_Id(Long teamId);
 }

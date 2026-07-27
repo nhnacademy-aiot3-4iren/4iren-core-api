@@ -35,10 +35,29 @@ public class Building extends VersionedEntity {
     @Column(name = "description", length = 200)
     private String description;
 
-    public Building(Team team, String buildingName, String description) {
+    @Column(name = "road_address", length = 200)
+    private String roadAddress;
+
+    @Column(name = "detail_address", length = 100)
+    private String detailAddress;
+
+    @Column(name = "region_name", length = 100)
+    private String regionName;
+
+    public Building(
+            Team team,
+            String buildingName,
+            String description,
+            String roadAddress,
+            String detailAddress,
+            String regionName
+    ) {
         this.team = team;
         this.buildingName = buildingName.strip();
         this.description = description == null ? null : description.strip();
+        this.roadAddress = roadAddress == null ? null : roadAddress.strip();
+        this.detailAddress = detailAddress == null ? null : detailAddress.strip();
+        this.regionName = regionName == null ? null : regionName.strip();
     }
 
     public void changeName(String buildingName) {
@@ -47,5 +66,17 @@ public class Building extends VersionedEntity {
 
     public void changeDescription(String description) {
         this.description = description == null ? null : description.strip();
+    }
+
+    public void changeRoadAddress(String roadAddress) {
+        this.roadAddress = roadAddress == null ? null : roadAddress.strip();
+    }
+
+    public void changeDetailAddress(String detailAddress) {
+        this.detailAddress = detailAddress == null ? null : detailAddress.strip();
+    }
+
+    public void changeRegionName(String regionName) {
+        this.regionName = regionName == null ? null : regionName.strip();
     }
 }

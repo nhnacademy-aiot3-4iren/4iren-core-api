@@ -29,4 +29,6 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
 
     @EntityGraph(attributePaths = "team")
     List<TeamMember> findAllByUserIdAndTeam_IdIn(Long userId, List<Long> teamIds);
+
+    long countByTeam_Id(Long teamId);
 }

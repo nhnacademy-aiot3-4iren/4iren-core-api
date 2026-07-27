@@ -3,9 +3,7 @@ package com.nhnacademy.core.service;
 import com.nhnacademy.core.domain.Building;
 import com.nhnacademy.core.domain.Room;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.room.RoomCreateRequest;
-import com.nhnacademy.core.dto.room.RoomResponse;
-import com.nhnacademy.core.dto.room.RoomUpdateRequest;
+import com.nhnacademy.core.dto.room.*;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.repository.building.BuildingRepository;
@@ -17,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -61,12 +61,36 @@ public class RoomService {
     }
 
     // 공간 상세 조회
-    public RoomResponse getRoom(Long userId, Long teamId, Long roomId) {
+    public RoomDetailResponse getRoom(Long userId, Long teamId, Long roomId) {
         teamAuthorizationService.requireTeamMember(userId, teamId);
 
-        Room room = getRoomOrThrow(roomId, teamId);
+        RoomDetailQueryResult result = roomRepository.findDetailByIdAndTeamId(roomId, teamId)
+                .orElseThrow(() -> new ResourceNotFoundException("공간", roomId));
 
-        return RoomResponse.from(room);
+        return RoomDetailResponse.from(result);
+    }
+
+    // 건물 내 공간 이름으로 조회
+    public RoomMatchResponse getRoomByName(
+            Long userId,
+            Long teamId,
+            Long buildingId,
+            String roomName
+    ) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+        getBuildingOrThrow(buildingId, teamId);
+
+        String normalizedName = roomName.strip();
+
+        return roomRepository.findByBuildingIdAndName(buildingId, normalizedName)
+                .orElseThrow(() -> new ResourceNotFoundException("공간", normalizedName));
+    }
+
+    // 팀 내 공간 이름으로 조회
+    public List<RoomMatchResponse> getRoomsByName(Long userId, Long teamId, String roomName) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
+        return roomRepository.findAllByTeamIdAndName(teamId, roomName.strip());
     }
 
     // 공간 이름, 설명 수정

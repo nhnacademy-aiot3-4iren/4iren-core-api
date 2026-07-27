@@ -1,9 +1,10 @@
 package com.nhnacademy.core.controller;
 
-import com.nhnacademy.core.config.AuthenticatedUser;
-import com.nhnacademy.core.config.CurrentUser;
+import com.nhnacademy.core.config.auth.AuthenticatedUser;
+import com.nhnacademy.core.config.auth.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.building.BuildingCreateRequest;
+import com.nhnacademy.core.dto.building.BuildingDetailResponse;
 import com.nhnacademy.core.dto.building.BuildingResponse;
 import com.nhnacademy.core.dto.building.BuildingUpdateRequest;
 import com.nhnacademy.core.service.BuildingService;
@@ -55,7 +56,7 @@ public class BuildingController {
     }
 
     @GetMapping("/{buildingId}")
-    public BuildingResponse getBuilding(
+    public BuildingDetailResponse getBuilding(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long buildingId
