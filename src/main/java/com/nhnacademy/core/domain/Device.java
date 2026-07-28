@@ -38,12 +38,12 @@ public class Device extends VersionedEntity {
         this.deviceName = normalizeName(deviceName);
     }
 
-    public void changeName(String deviceName) {
-        this.deviceName = normalizeName(deviceName);
-    }
-
     public void moveTo(Room room) {
         this.room = requireRoom(room);
+    }
+
+    public void changeName(String deviceName) {
+        this.deviceName = normalizeName(deviceName);
     }
 
     private Room requireRoom(Room room) {

@@ -12,21 +12,15 @@ import lombok.NoArgsConstructor;
 public final class SensorLocationUpdateRequest {
 
     @Getter
-    @Size(max = 100)
-    private String locationDetail;
-
-    @Getter
-    @Positive
+    @Positive(message = "공간 ID는 양수여야 합니다.")
     private Long roomId;
 
-    private boolean locationDetailPresent;
-    private boolean roomIdPresent;
+    @Getter
+    @Size(max = 100, message = "센서 위치 상세 정보는 100자 이하여야 합니다.")
+    private String locationDetail;
 
-    @JsonSetter("locationDetail")
-    public void setLocationDetail(String locationDetail) {
-        this.locationDetail = locationDetail;
-        this.locationDetailPresent = true;
-    }
+    private boolean roomIdPresent;
+    private boolean locationDetailPresent;
 
     @JsonSetter("roomId")
     public void setRoomId(Long roomId) {
@@ -34,9 +28,10 @@ public final class SensorLocationUpdateRequest {
         this.roomIdPresent = true;
     }
 
-    @JsonIgnore
-    public boolean hasLocationDetail() {
-        return locationDetailPresent;
+    @JsonSetter("locationDetail")
+    public void setLocationDetail(String locationDetail) {
+        this.locationDetail = locationDetail;
+        this.locationDetailPresent = true;
     }
 
     @JsonIgnore
@@ -44,13 +39,18 @@ public final class SensorLocationUpdateRequest {
         return roomIdPresent;
     }
 
-    @AssertTrue
     @JsonIgnore
-    public boolean isAnyFieldPresent() {
-        return locationDetailPresent || roomIdPresent;
+    public boolean hasLocationDetail() {
+        return locationDetailPresent;
     }
 
-    @AssertTrue
+    @AssertTrue(message = "수정할 필드가 없습니다. 최소 하나의 필드를 입력해야 합니다.")
+    @JsonIgnore
+    public boolean isAnyFieldPresent() {
+        return roomIdPresent || locationDetailPresent;
+    }
+
+    @AssertTrue(message = "공간 ID는 null일 수 없습니다.")
     @JsonIgnore
     public boolean isRoomIdValid() {
         return !roomIdPresent || roomId != null;

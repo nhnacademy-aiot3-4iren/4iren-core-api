@@ -11,7 +11,7 @@ import java.util.Locale;
 @Table(
         name = "sensor_locations",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_sensor_locations_dev_eui",
+                name = "uq_sensor_locations_dev_eui",
                 columnNames = "dev_eui"
         ),
         indexes = @Index(
@@ -32,7 +32,7 @@ public class SensorLocation extends VersionedEntity {
     @JoinColumn(
             name = "room_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_sensor_locations_room")
+            foreignKey = @ForeignKey(name = "fk_sensor_locations_room_id")
     )
     private Room room;
 
@@ -43,20 +43,45 @@ public class SensorLocation extends VersionedEntity {
     private String locationDetail;
 
     public SensorLocation(Room room, String devEui, String locationDetail) {
-        this.room = room;
+        this.room = requireRoom(room);
         this.devEui = normalizeDevEui(devEui);
-        this.locationDetail = locationDetail == null ? null : locationDetail.strip();
-    }
-
-    public static String normalizeDevEui(String devEui) {
-        return devEui.toLowerCase(Locale.ROOT);
+        this.locationDetail = normalizeLocationDetail(locationDetail);
     }
 
     public void moveTo(Room room) {
-        this.room = room;
+        this.room = requireRoom(room);
     }
 
     public void changeLocationDetail(String locationDetail) {
-        this.locationDetail = locationDetail == null ? null : locationDetail.strip();
+        this.locationDetail = normalizeLocationDetail(locationDetail);
+    }
+
+    private Room requireRoom(Room room) {
+        if (room == null) {
+            throw new IllegalArgumentException("공간은 null일 수 없습니다.");
+        }
+
+        return room;
+    }
+
+    public static String normalizeDevEui(String devEui) {
+        if (devEui == null || !devEui.matches("^[0-9A-Fa-f]{16}$")) {
+            throw new IllegalArgumentException("DevEUI는 16자리 16진수여야 합니다.");
+        }
+
+        return devEui.toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeLocationDetail(String locationDetail) {
+        if (locationDetail == null || locationDetail.isBlank()) {
+            return null;
+        }
+
+        String normalizedLocationDetail = locationDetail.strip();
+        if (normalizedLocationDetail.length() > 100) {
+            throw new IllegalArgumentException("센서 위치 상세 정보는 100자 이하여야 합니다.");
+        }
+
+        return normalizedLocationDetail;
     }
 }

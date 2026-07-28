@@ -66,12 +66,14 @@ public class DeviceService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         Device device = getDeviceOrThrow(deviceId, teamId);
+        Room destinationRoom = request.hasRoomId()
+                ? getRoomOrThrow(request.getRoomId(), teamId)
+                : null;
 
         if (request.hasDeviceName()) {
             device.changeName(request.getDeviceName());
         }
-        if (request.hasRoomId()) {
-            Room destinationRoom = getRoomOrThrow(request.getRoomId(), teamId);
+        if (destinationRoom != null) {
             device.moveTo(destinationRoom);
         }
 
