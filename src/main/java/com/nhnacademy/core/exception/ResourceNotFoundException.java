@@ -2,11 +2,8 @@ package com.nhnacademy.core.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
 
-    public ResourceNotFoundException(String resourceName, Long id) {
-        super("존재하지 않는 " + resourceName + "입니다. id=" + id);
-    }
-
-    public ResourceNotFoundException(String resourceName, String id) {
-        super("존재하지 않는 " + resourceName + "입니다. id=" + id);
+    public ResourceNotFoundException(ResourceType resourceType, String field, Object value) {
+        super("존재하지 않는 %s입니다. %s=%s"
+                .formatted(resourceType.displayName(), field, value));
     }
 }
