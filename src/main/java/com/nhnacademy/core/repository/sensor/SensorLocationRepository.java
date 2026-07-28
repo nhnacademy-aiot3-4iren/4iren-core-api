@@ -12,11 +12,11 @@ public interface SensorLocationRepository extends JpaRepository<SensorLocation, 
 
     Optional<SensorLocation> findByIdAndRoom_Building_Team_Id(Long sensorLocationId, Long teamId);
 
-    Optional<SensorLocation> findByDevEui(String devEui);
-
     Page<SensorLocation> findAllByRoom(Room room, Pageable pageable);
 
-    boolean existsByRoom(Room room);
+    Optional<SensorLocation> findByDevEui(String devEui);
 
     boolean existsByDevEui(String devEui);
+
+    boolean existsByRoom(Room room);
 }

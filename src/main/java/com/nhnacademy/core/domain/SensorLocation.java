@@ -1,11 +1,10 @@
 package com.nhnacademy.core.domain;
 
+import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Locale;
 
 @Entity
 @Table(
@@ -44,8 +43,8 @@ public class SensorLocation extends VersionedEntity {
 
     public SensorLocation(Room room, String devEui, String locationDetail) {
         this.room = requireRoom(room);
-        this.devEui = normalizeDevEui(devEui);
-        this.locationDetail = normalizeLocationDetail(locationDetail);
+        this.devEui = SensorLocationNormalizer.normalizeDevEui(devEui);
+        this.locationDetail = SensorLocationNormalizer.normalizeLocationDetail(locationDetail);
     }
 
     public void moveTo(Room room) {
@@ -53,7 +52,7 @@ public class SensorLocation extends VersionedEntity {
     }
 
     public void changeLocationDetail(String locationDetail) {
-        this.locationDetail = normalizeLocationDetail(locationDetail);
+        this.locationDetail = SensorLocationNormalizer.normalizeLocationDetail(locationDetail);
     }
 
     private Room requireRoom(Room room) {
@@ -62,26 +61,5 @@ public class SensorLocation extends VersionedEntity {
         }
 
         return room;
-    }
-
-    public static String normalizeDevEui(String devEui) {
-        if (devEui == null || !devEui.matches("^[0-9A-Fa-f]{16}$")) {
-            throw new IllegalArgumentException("DevEUI는 16자리 16진수여야 합니다.");
-        }
-
-        return devEui.toLowerCase(Locale.ROOT);
-    }
-
-    private String normalizeLocationDetail(String locationDetail) {
-        if (locationDetail == null || locationDetail.isBlank()) {
-            return null;
-        }
-
-        String normalizedLocationDetail = locationDetail.strip();
-        if (normalizedLocationDetail.length() > 100) {
-            throw new IllegalArgumentException("센서 위치 상세 정보는 100자 이하여야 합니다.");
-        }
-
-        return normalizedLocationDetail;
     }
 }

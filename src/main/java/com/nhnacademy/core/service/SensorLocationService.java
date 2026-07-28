@@ -2,6 +2,7 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Room;
 import com.nhnacademy.core.domain.SensorLocation;
+import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.sensor.SensorTelemetryContextResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationCreateRequest;
@@ -32,16 +33,14 @@ public class SensorLocationService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
-        String devEui = SensorLocation.normalizeDevEui(request.devEui());
+        SensorLocation sensorLocation = new SensorLocation(room, request.devEui(), request.locationDetail());
 
-        if (sensorLocationRepository.existsByDevEui(devEui)) {
+        if (sensorLocationRepository.existsByDevEui(sensorLocation.getDevEui())) {
             throw new ResourceConflictException("이미 등록된 DevEUI입니다.");
         }
 
         return SensorLocationResponse.from(
-                sensorLocationRepository.save(
-                        new SensorLocation(room, devEui, request.locationDetail())
-                )
+                sensorLocationRepository.save(sensorLocation)
         );
     }
 
@@ -69,7 +68,7 @@ public class SensorLocationService {
 
     // 센서 위치 DevEUI로 조회
     public SensorTelemetryContextResponse getSensorTelemetryContext(String devEui) {
-        String normalizedDevEui = SensorLocation.normalizeDevEui(devEui);
+        String normalizedDevEui = SensorLocationNormalizer.normalizeDevEui(devEui);
 
         return SensorTelemetryContextResponse.from(
                 sensorLocationRepository.findByDevEui(normalizedDevEui)

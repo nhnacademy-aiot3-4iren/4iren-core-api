@@ -1,5 +1,6 @@
 package com.nhnacademy.core.domain;
 
+import com.nhnacademy.core.domain.normalizer.RoomNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "rooms",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_rooms_building_id_room_name",
+                name = "uq_rooms_building_id_room_name",
                 columnNames = {"building_id", "room_name"}
         )
 )
@@ -26,7 +27,7 @@ public class Room extends VersionedEntity {
     @JoinColumn(
             name = "building_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_rooms_building")
+            foreignKey = @ForeignKey(name = "fk_rooms_building_id")
     )
     private Building building;
 
@@ -37,16 +38,24 @@ public class Room extends VersionedEntity {
     private String description;
 
     public Room(Building building, String roomName, String description) {
-        this.building = building;
-        this.roomName = roomName.strip();
-        this.description = description == null ? null : description.strip();
+        this.building = requireBuilding(building);
+        this.roomName = RoomNormalizer.normalizeName(roomName);
+        this.description = RoomNormalizer.normalizeDescription(description);
     }
 
     public void changeName(String roomName) {
-        this.roomName = roomName.strip();
+        this.roomName = RoomNormalizer.normalizeName(roomName);
     }
 
     public void changeDescription(String description) {
-        this.description = description == null ? null : description.strip();
+        this.description = RoomNormalizer.normalizeDescription(description);
+    }
+
+    private Building requireBuilding(Building building) {
+        if (building == null) {
+            throw new IllegalArgumentException("건물은 null일 수 없습니다.");
+        }
+
+        return building;
     }
 }

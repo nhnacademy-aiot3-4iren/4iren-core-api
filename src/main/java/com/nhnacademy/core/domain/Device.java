@@ -1,5 +1,6 @@
 package com.nhnacademy.core.domain;
 
+import com.nhnacademy.core.domain.normalizer.DeviceNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,7 +36,7 @@ public class Device extends VersionedEntity {
 
     public Device(Room room, String deviceName) {
         this.room = requireRoom(room);
-        this.deviceName = normalizeName(deviceName);
+        this.deviceName = DeviceNormalizer.normalizeName(deviceName);
     }
 
     public void moveTo(Room room) {
@@ -43,7 +44,7 @@ public class Device extends VersionedEntity {
     }
 
     public void changeName(String deviceName) {
-        this.deviceName = normalizeName(deviceName);
+        this.deviceName = DeviceNormalizer.normalizeName(deviceName);
     }
 
     private Room requireRoom(Room room) {
@@ -52,18 +53,5 @@ public class Device extends VersionedEntity {
         }
 
         return room;
-    }
-
-    private String normalizeName(String deviceName) {
-        if (deviceName == null || deviceName.isBlank()) {
-            throw new IllegalArgumentException("기기 이름은 null이거나 공백일 수 없습니다.");
-        }
-
-        String normalizedName = deviceName.strip();
-        if (normalizedName.length() > 50) {
-            throw new IllegalArgumentException("기기 이름은 50자 이하여야 합니다.");
-        }
-
-        return normalizedName;
     }
 }

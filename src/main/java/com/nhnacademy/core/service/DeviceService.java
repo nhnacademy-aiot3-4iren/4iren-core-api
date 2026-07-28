@@ -30,11 +30,10 @@ public class DeviceService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
+        Device device = new Device(room, request.deviceName());
 
         return DeviceResponse.from(
-                deviceRepository.save(
-                        new Device(room, request.deviceName())
-                )
+                deviceRepository.save(device)
         );
     }
 

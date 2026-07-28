@@ -2,10 +2,12 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Building;
 import com.nhnacademy.core.domain.Room;
+import com.nhnacademy.core.domain.normalizer.RoomNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.room.*;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
+import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.building.BuildingRepository;
 import com.nhnacademy.core.repository.device.DeviceRepository;
 import com.nhnacademy.core.repository.room.RoomRepository;
@@ -14,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -35,16 +36,15 @@ public class RoomService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         Building building = getBuildingOrThrow(buildingId, teamId);
-        String roomName = request.roomName().strip();
+        Room room = new Room(building, request.roomName(), request.description());
 
-        if (roomRepository.existsByBuilding_IdAndRoomName(buildingId, roomName)) {
+        if (roomRepository.existsByBuildingAndRoomName(building, room.getRoomName())) {
             throw new ResourceConflictException("이미 사용 중인 공간 이름입니다.");
         }
-        Room room = roomRepository.save(
-                new Room(building, roomName, normalizeDescription(request.description()))
-        );
 
-        return RoomResponse.from(room);
+        return RoomResponse.from(
+                roomRepository.save(room)
+        );
     }
 
     // 공간 목록 조회
@@ -52,10 +52,10 @@ public class RoomService {
         teamAuthorizationService.requireTeamMember(userId, teamId);
 
         // 건물 존재 여부 확인
-        getBuildingOrThrow(buildingId, teamId);
+        Building building = getBuildingOrThrow(buildingId, teamId);
 
         return PageResponse.from(
-                roomRepository.findAllByBuilding_Id(buildingId, pageable)
+                roomRepository.findAllByBuilding(building, pageable)
                         .map(RoomResponse::from)
         );
     }
@@ -64,33 +64,28 @@ public class RoomService {
     public RoomDetailResponse getRoom(Long userId, Long teamId, Long roomId) {
         teamAuthorizationService.requireTeamMember(userId, teamId);
 
-        RoomDetailQueryResult result = roomRepository.findDetailByIdAndTeamId(roomId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("공간", roomId));
-
-        return RoomDetailResponse.from(result);
-    }
-
-    // 건물 내 공간 이름으로 조회
-    public RoomMatchResponse getRoomByName(
-            Long userId,
-            Long teamId,
-            Long buildingId,
-            String roomName
-    ) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
-        getBuildingOrThrow(buildingId, teamId);
-
-        String normalizedName = roomName.strip();
-
-        return roomRepository.findByBuildingIdAndName(buildingId, normalizedName)
-                .orElseThrow(() -> new ResourceNotFoundException("공간", normalizedName));
+        return RoomDetailResponse.from(
+                roomRepository.findDetailByIdAndTeamId(roomId, teamId)
+                        .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "id", roomId)));
     }
 
     // 팀 내 공간 이름으로 조회
     public List<RoomMatchResponse> getRoomsByName(Long userId, Long teamId, String roomName) {
         teamAuthorizationService.requireTeamMember(userId, teamId);
 
-        return roomRepository.findAllByTeamIdAndName(teamId, roomName.strip());
+        return roomRepository.findAllByTeamIdAndName(teamId, RoomNormalizer.normalizeName(roomName));
+    }
+
+    // 건물 내 공간 이름으로 조회
+    public RoomMatchResponse getRoomByName(Long userId, Long teamId, Long buildingId, String roomName) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
+        getBuildingOrThrow(buildingId, teamId);
+
+        String normalizedName = RoomNormalizer.normalizeName(roomName);
+
+        return roomRepository.findByBuildingIdAndName(buildingId, normalizedName)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "name", normalizedName));
     }
 
     // 공간 이름, 설명 수정
@@ -101,15 +96,17 @@ public class RoomService {
         Room room = getRoomOrThrow(roomId, teamId);
 
         if (request.hasRoomName()) {
-            String roomName = request.getRoomName().strip();
-            if (roomRepository.existsByBuilding_IdAndRoomNameAndIdNot(room.getBuilding().getId(), roomName, roomId)) {
-                throw new ResourceConflictException("이미 사용 중인 공간 이름입니다.");
-            }
+            String normalizedRoomName = RoomNormalizer.normalizeName(request.getRoomName());
+            if (!normalizedRoomName.equals(room.getRoomName())) {
+                if (roomRepository.existsByBuildingAndRoomNameAndIdNot(room.getBuilding(), normalizedRoomName, roomId)) {
+                    throw new ResourceConflictException("이미 사용 중인 공간 이름입니다.");
+                }
 
-            room.changeName(roomName);
+                room.changeName(request.getRoomName());
+            }
         }
         if (request.hasDescription()) {
-            room.changeDescription(normalizeDescription(request.getDescription()));
+            room.changeDescription(request.getDescription());
         }
 
         return RoomResponse.from(room);
@@ -130,15 +127,11 @@ public class RoomService {
 
     private Building getBuildingOrThrow(Long buildingId, Long teamId) {
         return buildingRepository.findByIdAndTeam_Id(buildingId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("건물", buildingId));
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.BUILDING, "id", buildingId));
     }
 
     private Room getRoomOrThrow(Long roomId, Long teamId) {
         return roomRepository.findByIdAndBuilding_Team_Id(roomId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("공간", roomId));
-    }
-
-    private String normalizeDescription(String description) {
-        return StringUtils.hasText(description) ? description : null;
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "id", roomId));
     }
 }

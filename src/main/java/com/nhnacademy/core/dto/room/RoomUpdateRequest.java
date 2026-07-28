@@ -12,11 +12,11 @@ import org.springframework.util.StringUtils;
 public final class RoomUpdateRequest {
 
     @Getter
-    @Size(max = 50)
+    @Size(max = 50, message = "공간 이름은 50자 이하여야 합니다.")
     private String roomName;
 
     @Getter
-    @Size(max = 200)
+    @Size(max = 200, message = "공간 설명은 200자 이하여야 합니다.")
     private String description;
 
     private boolean roomNamePresent;
@@ -44,13 +44,13 @@ public final class RoomUpdateRequest {
         return descriptionPresent;
     }
 
-    @AssertTrue
+    @AssertTrue(message = "수정할 필드가 없습니다. 최소 하나의 필드를 입력해야 합니다.")
     @JsonIgnore
     public boolean isAnyFieldPresent() {
         return roomNamePresent || descriptionPresent;
     }
 
-    @AssertTrue
+    @AssertTrue(message = "공간 이름은 null이거나 공백일 수 없습니다.")
     @JsonIgnore
     public boolean isRoomNameValid() {
         return !roomNamePresent || StringUtils.hasText(roomName);
