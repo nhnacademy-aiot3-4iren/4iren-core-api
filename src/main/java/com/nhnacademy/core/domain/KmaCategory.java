@@ -27,16 +27,16 @@ public enum KmaCategory {
         this.unit = unit;
     }
 
-    public String description(){
+    public static KmaCategory fromCode(String code) {
+        return valueOf(code);
+    }
+
+    public String description() {
         return description;
     }
 
-    public String unit(){
+    public String unit() {
         return unit;
-    }
-
-    public static KmaCategory fromCode(String code) {
-        return valueOf(code);
     }
 
     public String parseValue(String value) {

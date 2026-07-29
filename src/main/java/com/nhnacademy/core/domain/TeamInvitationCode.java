@@ -1,5 +1,6 @@
 package com.nhnacademy.core.domain;
 
+import com.nhnacademy.core.domain.normalizer.TeamInvitationCodeNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,13 +9,12 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
-import java.util.Locale;
 
 @Entity
 @Table(
         name = "team_invitation_codes",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_team_invitation_codes_code",
+                name = "uq_team_invitation_codes_code",
                 columnNames = "code"
         ),
         indexes = @Index(
@@ -35,7 +35,7 @@ public class TeamInvitationCode extends VersionedEntity {
     @JoinColumn(
             name = "team_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_team_invitation_codes_team")
+            foreignKey = @ForeignKey(name = "fk_team_invitation_codes_team_id")
     )
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Team team;
@@ -50,13 +50,9 @@ public class TeamInvitationCode extends VersionedEntity {
     private boolean active = true;
 
     public TeamInvitationCode(Team team, String code, LocalDateTime expiresAt) {
-        this.team = team;
-        this.code = normalizeCode(code);
-        this.expiresAt = expiresAt;
-    }
-
-    public static String normalizeCode(String code) {
-        return code == null ? null : code.toUpperCase(Locale.ROOT);
+        this.team = requireTeam(team);
+        this.code = TeamInvitationCodeNormalizer.normalizeCode(code);
+        this.expiresAt = requireExpiresAt(expiresAt);
     }
 
     public boolean isValidAt(LocalDateTime now) {
@@ -65,5 +61,21 @@ public class TeamInvitationCode extends VersionedEntity {
 
     public void deactivate() {
         this.active = false;
+    }
+
+    private Team requireTeam(Team team) {
+        if (team == null) {
+            throw new IllegalArgumentException("팀은 null일 수 없습니다.");
+        }
+
+        return team;
+    }
+
+    private LocalDateTime requireExpiresAt(LocalDateTime expiresAt) {
+        if (expiresAt == null) {
+            throw new IllegalArgumentException("초대 코드 만료 시간은 null일 수 없습니다.");
+        }
+
+        return expiresAt;
     }
 }
