@@ -54,12 +54,8 @@ public class RoomSubscription extends VersionedEntity {
         this.teamMember = requireTeamMember(teamMember);
     }
 
-    public void enableNotifications() {
-        this.notificationEnabled = true;
-    }
-
-    public void disableNotifications() {
-        this.notificationEnabled = false;
+    public void changeNotificationEnabled(boolean notificationEnabled) {
+        this.notificationEnabled = notificationEnabled;
     }
 
     private Room requireRoom(Room room) {
