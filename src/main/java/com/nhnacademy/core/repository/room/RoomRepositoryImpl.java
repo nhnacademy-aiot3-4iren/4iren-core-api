@@ -5,14 +5,12 @@ import com.nhnacademy.core.domain.QDevice;
 import com.nhnacademy.core.domain.QRoom;
 import com.nhnacademy.core.domain.QSensorLocation;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
-import com.nhnacademy.core.dto.room.RoomMatchResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -51,48 +49,7 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
                         room.id.eq(roomId),
                         building.team.id.eq(teamId)
                 )
-                .fetchOne());
-    }
-
-    @Override
-    public Optional<RoomMatchResponse> findByBuildingIdAndName(Long buildingId, String roomName) {
-        return Optional.ofNullable(queryFactory
-                .select(Projections.constructor(
-                        RoomMatchResponse.class,
-                        room.id,
-                        building.id,
-                        building.buildingName,
-                        room.roomName
-                ))
-                .from(room)
-                .join(room.building, building)
-                .where(
-                        building.id.eq(buildingId),
-                        room.roomName.eq(roomName)
-                )
-                .fetchOne());
-    }
-
-    @Override
-    public List<RoomMatchResponse> findAllByTeamIdAndName(Long teamId, String roomName) {
-        return queryFactory
-                .select(Projections.constructor(
-                        RoomMatchResponse.class,
-                        room.id,
-                        building.id,
-                        building.buildingName,
-                        room.roomName
-                ))
-                .from(room)
-                .join(room.building, building)
-                .where(
-                        building.team.id.eq(teamId),
-                        room.roomName.eq(roomName)
-                )
-                .orderBy(
-                        building.id.asc(),
-                        room.id.asc()
-                )
-                .fetch();
+                .fetchOne()
+        );
     }
 }
