@@ -4,6 +4,7 @@ import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamInvitationCode;
 import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.domain.normalizer.TeamInvitationCodeNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.member.TeamJoinRequest;
 import com.nhnacademy.core.dto.team.member.TeamMemberResponse;
@@ -12,14 +13,14 @@ import com.nhnacademy.core.dto.team.member.TeamOwnerChangeRequest;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
+import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.team.TeamInvitationCodeRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -33,43 +34,41 @@ public class TeamMemberService {
     private final TeamMemberRepository teamMemberRepository;
     private final TeamInvitationCodeRepository teamInvitationCodeRepository;
     private final TeamAuthorizationService teamAuthorizationService;
-    private final EntityManager entityManager;
 
-    // 팀 구성원 가입, 초대 코드 유효성 확인 후 MEMBER 역할 부여
-    @Transactional
+    // 팀 가입
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public TeamMemberResponse joinTeam(Long userId, TeamJoinRequest request) {
-        String invitationCode = normalizeInvitationCode(request.invitationCode());
-        TeamInvitationCode invitation = teamInvitationCodeRepository.findByCode(invitationCode)
-                .orElseThrow(() -> new ResourceNotFoundException("초대 코드", invitationCode));
+        String invitationCode = TeamInvitationCodeNormalizer.normalizeCode(request.invitationCode());
+        Long teamId = teamInvitationCodeRepository.findTeamIdByCode(invitationCode)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.INVITATION_CODE, "code", invitationCode));
 
-        Long teamId = invitation.getTeam().getId();
-        // 팀 구성원 가입 시, 팀과 구성원 변경 작업이 동시에 실행되지 않도록
+        // 팀 잠금 및 존재 여부 확인
         Team team = lockTeamOrThrow(teamId);
+        TeamInvitationCode invitation = teamInvitationCodeRepository.findByCodeAndTeam(invitationCode, team)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.INVITATION_CODE, "code", invitationCode));
 
         // 초대 코드 유효성 확인
-        entityManager.refresh(invitation, LockModeType.PESSIMISTIC_WRITE);
         if (!invitation.isValidAt(LocalDateTime.now())) {
             throw new ResourceConflictException("만료되었거나 비활성화된 초대 코드입니다.");
         }
 
-        if (teamMemberRepository.existsByTeam_IdAndUserId(teamId, userId)) {
+        TeamMember teamMember = new TeamMember(team, userId, TeamRole.MEMBER);
+        if (teamMemberRepository.existsByTeamAndUserId(team, teamMember.getUserId())) {
             throw new ResourceConflictException("이미 가입한 팀입니다.");
         }
 
-        TeamMember teamMember = teamMemberRepository.save(
-                new TeamMember(team, userId, TeamRole.MEMBER)
+        return TeamMemberResponse.from(
+                teamMemberRepository.save(teamMember)
         );
-
-        return TeamMemberResponse.from(teamMember);
     }
 
     // 팀 구성원 목록 조회
     public PageResponse<TeamMemberResponse> getTeamMembers(Long userId, Long teamId, Pageable pageable) {
-        // 팀 구성원 조회 권한 확인
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        Team team = teamAuthorizationService.requireTeamMember(userId, teamId)
+                .getTeam();
 
         return PageResponse.from(
-                teamMemberRepository.findAllByTeam_Id(teamId, pageable)
+                teamMemberRepository.findAllByTeam(team, pageable)
                         .map(TeamMemberResponse::from)
         );
     }
@@ -82,14 +81,13 @@ public class TeamMemberService {
 
         TeamMember teamMember = getTeamMemberOrThrow(teamMemberId, teamId);
 
-        // ADMIN ↔ MEMBER만 허용
+        // OWNER Role 변경 불가
         if (request.teamRole() == TeamRole.OWNER) {
             throw new ResourceConflictException("Role을 OWNER로 변경할 수 없습니다.");
         }
         if (teamMember.getTeamRole().isOwner()) {
             throw new ResourceConflictException("OWNER의 Role은 변경할 수 없습니다.");
         }
-
         teamMember.changeRole(request.teamRole());
 
         return TeamMemberResponse.from(teamMember);
@@ -100,46 +98,41 @@ public class TeamMemberService {
     public void removeTeamMember(Long userId, Long teamId, Long teamMemberId) {
         lockTeamOrThrow(teamId);
 
-        // 요청자 권한 확인
         TeamRole requesterRole = teamAuthorizationService.getTeamRole(userId, teamId);
         TeamMember targetMember = getTeamMemberOrThrow(teamMemberId, teamId);
         TeamRole targetRole = targetMember.getTeamRole();
 
-        if (!(requesterRole.isOwner() && !targetRole.isOwner()) && !(requesterRole == TeamRole.ADMIN && targetRole == TeamRole.MEMBER)) {
+        if (!((requesterRole.isOwner() && !targetRole.isOwner())
+                || (requesterRole == TeamRole.ADMIN && targetRole == TeamRole.MEMBER))) {
             throw new ForbiddenException("팀 구성원 삭제 권한이 없습니다.");
         }
 
         teamMemberRepository.delete(targetMember);
     }
 
-    // 팀 탈퇴, OWNER는 소유권 이전 후 탈퇴 가능
+    // 팀 탈퇴
     @Transactional
     public void leaveTeam(Long userId, Long teamId) {
         lockTeamOrThrow(teamId);
 
-        TeamRole teamRole = teamAuthorizationService.getTeamRole(userId, teamId);
-        if (teamRole.isOwner()) {
-            throw new ForbiddenException("OWNER는 소유권을 이전한 후 탈퇴할 수 있습니다.");
+        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
+        if (teamMember.getTeamRole().isOwner()) {
+            throw new ResourceConflictException("팀 소유자는 소유권 이전 후 탈퇴할 수 있습니다.");
         }
-
-        TeamMember teamMember = teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
-                .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
 
         teamMemberRepository.delete(teamMember);
     }
 
     // 팀 소유권 이전
     @Transactional
-    public TeamMemberResponse changeTeamOwner(Long userId, Long teamId, TeamOwnerChangeRequest request) {
+    public TeamMemberResponse transferTeamOwnership(Long userId, Long teamId, TeamOwnerChangeRequest request) {
         lockTeamOrThrow(teamId);
-        teamAuthorizationService.requireTeamOwner(userId, teamId);
 
-        TeamMember currentOwner = teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
-                .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
+        TeamMember currentOwner = teamAuthorizationService.requireTeamOwner(userId, teamId);
         TeamMember newOwner = getTeamMemberOrThrow(request.teamMemberId(), teamId);
 
         if (currentOwner.getId().equals(newOwner.getId())) {
-            throw new ResourceConflictException("현재 OWNER에게는 소유권을 이전할 수 없습니다.");
+            throw new ResourceConflictException("현재 소유자에게 소유권을 이전할 수 없습니다.");
         }
 
         currentOwner.changeRole(TeamRole.ADMIN);
@@ -150,15 +143,11 @@ public class TeamMemberService {
 
     private Team lockTeamOrThrow(Long teamId) {
         return teamRepository.findLockedById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId));
     }
 
     private TeamMember getTeamMemberOrThrow(Long teamMemberId, Long teamId) {
         return teamMemberRepository.findByIdAndTeam_Id(teamMemberId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("팀 구성원", teamMemberId));
-    }
-
-    private String normalizeInvitationCode(String invitationCode) {
-        return TeamInvitationCode.normalizeCode(invitationCode.strip());
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM_MEMBER, "id", teamMemberId));
     }
 }
