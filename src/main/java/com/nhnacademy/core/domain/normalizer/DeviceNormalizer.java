@@ -13,7 +13,7 @@ public final class DeviceNormalizer {
 
     public static String normalizeName(String deviceName) {
         if (deviceName == null || deviceName.isBlank()) {
-            throw new IllegalArgumentException("기기 이름은 null이거나 공백일 수 없습니다.");
+            throw new IllegalArgumentException("기기 이름은 null 또는 공백일 수 없습니다.");
         }
 
         String normalizedName = WHITESPACE_PATTERN

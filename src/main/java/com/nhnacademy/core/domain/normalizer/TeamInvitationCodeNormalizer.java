@@ -12,7 +12,7 @@ public final class TeamInvitationCodeNormalizer {
 
     public static String normalizeCode(String code) {
         if (code == null || code.isBlank()) {
-            throw new IllegalArgumentException("초대 코드는 null이거나 공백일 수 없습니다.");
+            throw new IllegalArgumentException("초대 코드는 null 또는 공백일 수 없습니다.");
         }
 
         String normalizedCode = code.strip();

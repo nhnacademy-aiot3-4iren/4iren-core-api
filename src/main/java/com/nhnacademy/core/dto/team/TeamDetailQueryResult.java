@@ -1,7 +1,5 @@
 package com.nhnacademy.core.dto.team;
 
-import com.querydsl.core.annotations.QueryProjection;
-
 public record TeamDetailQueryResult(
         Long teamId,
         String teamName,
@@ -12,7 +10,4 @@ public record TeamDetailQueryResult(
         long sensorCount,
         long deviceCount
 ) {
-    @QueryProjection
-    public TeamDetailQueryResult {
-    }
 }

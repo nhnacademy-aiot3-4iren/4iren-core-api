@@ -14,7 +14,7 @@ public final class TeamNormalizer {
 
     public static String normalizeName(String teamName) {
         if (teamName == null || teamName.isBlank()) {
-            throw new IllegalArgumentException("팀 이름은 null이거나 공백일 수 없습니다.");
+            throw new IllegalArgumentException("팀 이름은 null 또는 공백일 수 없습니다.");
         }
 
         String normalizedName = WHITESPACE_PATTERN

@@ -1,110 +1,47 @@
 package com.nhnacademy.core.dto.building;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.util.StringUtils;
 
 @NoArgsConstructor
+@Getter
+@Setter
 public final class BuildingUpdateRequest {
 
-    @Getter
-    @Size(max = 100)
-    private String buildingName;
+    @Size(max = 100, message = "건물 이름은 100자 이하여야 합니다.")
+    private JsonNullable<String> buildingName = JsonNullable.undefined();
 
-    @Getter
-    @Size(max = 200)
-    private String description;
+    @Size(max = 200, message = "건물 설명은 200자 이하여야 합니다.")
+    private JsonNullable<String> description = JsonNullable.undefined();
 
-    @Getter
-    @Size(max = 200)
-    private String roadAddress;
+    @Size(max = 200, message = "도로명 주소는 200자 이하여야 합니다.")
+    private JsonNullable<String> roadAddress = JsonNullable.undefined();
 
-    @Getter
-    @Size(max = 100)
-    private String detailAddress;
+    @Size(max = 100, message = "상세 주소는 100자 이하여야 합니다.")
+    private JsonNullable<String> detailAddress = JsonNullable.undefined();
 
-    @Getter
-    @Size(max = 100)
-    private String regionName;
+    @Size(max = 100, message = "지역 이름은 100자 이하여야 합니다.")
+    private JsonNullable<String> regionName = JsonNullable.undefined();
 
-    private boolean buildingNamePresent;
-    private boolean descriptionPresent;
-    private boolean roadAddressPresent;
-    private boolean detailAddressPresent;
-    private boolean regionNamePresent;
-
-    @JsonSetter("buildingName")
-    public void setBuildingName(String buildingName) {
-        this.buildingName = buildingName;
-        this.buildingNamePresent = true;
-    }
-
-    @JsonSetter("description")
-    public void setDescription(String description) {
-        this.description = description;
-        this.descriptionPresent = true;
-    }
-
-    @JsonSetter("roadAddress")
-    public void setRoadAddress(String roadAddress) {
-        this.roadAddress = roadAddress;
-        this.roadAddressPresent = true;
-    }
-
-    @JsonSetter("detailAddress")
-    public void setDetailAddress(String detailAddress) {
-        this.detailAddress = detailAddress;
-        this.detailAddressPresent = true;
-    }
-
-    @JsonSetter("regionName")
-    public void setRegionName(String regionName) {
-        this.regionName = regionName;
-        this.regionNamePresent = true;
-    }
-
-    @JsonIgnore
-    public boolean hasBuildingName() {
-        return buildingNamePresent;
-    }
-
-    @JsonIgnore
-    public boolean hasDescription() {
-        return descriptionPresent;
-    }
-
-    @JsonIgnore
-    public boolean hasRoadAddress() {
-        return roadAddressPresent;
-    }
-
-    @JsonIgnore
-    public boolean hasDetailAddress() {
-        return detailAddressPresent;
-    }
-
-    @JsonIgnore
-    public boolean hasRegionName() {
-        return regionNamePresent;
-    }
-
-    @AssertTrue
+    @AssertTrue(message = "수정할 필드가 없습니다. 최소 하나의 필드를 입력해야 합니다.")
     @JsonIgnore
     public boolean isAnyFieldPresent() {
-        return buildingNamePresent
-                || descriptionPresent
-                || roadAddressPresent
-                || detailAddressPresent
-                || regionNamePresent;
+        return buildingName.isPresent()
+                || description.isPresent()
+                || roadAddress.isPresent()
+                || detailAddress.isPresent()
+                || regionName.isPresent();
     }
 
-    @AssertTrue
+    @AssertTrue(message = "건물 이름은 null 또는 공백일 수 없습니다.")
     @JsonIgnore
     public boolean isBuildingNameValid() {
-        return !buildingNamePresent || StringUtils.hasText(buildingName);
+        return !buildingName.isPresent() || StringUtils.hasText(buildingName.orElse(null));
     }
 }

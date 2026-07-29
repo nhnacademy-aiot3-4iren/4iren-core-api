@@ -1,7 +1,5 @@
 package com.nhnacademy.core.dto.building;
 
-import com.querydsl.core.annotations.QueryProjection;
-
 public record BuildingDetailQueryResult(
         Long buildingId,
         Long teamId,
@@ -14,7 +12,4 @@ public record BuildingDetailQueryResult(
         long sensorCount,
         long deviceCount
 ) {
-    @QueryProjection
-    public BuildingDetailQueryResult {
-    }
 }

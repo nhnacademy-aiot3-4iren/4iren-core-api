@@ -17,7 +17,7 @@ public final class BuildingNormalizer {
 
     public static String normalizeName(String buildingName) {
         if (buildingName == null || buildingName.isBlank()) {
-            throw new IllegalArgumentException("건물 이름은 null이거나 공백일 수 없습니다.");
+            throw new IllegalArgumentException("건물 이름은 null 또는 공백일 수 없습니다.");
         }
 
         String normalizedName = WHITESPACE_PATTERN
