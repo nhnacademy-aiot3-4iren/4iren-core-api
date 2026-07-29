@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 public final class SensorLocationNormalizer {
 
     private static final int MAX_LOCATION_DETAIL_LENGTH = 100;
+
     private static final Pattern DEV_EUI_PATTERN = Pattern.compile("^[0-9A-Fa-f]{16}$");
 
     private SensorLocationNormalizer() {
@@ -26,9 +27,7 @@ public final class SensorLocationNormalizer {
 
         String normalizedLocationDetail = locationDetail.strip();
         if (normalizedLocationDetail.length() > MAX_LOCATION_DETAIL_LENGTH) {
-            throw new IllegalArgumentException(
-                    "센서 위치 상세 정보는 " + MAX_LOCATION_DETAIL_LENGTH + "자 이하여야 합니다."
-            );
+            throw new IllegalArgumentException("센서 위치 상세는 " + MAX_LOCATION_DETAIL_LENGTH + "자 이하여야 합니다.");
         }
 
         return normalizedLocationDetail;

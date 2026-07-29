@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 public final class DeviceNormalizer {
 
     public static final int MAX_NAME_LENGTH = 50;
+
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     private DeviceNormalizer() {
