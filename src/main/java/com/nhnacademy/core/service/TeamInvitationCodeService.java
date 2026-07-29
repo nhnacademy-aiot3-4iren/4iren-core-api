@@ -6,6 +6,7 @@ import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeCreateRequest;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeResponse;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
+import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.team.TeamInvitationCodeRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,30 +27,30 @@ public class TeamInvitationCodeService {
     // 팀 초대 코드 생성
     @Transactional
     public TeamInvitationCodeResponse createInvitationCode(Long userId, Long teamId, TeamInvitationCodeCreateRequest request) {
-        Team team = getTeamOrThrow(teamId);
+        Team team = lockTeamOrThrow(teamId);
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
-        TeamInvitationCode invitationCode = teamInvitationCodeRepository.save(
-                new TeamInvitationCode(team, generateUniqueCode(), request.expiresAt())
-        );
+        TeamInvitationCode invitationCode = new TeamInvitationCode(team, generateCode(), request.expiresAt());
 
-        return TeamInvitationCodeResponse.from(invitationCode);
+        return TeamInvitationCodeResponse.from(
+                teamInvitationCodeRepository.save(invitationCode)
+        );
     }
 
     // 팀 초대 코드 비활성화
     @Transactional
     public void deactivateInvitationCode(Long userId, Long teamId, Long invitationCodeId) {
-        getTeamOrThrow(teamId);
+        Team team = lockTeamOrThrow(teamId);
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
-        TeamInvitationCode invitationCode = teamInvitationCodeRepository.findLockedByIdAndTeam_Id(invitationCodeId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("초대 코드", invitationCodeId));
+        TeamInvitationCode invitationCode = teamInvitationCodeRepository.findByIdAndTeam(invitationCodeId, team)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.INVITATION_CODE, "id", invitationCodeId));
 
         invitationCode.deactivate();
     }
 
-    // 팀 초대 코드 생성 시, 중복되지 않는 고유한 코드 생성
-    private String generateUniqueCode() {
+    // 중복되지 않는 초대 코드 생성
+    private String generateCode() {
         for (int attempt = 0; attempt < MAX_CODE_GENERATION_ATTEMPTS; attempt++) {
             String code = InvitationCodeGenerator.generate();
             if (!teamInvitationCodeRepository.existsByCode(code)) {
@@ -60,8 +61,8 @@ public class TeamInvitationCodeService {
         throw new ResourceConflictException("초대 코드를 생성하지 못했습니다. 다시 시도해 주세요.");
     }
 
-    private Team getTeamOrThrow(Long teamId) {
-        return teamRepository.findById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
+    private Team lockTeamOrThrow(Long teamId) {
+        return teamRepository.findLockedById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId));
     }
 }
