@@ -2,10 +2,15 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Building;
 import com.nhnacademy.core.domain.Team;
+import com.nhnacademy.core.domain.normalizer.BuildingNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.building.*;
+import com.nhnacademy.core.dto.building.BuildingCreateRequest;
+import com.nhnacademy.core.dto.building.BuildingDetailResponse;
+import com.nhnacademy.core.dto.building.BuildingResponse;
+import com.nhnacademy.core.dto.building.BuildingUpdateRequest;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
+import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.building.BuildingRepository;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
@@ -13,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -31,31 +35,31 @@ public class BuildingService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         Team team = getTeamOrThrow(teamId);
-        String buildingName = request.buildingName().strip();
-
-        if (buildingRepository.existsByTeam_IdAndBuildingName(teamId, buildingName)) {
-            throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
-        }
-        Building building = buildingRepository.save(
-                new Building(
-                        team,
-                        buildingName,
-                        normalizeString(request.description()),
-                        normalizeString(request.roadAddress()),
-                        normalizeString(request.detailAddress()),
-                        normalizeString(request.regionName())
-                )
+        Building building = new Building(
+                team,
+                request.buildingName(),
+                request.description(),
+                request.roadAddress(),
+                request.detailAddress(),
+                request.regionName()
         );
 
-        return BuildingResponse.from(building);
+        if (buildingRepository.existsByTeamAndBuildingName(team, building.getBuildingName())) {
+            throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
+        }
+
+        return BuildingResponse.from(
+                buildingRepository.save(building)
+        );
     }
 
     // 건물 목록 조회
     public PageResponse<BuildingResponse> getBuildings(Long userId, Long teamId, Pageable pageable) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        Team team = teamAuthorizationService.requireTeamMember(userId, teamId)
+                .getTeam();
 
         return PageResponse.from(
-                buildingRepository.findAllByTeam_Id(teamId, pageable)
+                buildingRepository.findAllByTeam(team, pageable)
                         .map(BuildingResponse::from)
         );
     }
@@ -64,10 +68,10 @@ public class BuildingService {
     public BuildingDetailResponse getBuilding(Long userId, Long teamId, Long buildingId) {
         teamAuthorizationService.requireTeamMember(userId, teamId);
 
-        BuildingDetailQueryResult result = buildingRepository.findDetailByIdAndTeamId(buildingId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("건물", buildingId));
-
-        return BuildingDetailResponse.from(result);
+        return BuildingDetailResponse.from(
+                buildingRepository.findDetailByIdAndTeamId(buildingId, teamId)
+                        .orElseThrow(() -> new ResourceNotFoundException(ResourceType.BUILDING, "id", buildingId))
+        );
     }
 
     // 건물 이름, 설명, 주소 수정
@@ -77,25 +81,32 @@ public class BuildingService {
 
         Building building = getBuildingOrThrow(buildingId, teamId);
 
-        if (request.hasBuildingName()) {
-            String buildingName = request.getBuildingName().strip();
-            if (buildingRepository.existsByTeam_IdAndBuildingNameAndIdNot(teamId, buildingName, buildingId)) {
-                throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
-            }
+        if (request.getBuildingName().isPresent()) {
+            String requestedBuildingName = request.getBuildingName().orElse(null);
+            String normalizedBuildingName = BuildingNormalizer.normalizeName(requestedBuildingName);
+            if (!normalizedBuildingName.equals(building.getBuildingName())) {
+                if (buildingRepository.existsByTeamAndBuildingNameAndIdNot(
+                        building.getTeam(),
+                        normalizedBuildingName,
+                        buildingId
+                )) {
+                    throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
+                }
 
-            building.changeName(buildingName);
+                building.changeName(requestedBuildingName);
+            }
         }
-        if (request.hasDescription()) {
-            building.changeDescription(normalizeString(request.getDescription()));
+        if (request.getDescription().isPresent()) {
+            building.changeDescription(request.getDescription().orElse(null));
         }
-        if (request.hasRoadAddress()) {
-            building.changeRoadAddress(normalizeString(request.getRoadAddress()));
+        if (request.getRoadAddress().isPresent()) {
+            building.changeRoadAddress(request.getRoadAddress().orElse(null));
         }
-        if (request.hasDetailAddress()) {
-            building.changeDetailAddress(normalizeString(request.getDetailAddress()));
+        if (request.getDetailAddress().isPresent()) {
+            building.changeDetailAddress(request.getDetailAddress().orElse(null));
         }
-        if (request.hasRegionName()) {
-            building.changeRegionName(normalizeString(request.getRegionName()));
+        if (request.getRegionName().isPresent()) {
+            building.changeRegionName(request.getRegionName().orElse(null));
         }
 
         return BuildingResponse.from(building);
@@ -114,17 +125,13 @@ public class BuildingService {
         buildingRepository.delete(building);
     }
 
-    private Building getBuildingOrThrow(Long buildingId, Long teamId) {
-        return buildingRepository.findByIdAndTeam_Id(buildingId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("건물", buildingId));
-    }
-
     private Team getTeamOrThrow(Long teamId) {
         return teamRepository.findById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("팀", teamId));
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId));
     }
 
-    private String normalizeString(String value) {
-        return StringUtils.hasText(value) ? value : null;
+    private Building getBuildingOrThrow(Long buildingId, Long teamId) {
+        return buildingRepository.findByIdAndTeam_Id(buildingId, teamId)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.BUILDING, "id", buildingId));
     }
 }
