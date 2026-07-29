@@ -82,12 +82,12 @@ public class SensorLocationService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         SensorLocation sensorLocation = getSensorLocationOrThrow(sensorLocationId, teamId);
-        Room destinationRoom = request.hasRoomId()
-                ? getRoomOrThrow(request.getRoomId(), teamId)
+        Room destinationRoom = request.getRoomId().isPresent()
+                ? getRoomOrThrow(request.getRoomId().orElse(null), teamId)
                 : null;
 
-        if (request.hasLocationDetail()) {
-            sensorLocation.changeLocationDetail(request.getLocationDetail());
+        if (request.getLocationDetail().isPresent()) {
+            sensorLocation.changeLocationDetail(request.getLocationDetail().orElse(null));
         }
         if (destinationRoom != null) {
             sensorLocation.moveTo(destinationRoom);
