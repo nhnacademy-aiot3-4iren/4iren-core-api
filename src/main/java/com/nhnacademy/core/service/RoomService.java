@@ -71,6 +71,12 @@ public class RoomService {
         );
     }
 
+    public String getRegionName(Long roomId) {
+        return roomRepository.findRegionNameById(roomId)
+                // 공간은 존재하지만, regionName이 null인 경우도 예외
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "id", roomId));
+    }
+
     // 팀 내 공간 이름으로 조회
     public List<RoomMatchResponse> searchRoomsInTeam(Long userId, Long teamId, String roomName) {
         Team team = teamAuthorizationService.requireTeamMember(userId, teamId)

@@ -7,4 +7,6 @@ import java.util.Optional;
 public interface RoomRepositoryCustom {
 
     Optional<RoomDetailQueryResult> findDetailByIdAndTeamId(Long roomId, Long teamId);
+
+    Optional<String> findRegionNameById(Long roomId);
 }

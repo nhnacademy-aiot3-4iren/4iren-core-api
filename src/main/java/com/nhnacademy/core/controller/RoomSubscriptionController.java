@@ -24,21 +24,21 @@ public class RoomSubscriptionController {
     private final RoomSubscriptionService roomSubscriptionService;
 
     @PutMapping("/rooms/{roomId}/subscription")
-    public RoomSubscriptionResponse subscribe(
+    public RoomSubscriptionResponse subscribeToRoom(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long roomId
     ) {
-        return roomSubscriptionService.subscribe(user.id(), teamId, roomId);
+        return roomSubscriptionService.subscribeToRoom(user.id(), teamId, roomId);
     }
 
     @GetMapping("/room-subscriptions")
-    public PageResponse<RoomSubscriptionResponse> getRoomSubscriptions(
+    public PageResponse<RoomSubscriptionResponse> getSubscriptions(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
-        return roomSubscriptionService.getRoomSubscriptions(user.id(), teamId, pageable);
+        return roomSubscriptionService.getSubscriptions(user.id(), teamId, pageable);
     }
 
     @PatchMapping("/rooms/{roomId}/subscription")
@@ -52,12 +52,12 @@ public class RoomSubscriptionController {
     }
 
     @DeleteMapping("/rooms/{roomId}/subscription")
-    public ResponseEntity<Void> unsubscribe(
+    public ResponseEntity<Void> unsubscribeFromRoom(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long roomId
     ) {
-        roomSubscriptionService.unsubscribe(user.id(), teamId, roomId);
+        roomSubscriptionService.unsubscribeFromRoom(user.id(), teamId, roomId);
 
         return ResponseEntity.noContent()
                 .build();

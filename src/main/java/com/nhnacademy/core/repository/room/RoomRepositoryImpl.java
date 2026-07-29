@@ -52,4 +52,15 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
                 .fetchOne()
         );
     }
+
+    @Override
+    public Optional<String> findRegionNameById(Long roomId) {
+        return Optional.ofNullable(queryFactory
+                .select(building.regionName)
+                .from(room)
+                .join(room.building, building)
+                .where(room.id.eq(roomId))
+                .fetchOne()
+        );
+    }
 }
