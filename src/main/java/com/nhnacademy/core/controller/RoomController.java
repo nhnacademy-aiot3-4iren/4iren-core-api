@@ -23,7 +23,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/teams/{teamId}")
+@RequestMapping("/teams/{teamId}")
 public class RoomController {
 
     private final RoomService roomService;

@@ -22,7 +22,7 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/teams/{teamId}")
+@RequestMapping("/teams/{teamId}")
 public class DeviceController {
 
     private final DeviceService deviceService;

@@ -23,7 +23,7 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/teams/{teamId}/buildings")
+@RequestMapping("/teams/{teamId}/buildings")
 public class BuildingController {
 
     private final BuildingService buildingService;

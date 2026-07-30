@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/teams/{teamId}/invitation-codes")
+@RequestMapping("/teams/{teamId}/invitation-codes")
 public class TeamInvitationCodeController {
 
     private final TeamInvitationCodeService teamInvitationCodeService;

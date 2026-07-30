@@ -22,7 +22,7 @@ import java.net.URI;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/teams/{teamId}")
+@RequestMapping("/teams/{teamId}")
 public class SensorLocationController {
 
     private final SensorLocationService sensorLocationService;
