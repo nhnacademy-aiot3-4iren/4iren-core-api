@@ -2,6 +2,7 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Room;
 import com.nhnacademy.core.domain.SensorLocation;
+import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.sensor.SensorTelemetryContextResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationCreateRequest;
@@ -9,13 +10,13 @@ import com.nhnacademy.core.dto.sensor.location.SensorLocationResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationUpdateRequest;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
+import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.sensor.SensorLocationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -32,27 +33,26 @@ public class SensorLocationService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
-        String devEui = SensorLocation.normalizeDevEui(request.devEui());
+        SensorLocation sensorLocation = new SensorLocation(room, request.devEui(), request.locationDetail());
 
-        if (sensorLocationRepository.existsByDevEui(devEui)) {
+        if (sensorLocationRepository.existsByDevEui(sensorLocation.getDevEui())) {
             throw new ResourceConflictException("이미 등록된 DevEUI입니다.");
         }
-        SensorLocation sensorLocation = sensorLocationRepository.save(
-                new SensorLocation(room, devEui, normalizeLocationDetail(request.locationDetail()))
-        );
 
-        return SensorLocationResponse.from(sensorLocation);
+        return SensorLocationResponse.from(
+                sensorLocationRepository.save(sensorLocation)
+        );
     }
 
     // 센서 위치 목록 조회
     public PageResponse<SensorLocationResponse> getSensorLocations(Long userId, Long teamId, Long roomId, Pageable pageable) {
         teamAuthorizationService.requireTeamMember(userId, teamId);
 
-        // 방 존재 여부 확인
-        getRoomOrThrow(roomId, teamId);
+        // 공간 존재 여부 확인
+        Room room = getRoomOrThrow(roomId, teamId);
 
         return PageResponse.from(
-                sensorLocationRepository.findAllByRoom_Id(roomId, pageable)
+                sensorLocationRepository.findAllByRoom(room, pageable)
                         .map(SensorLocationResponse::from)
         );
     }
@@ -66,12 +66,14 @@ public class SensorLocationService {
         return SensorLocationResponse.from(sensorLocation);
     }
 
+    // 센서 위치 DevEUI로 조회
     public SensorTelemetryContextResponse getSensorTelemetryContext(String devEui) {
-        String normalizedDevEui = SensorLocation.normalizeDevEui(devEui);
-        SensorLocation sensorLocation = sensorLocationRepository.findByDevEui(normalizedDevEui)
-                .orElseThrow(() -> new ResourceNotFoundException("센서", normalizedDevEui));
+        String normalizedDevEui = SensorLocationNormalizer.normalizeDevEui(devEui);
 
-        return SensorTelemetryContextResponse.from(sensorLocation);
+        return SensorTelemetryContextResponse.from(
+                sensorLocationRepository.findByDevEui(normalizedDevEui)
+                        .orElseThrow(() -> new ResourceNotFoundException(ResourceType.SENSOR_LOCATION, "devEui", normalizedDevEui))
+        );
     }
 
     // 센서 위치 수정
@@ -80,13 +82,15 @@ public class SensorLocationService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         SensorLocation sensorLocation = getSensorLocationOrThrow(sensorLocationId, teamId);
+        Room destinationRoom = request.getRoomId().isPresent()
+                ? getRoomOrThrow(request.getRoomId().orElse(null), teamId)
+                : null;
 
-        if (request.hasLocationDetail()) {
-            sensorLocation.changeLocationDetail(normalizeLocationDetail(request.getLocationDetail()));
+        if (request.getLocationDetail().isPresent()) {
+            sensorLocation.changeLocationDetail(request.getLocationDetail().orElse(null));
         }
-        if (request.hasRoomId()) {
-            Room room = getRoomOrThrow(request.getRoomId(), teamId);
-            sensorLocation.moveTo(room);
+        if (destinationRoom != null) {
+            sensorLocation.moveTo(destinationRoom);
         }
 
         return SensorLocationResponse.from(sensorLocation);
@@ -102,17 +106,13 @@ public class SensorLocationService {
         sensorLocationRepository.delete(sensorLocation);
     }
 
-    private SensorLocation getSensorLocationOrThrow(Long sensorLocationId, Long teamId) {
-        return sensorLocationRepository.findByIdAndRoom_Building_Team_Id(sensorLocationId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("센서 위치", sensorLocationId));
-    }
-
     private Room getRoomOrThrow(Long roomId, Long teamId) {
         return roomRepository.findByIdAndBuilding_Team_Id(roomId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("공간", roomId));
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "id", roomId));
     }
 
-    private String normalizeLocationDetail(String locationDetail) {
-        return StringUtils.hasText(locationDetail) ? locationDetail : null;
+    private SensorLocation getSensorLocationOrThrow(Long sensorLocationId, Long teamId) {
+        return sensorLocationRepository.findByIdAndRoom_Building_Team_Id(sensorLocationId, teamId)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.SENSOR_LOCATION, "id", sensorLocationId));
     }
 }

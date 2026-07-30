@@ -56,6 +56,15 @@ public class TeamMemberController {
         return teamMemberService.changeTeamMemberRole(user.id(), teamId, teamMemberId, request);
     }
 
+    @PatchMapping("/teams/{teamId}/owner")
+    public TeamMemberResponse transferTeamOwnership(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @Valid @RequestBody TeamOwnerChangeRequest request
+    ) {
+        return teamMemberService.transferTeamOwnership(user.id(), teamId, request);
+    }
+
     @DeleteMapping("/teams/{teamId}/members/{teamMemberId}")
     public ResponseEntity<Void> removeTeamMember(
             @CurrentUser AuthenticatedUser user,
@@ -77,14 +86,5 @@ public class TeamMemberController {
 
         return ResponseEntity.noContent()
                 .build();
-    }
-
-    @PatchMapping("/teams/{teamId}/owner")
-    public TeamMemberResponse changeTeamOwner(
-            @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @Valid @RequestBody TeamOwnerChangeRequest request
-    ) {
-        return teamMemberService.changeTeamOwner(user.id(), teamId, request);
     }
 }

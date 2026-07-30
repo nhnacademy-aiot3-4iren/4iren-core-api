@@ -66,23 +66,23 @@ public class RoomController {
         return roomService.getRoom(user.id(), teamId, roomId);
     }
 
+    @GetMapping("/rooms/by-name")
+    public List<RoomMatchResponse> searchRoomsInTeam(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable @Positive Long teamId,
+            @RequestParam @NotBlank @Size(max = 50) String roomName
+    ) {
+        return roomService.searchRoomsInTeam(user.id(), teamId, roomName);
+    }
+
     @GetMapping("/buildings/{buildingId}/rooms/by-name")
-    public RoomMatchResponse getRoomByName(
+    public RoomMatchResponse searchRoomInBuilding(
             @CurrentUser AuthenticatedUser user,
             @PathVariable @Positive Long teamId,
             @PathVariable @Positive Long buildingId,
             @RequestParam @NotBlank @Size(max = 50) String roomName
     ) {
-        return roomService.getRoomByName(user.id(), teamId, buildingId, roomName);
-    }
-
-    @GetMapping("/rooms/by-name")
-    public List<RoomMatchResponse> getRoomsByName(
-            @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @RequestParam @NotBlank @Size(max = 50) String roomName
-    ) {
-        return roomService.getRoomsByName(user.id(), teamId, roomName);
+        return roomService.searchRoomInBuilding(user.id(), teamId, buildingId, roomName);
     }
 
     @PatchMapping("/rooms/{roomId}")

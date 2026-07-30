@@ -4,7 +4,7 @@ import com.nhnacademy.core.domain.TeamRole;
 import jakarta.validation.constraints.NotNull;
 
 public record TeamMemberRoleChangeRequest(
-        @NotNull
+        @NotNull(message = "팀 Role은 null일 수 없습니다.")
         TeamRole teamRole
 ) {
 }

@@ -56,6 +56,7 @@ public class BuildingRepositoryImpl implements BuildingRepositoryCustom {
                         building.id.eq(buildingId),
                         building.team.id.eq(teamId)
                 )
-                .fetchOne());
+                .fetchOne()
+        );
     }
 }

@@ -22,17 +22,23 @@ public class TeamAuthorizationService {
     }
 
     // 팀 관리자 권한 확인
-    public void requireTeamManager(Long userId, Long teamId) {
-        if (!getTeamRole(userId, teamId).isManager()) {
+    public TeamMember requireTeamManager(Long userId, Long teamId) {
+        TeamMember teamMember = requireTeamMember(userId, teamId);
+        if (!teamMember.getTeamRole().isManager()) {
             throw new ForbiddenException("팀 관리 권한이 없습니다.");
         }
+
+        return teamMember;
     }
 
     // 팀 소유자 권한 확인
-    public void requireTeamOwner(Long userId, Long teamId) {
-        if (!getTeamRole(userId, teamId).isOwner()) {
+    public TeamMember requireTeamOwner(Long userId, Long teamId) {
+        TeamMember teamMember = requireTeamMember(userId, teamId);
+        if (!teamMember.getTeamRole().isOwner()) {
             throw new ForbiddenException("팀 소유자 권한이 없습니다.");
         }
+
+        return teamMember;
     }
 
     public TeamRole getTeamRole(Long userId, Long teamId) {

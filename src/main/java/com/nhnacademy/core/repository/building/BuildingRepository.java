@@ -1,6 +1,7 @@
 package com.nhnacademy.core.repository.building;
 
 import com.nhnacademy.core.domain.Building;
+import com.nhnacademy.core.domain.Team;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,15 +10,13 @@ import java.util.Optional;
 
 public interface BuildingRepository extends JpaRepository<Building, Long>, BuildingRepositoryCustom {
 
-    Page<Building> findAllByTeam_Id(Long teamId, Pageable pageable);
-
     Optional<Building> findByIdAndTeam_Id(Long buildingId, Long teamId);
 
-    boolean existsByTeam_IdAndBuildingName(Long teamId, String buildingName);
+    Page<Building> findAllByTeam(Team team, Pageable pageable);
 
-    boolean existsByTeam_IdAndBuildingNameAndIdNot(Long teamId, String buildingName, Long buildingId);
+    boolean existsByTeam(Team team);
 
-    boolean existsByTeam_Id(Long teamId);
+    boolean existsByTeamAndBuildingName(Team team, String buildingName);
 
-    long countByTeam_Id(Long teamId);
+    boolean existsByTeamAndBuildingNameAndIdNot(Team team, String buildingName, Long buildingId);
 }

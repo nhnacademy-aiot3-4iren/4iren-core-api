@@ -1,58 +1,34 @@
 package com.nhnacademy.core.dto.team;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.util.StringUtils;
 
 @NoArgsConstructor
+@Getter
+@Setter
 public final class TeamUpdateRequest {
 
-    @Getter
-    @Size(max = 50)
-    private String teamName;
+    @Size(max = 50, message = "팀 이름은 50자 이하여야 합니다.")
+    private JsonNullable<String> teamName = JsonNullable.undefined();
 
-    @Getter
-    @Size(max = 200)
-    private String description;
+    @Size(max = 200, message = "팀 설명은 200자 이하여야 합니다.")
+    private JsonNullable<String> description = JsonNullable.undefined();
 
-    private boolean teamNamePresent;
-    private boolean descriptionPresent;
-
-    @JsonSetter("teamName")
-    public void setTeamName(String teamName) {
-        this.teamName = teamName;
-        this.teamNamePresent = true;
-    }
-
-    @JsonSetter("description")
-    public void setDescription(String description) {
-        this.description = description;
-        this.descriptionPresent = true;
-    }
-
-    @JsonIgnore
-    public boolean hasTeamName() {
-        return teamNamePresent;
-    }
-
-    @JsonIgnore
-    public boolean hasDescription() {
-        return descriptionPresent;
-    }
-
-    @AssertTrue
+    @AssertTrue(message = "수정할 필드가 없습니다. 최소 하나의 필드를 입력해야 합니다.")
     @JsonIgnore
     public boolean isAnyFieldPresent() {
-        return teamNamePresent || descriptionPresent;
+        return teamName.isPresent() || description.isPresent();
     }
 
-    @AssertTrue
+    @AssertTrue(message = "팀 이름은 null 또는 공백일 수 없습니다.")
     @JsonIgnore
     public boolean isTeamNameValid() {
-        return !teamNamePresent || StringUtils.hasText(teamName);
+        return !teamName.isPresent() || StringUtils.hasText(teamName.orElse(null));
     }
 }

@@ -1,5 +1,6 @@
 package com.nhnacademy.core.domain;
 
+import com.nhnacademy.core.domain.normalizer.BuildingNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "buildings",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_buildings_team_id_building_name",
+                name = "uq_buildings_team_id_building_name",
                 columnNames = {"team_id", "building_name"}
         )
 )
@@ -22,10 +23,11 @@ public class Building extends VersionedEntity {
     @Column(name = "building_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "team_id",
-            foreignKey = @ForeignKey(name = "fk_buildings_team")
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_buildings_team_id")
     )
     private Team team;
 
@@ -52,31 +54,39 @@ public class Building extends VersionedEntity {
             String detailAddress,
             String regionName
     ) {
-        this.team = team;
-        this.buildingName = buildingName.strip();
-        this.description = description == null ? null : description.strip();
-        this.roadAddress = roadAddress == null ? null : roadAddress.strip();
-        this.detailAddress = detailAddress == null ? null : detailAddress.strip();
-        this.regionName = regionName == null ? null : regionName.strip();
+        this.team = requireTeam(team);
+        this.buildingName = BuildingNormalizer.normalizeName(buildingName);
+        this.description = BuildingNormalizer.normalizeDescription(description);
+        this.roadAddress = BuildingNormalizer.normalizeRoadAddress(roadAddress);
+        this.detailAddress = BuildingNormalizer.normalizeDetailAddress(detailAddress);
+        this.regionName = BuildingNormalizer.normalizeRegionName(regionName);
     }
 
     public void changeName(String buildingName) {
-        this.buildingName = buildingName.strip();
+        this.buildingName = BuildingNormalizer.normalizeName(buildingName);
     }
 
     public void changeDescription(String description) {
-        this.description = description == null ? null : description.strip();
+        this.description = BuildingNormalizer.normalizeDescription(description);
     }
 
     public void changeRoadAddress(String roadAddress) {
-        this.roadAddress = roadAddress == null ? null : roadAddress.strip();
+        this.roadAddress = BuildingNormalizer.normalizeRoadAddress(roadAddress);
     }
 
     public void changeDetailAddress(String detailAddress) {
-        this.detailAddress = detailAddress == null ? null : detailAddress.strip();
+        this.detailAddress = BuildingNormalizer.normalizeDetailAddress(detailAddress);
     }
 
     public void changeRegionName(String regionName) {
-        this.regionName = regionName == null ? null : regionName.strip();
+        this.regionName = BuildingNormalizer.normalizeRegionName(regionName);
+    }
+
+    private Team requireTeam(Team team) {
+        if (team == null) {
+            throw new IllegalArgumentException("팀은 null일 수 없습니다.");
+        }
+
+        return team;
     }
 }

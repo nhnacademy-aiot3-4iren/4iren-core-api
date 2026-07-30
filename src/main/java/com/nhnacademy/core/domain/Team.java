@@ -1,5 +1,6 @@
 package com.nhnacademy.core.domain;
 
+import com.nhnacademy.core.domain.normalizer.TeamNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,15 +24,15 @@ public class Team extends VersionedEntity {
     private String description;
 
     public Team(String teamName, String description) {
-        this.teamName = teamName.strip();
-        this.description = description == null ? null : description.strip();
+        this.teamName = TeamNormalizer.normalizeName(teamName);
+        this.description = TeamNormalizer.normalizeDescription(description);
     }
 
     public void changeName(String teamName) {
-        this.teamName = teamName.strip();
+        this.teamName = TeamNormalizer.normalizeName(teamName);
     }
 
     public void changeDescription(String description) {
-        this.description = description == null ? null : description.strip();
+        this.description = TeamNormalizer.normalizeDescription(description);
     }
 }

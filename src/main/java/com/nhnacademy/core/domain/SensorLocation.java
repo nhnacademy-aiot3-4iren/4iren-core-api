@@ -1,17 +1,16 @@
 package com.nhnacademy.core.domain;
 
+import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Locale;
-
 @Entity
 @Table(
         name = "sensor_locations",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_sensor_locations_dev_eui",
+                name = "uq_sensor_locations_dev_eui",
                 columnNames = "dev_eui"
         ),
         indexes = @Index(
@@ -32,7 +31,7 @@ public class SensorLocation extends VersionedEntity {
     @JoinColumn(
             name = "room_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_sensor_locations_room")
+            foreignKey = @ForeignKey(name = "fk_sensor_locations_room_id")
     )
     private Room room;
 
@@ -43,20 +42,24 @@ public class SensorLocation extends VersionedEntity {
     private String locationDetail;
 
     public SensorLocation(Room room, String devEui, String locationDetail) {
-        this.room = room;
-        this.devEui = normalizeDevEui(devEui);
-        this.locationDetail = locationDetail == null ? null : locationDetail.strip();
-    }
-
-    public static String normalizeDevEui(String devEui) {
-        return devEui.toLowerCase(Locale.ROOT);
+        this.room = requireRoom(room);
+        this.devEui = SensorLocationNormalizer.normalizeDevEui(devEui);
+        this.locationDetail = SensorLocationNormalizer.normalizeLocationDetail(locationDetail);
     }
 
     public void moveTo(Room room) {
-        this.room = room;
+        this.room = requireRoom(room);
     }
 
     public void changeLocationDetail(String locationDetail) {
-        this.locationDetail = locationDetail == null ? null : locationDetail.strip();
+        this.locationDetail = SensorLocationNormalizer.normalizeLocationDetail(locationDetail);
+    }
+
+    private Room requireRoom(Room room) {
+        if (room == null) {
+            throw new IllegalArgumentException("공간은 null일 수 없습니다.");
+        }
+
+        return room;
     }
 }

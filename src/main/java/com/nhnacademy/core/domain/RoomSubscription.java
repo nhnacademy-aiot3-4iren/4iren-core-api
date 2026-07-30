@@ -11,7 +11,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Table(
         name = "room_subscriptions",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_room_subscriptions_room_id_team_member_id",
+                name = "uq_room_subscriptions_room_id_team_member_id",
                 columnNames = {"room_id", "team_member_id"}
         ),
         indexes = @Index(
@@ -32,7 +32,7 @@ public class RoomSubscription extends VersionedEntity {
     @JoinColumn(
             name = "room_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_room_subscriptions_room")
+            foreignKey = @ForeignKey(name = "fk_room_subscriptions_room_id")
     )
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Room room;
@@ -41,7 +41,7 @@ public class RoomSubscription extends VersionedEntity {
     @JoinColumn(
             name = "team_member_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_room_subscriptions_team_member")
+            foreignKey = @ForeignKey(name = "fk_room_subscriptions_team_member_id")
     )
     @OnDelete(action = OnDeleteAction.CASCADE)
     private TeamMember teamMember;
@@ -50,15 +50,27 @@ public class RoomSubscription extends VersionedEntity {
     private boolean notificationEnabled = true;
 
     public RoomSubscription(Room room, TeamMember teamMember) {
-        this.room = room;
-        this.teamMember = teamMember;
+        this.room = requireRoom(room);
+        this.teamMember = requireTeamMember(teamMember);
     }
 
-    public void enableNotifications() {
-        this.notificationEnabled = true;
+    public void changeNotificationEnabled(boolean notificationEnabled) {
+        this.notificationEnabled = notificationEnabled;
     }
 
-    public void disableNotifications() {
-        this.notificationEnabled = false;
+    private Room requireRoom(Room room) {
+        if (room == null) {
+            throw new IllegalArgumentException("공간은 null일 수 없습니다.");
+        }
+
+        return room;
+    }
+
+    private TeamMember requireTeamMember(TeamMember teamMember) {
+        if (teamMember == null) {
+            throw new IllegalArgumentException("팀 구성원은 null일 수 없습니다.");
+        }
+
+        return teamMember;
     }
 }

@@ -1,5 +1,6 @@
 package com.nhnacademy.core.repository.team;
 
+import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamMember;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -20,15 +21,12 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
 
     Optional<TeamMember> findByIdAndTeam_Id(Long teamMemberId, Long teamId);
 
-    boolean existsByTeam_IdAndUserId(Long teamId, Long userId);
-
-    Page<TeamMember> findAllByTeam_Id(Long teamId, Pageable pageable);
+    Page<TeamMember> findAllByTeam(Team team, Pageable pageable);
 
     @EntityGraph(attributePaths = "team")
     Page<TeamMember> findAllByUserId(Long userId, Pageable pageable);
 
-    @EntityGraph(attributePaths = "team")
     List<TeamMember> findAllByUserIdAndTeam_IdIn(Long userId, List<Long> teamIds);
 
-    long countByTeam_Id(Long teamId);
+    boolean existsByTeamAndUserId(Team team, Long userId);
 }

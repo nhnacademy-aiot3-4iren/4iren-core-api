@@ -11,7 +11,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Table(
         name = "team_members",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_team_members_team_id_user_id",
+                name = "uq_team_members_team_id_user_id",
                 columnNames = {"team_id", "user_id"}
         ),
         indexes = @Index(
@@ -32,7 +32,7 @@ public class TeamMember extends VersionedEntity {
     @JoinColumn(
             name = "team_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_team_members_team")
+            foreignKey = @ForeignKey(name = "fk_team_members_team_id")
     )
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Team team;
@@ -45,12 +45,36 @@ public class TeamMember extends VersionedEntity {
     private TeamRole teamRole;
 
     public TeamMember(Team team, Long userId, TeamRole teamRole) {
-        this.team = team;
-        this.userId = userId;
-        this.teamRole = teamRole;
+        this.team = requireTeam(team);
+        this.userId = requireUserId(userId);
+        this.teamRole = requireTeamRole(teamRole);
     }
 
     public void changeRole(TeamRole teamRole) {
-        this.teamRole = teamRole;
+        this.teamRole = requireTeamRole(teamRole);
+    }
+
+    private Team requireTeam(Team team) {
+        if (team == null) {
+            throw new IllegalArgumentException("팀은 null일 수 없습니다.");
+        }
+
+        return team;
+    }
+
+    private Long requireUserId(Long userId) {
+        if (userId == null || userId <= 0) {
+            throw new IllegalArgumentException("사용자 ID는 양수여야 합니다.");
+        }
+
+        return userId;
+    }
+
+    private TeamRole requireTeamRole(TeamRole teamRole) {
+        if (teamRole == null) {
+            throw new IllegalArgumentException("팀 Role은 null일 수 없습니다.");
+        }
+
+        return teamRole;
     }
 }

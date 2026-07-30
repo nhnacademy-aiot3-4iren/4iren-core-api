@@ -1,58 +1,34 @@
 package com.nhnacademy.core.dto.sensor.location;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.openapitools.jackson.nullable.JsonNullable;
 
 @NoArgsConstructor
+@Getter
+@Setter
 public final class SensorLocationUpdateRequest {
 
-    @Getter
-    @Size(max = 100)
-    private String locationDetail;
+    @Positive(message = "공간 ID는 양수여야 합니다.")
+    private JsonNullable<Long> roomId = JsonNullable.undefined();
 
-    @Getter
-    @Positive
-    private Long roomId;
+    @Size(max = 100, message = "센서 위치 상세는 100자 이하여야 합니다.")
+    private JsonNullable<String> locationDetail = JsonNullable.undefined();
 
-    private boolean locationDetailPresent;
-    private boolean roomIdPresent;
-
-    @JsonSetter("locationDetail")
-    public void setLocationDetail(String locationDetail) {
-        this.locationDetail = locationDetail;
-        this.locationDetailPresent = true;
-    }
-
-    @JsonSetter("roomId")
-    public void setRoomId(Long roomId) {
-        this.roomId = roomId;
-        this.roomIdPresent = true;
-    }
-
-    @JsonIgnore
-    public boolean hasLocationDetail() {
-        return locationDetailPresent;
-    }
-
-    @JsonIgnore
-    public boolean hasRoomId() {
-        return roomIdPresent;
-    }
-
-    @AssertTrue
+    @AssertTrue(message = "수정할 필드가 없습니다. 최소 하나의 필드를 입력해야 합니다.")
     @JsonIgnore
     public boolean isAnyFieldPresent() {
-        return locationDetailPresent || roomIdPresent;
+        return roomId.isPresent() || locationDetail.isPresent();
     }
 
-    @AssertTrue
+    @AssertTrue(message = "공간 ID는 null일 수 없습니다.")
     @JsonIgnore
     public boolean isRoomIdValid() {
-        return !roomIdPresent || roomId != null;
+        return !roomId.isPresent() || roomId.orElse(null) != null;
     }
 }

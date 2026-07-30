@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public interface DeviceRepository extends JpaRepository<Device, Long> {
 
-    Page<Device> findAllByRoom_Id(Long roomId, Pageable pageable);
-
     Optional<Device> findByIdAndRoom_Building_Team_Id(Long deviceId, Long teamId);
+
+    Page<Device> findAllByRoom(Room room, Pageable pageable);
 
     boolean existsByRoom(Room room);
 }

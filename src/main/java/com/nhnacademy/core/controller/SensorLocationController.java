@@ -34,7 +34,8 @@ public class SensorLocationController {
             @PathVariable @Positive Long roomId,
             @Valid @RequestBody SensorLocationCreateRequest request
     ) {
-        SensorLocationResponse response = sensorLocationService.createSensorLocation(user.id(), teamId, roomId, request);
+        SensorLocationResponse response =
+                sensorLocationService.createSensorLocation(user.id(), teamId, roomId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
