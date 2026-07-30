@@ -29,13 +29,19 @@ import java.util.TreeMap;
 public class KmaService {
     private final KmaClient kmaClient;
     private final RegionCoordinateService regionCoordinateService;
+    private final RoomService roomService;
     @Value("${kma.service-key}")
     private String authKey;
 
 
     public KmaCurrentWeatherDto getCurrentUltraSrtNcst(String regionName) {
+        return getCurrentUltraSrtNcstToDateTime(regionName, LocalDateTime.now());
+    }
+
+
+    public KmaCurrentWeatherDto getCurrentUltraSrtNcstToDateTime(String regionName, LocalDateTime requestDateTime) {
         RegionCoordinate coordinate = regionCoordinateService.findByRegionName(regionName);
-        LocalDateTime baseDateTime = LocalDateTime.now().minusMinutes(10);
+        LocalDateTime baseDateTime = requestDateTime.minusMinutes(10);
         KmaUltraSrtNcstRequestDto request = new KmaUltraSrtNcstRequestDto(
                 baseDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd")),
                 baseDateTime.format(DateTimeFormatter.ofPattern("HH")) + "00",
@@ -66,6 +72,36 @@ public class KmaService {
      */
     public KmaCurrentWeatherResponseDto getCurrentSimpleUltraSrtNcstForLLM(String regionName) {
         KmaCurrentWeatherDto currentWeather = getCurrentUltraSrtNcst(regionName);
+        CurrentWeatherAccumulator weather = new CurrentWeatherAccumulator();
+        currentWeather.values().forEach(weather::put);
+
+        return new KmaCurrentWeatherResponseDto(
+                regionName,
+                currentWeather.regionName(),
+                currentWeather.nx(),
+                currentWeather.ny(),
+                formatDateTime(currentWeather.baseDateTime()),
+                weather.temperature,
+                weather.precipitationType,
+                weather.precipitationAmount,
+                weather.humidity,
+                weather.windDirection,
+                weather.windSpeed,
+                weather.eastWestWindComponent,
+                weather.northSouthWindComponent
+        );
+    }
+
+    /**
+     * 방 번호와 요청한 시각으로 그 지역과 그 시각의 날씨 조회
+     *
+     * @param roomId
+     * @param requestDateTime
+     * @return
+     */
+    public KmaCurrentWeatherResponseDto getCurrentSimpleUltraSrtNcstToRoomIdForLLM(Long roomId, LocalDateTime requestDateTime) {
+        String regionName = roomService.getRegionName(roomId);
+        KmaCurrentWeatherDto currentWeather = getCurrentUltraSrtNcstToDateTime(regionName, requestDateTime);
         CurrentWeatherAccumulator weather = new CurrentWeatherAccumulator();
         currentWeather.values().forEach(weather::put);
 

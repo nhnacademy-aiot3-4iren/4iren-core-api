@@ -8,10 +8,9 @@ import com.nhnacademy.core.service.KmaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/kma")
@@ -50,4 +49,12 @@ public class KmaController {
         KmaForecastWeatherDto response = kmaService.getUltraSrtFcst(regionName);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/rooms/{roomId}/weather")
+    public ResponseEntity<KmaCurrentWeatherResponseDto> getNcstToRoomId(@PathVariable Long roomId, @RequestParam LocalDateTime dateTime) {
+        KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstToRoomIdForLLM(roomId, dateTime);
+        log.info("초단기실황조회 호출결과: {}", response);
+        return ResponseEntity.ok(response);
+    }
+
 }
