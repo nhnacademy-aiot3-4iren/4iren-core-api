@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/teams/{teamId}")
+@RequestMapping("/teams/{teamId}")
 public class RoomSubscriptionController {
 
     private final RoomSubscriptionService roomSubscriptionService;

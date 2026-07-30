@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api")
 public class TeamMemberController {
 
     private final TeamMemberService teamMemberService;

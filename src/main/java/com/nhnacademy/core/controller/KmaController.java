@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/kma")
+@RequestMapping("/kma")
 @RequiredArgsConstructor
 @Slf4j
 public class KmaController {
