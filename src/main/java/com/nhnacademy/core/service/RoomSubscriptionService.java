@@ -1,15 +1,13 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.domain.Room;
-import com.nhnacademy.core.domain.RoomSubscription;
-import com.nhnacademy.core.domain.TeamMember;
+import com.nhnacademy.core.domain.*;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionUpdateRequest;
 import com.nhnacademy.core.dto.subscription.UserRoomSubscriptionsResponse;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.subscription.RoomSubscriptionRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
@@ -18,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -47,6 +47,39 @@ public class RoomSubscriptionService {
                 });
 
         return RoomSubscriptionResponse.from(subscription);
+    }
+
+    // 팀의 모든 관리자에게 새로운 공간 구독 생성
+    @Transactional
+    public void subscribeManagersToRoom(Room room) {
+        Team team = room.getBuilding().getTeam();
+
+        // 해당 팀의 관리자 역할을 가진 모든 팀 구성원에 대해 구독 생성
+        List<RoomSubscription> subscriptions = teamMemberRepository
+                .findAllByTeamAndTeamRoleIn(team, TeamRole.managerRoles())
+                .stream()
+                .map(manager -> new RoomSubscription(room, manager))
+                .toList();
+
+        saveSubscriptions(subscriptions);
+    }
+
+    // 기존 공간에 일괄 구독 생성
+    @Transactional
+    public void subscribeManagerToAllRooms(TeamMember teamMember) {
+        if (!teamMember.getTeamRole().isManager()) {
+            throw new IllegalArgumentException("관리자 권한이 있는 팀 구성원만 기존 공간에 일괄 구독할 수 있습니다.");
+        }
+
+        Team team = teamMember.getTeam();
+        // 이미 구독 중인 공간을 제외한, 해당 팀의 모든 공간에 대해 구독 생성
+        List<RoomSubscription> subscriptions = roomRepository
+                .findAllUnsubscribedByTeamMemberAndTeam(teamMember, team)
+                .stream()
+                .map(room -> new RoomSubscription(room, teamMember))
+                .toList();
+
+        saveSubscriptions(subscriptions);
     }
 
     // 구독 목록 조회
@@ -82,7 +115,7 @@ public class RoomSubscriptionService {
     // 구독 정보 수정
     @Transactional
     public RoomSubscriptionResponse updateSubscription(Long userId, Long teamId, Long roomId, RoomSubscriptionUpdateRequest request) {
-        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
+        TeamMember teamMember = lockTeamMemberOrThrow(userId, teamId);
 
         RoomSubscription subscription = getSubscriptionOrThrow(roomId, teamMember);
 
@@ -94,7 +127,7 @@ public class RoomSubscriptionService {
     // 구독 해제
     @Transactional
     public void unsubscribeFromRoom(Long userId, Long teamId, Long roomId) {
-        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
+        TeamMember teamMember = lockTeamMemberOrThrow(userId, teamId);
 
         RoomSubscription subscription = getSubscriptionOrThrow(roomId, teamMember);
 
@@ -103,12 +136,18 @@ public class RoomSubscriptionService {
 
     private TeamMember lockTeamMemberOrThrow(Long userId, Long teamId) {
         return teamMemberRepository.findLockedByTeam_IdAndUserId(teamId, userId)
-                .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
+                .orElseThrow(() -> new ForbiddenException(
+                        ErrorCode.TEAM_ACCESS_FORBIDDEN,
+                        Map.of("teamId", teamId)
+                ));
     }
 
     private Room getRoomOrThrow(Long roomId, Long teamId) {
         return roomRepository.findByIdAndBuilding_Team_Id(roomId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "id", roomId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.ROOM_NOT_FOUND,
+                        Map.of("roomId", roomId, "teamId", teamId)
+                ));
     }
 
     private Optional<RoomSubscription> findSubscription(Long roomId, TeamMember teamMember) {
@@ -118,6 +157,15 @@ public class RoomSubscriptionService {
 
     private RoomSubscription getSubscriptionOrThrow(Long roomId, TeamMember teamMember) {
         return findSubscription(roomId, teamMember)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM_SUBSCRIPTION, "roomId", roomId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.ROOM_SUBSCRIPTION_NOT_FOUND,
+                        Map.of("roomId", roomId, "teamId", teamMember.getTeam().getId())
+                ));
+    }
+
+    private void saveSubscriptions(List<RoomSubscription> subscriptions) {
+        if (!subscriptions.isEmpty()) {
+            roomSubscriptionRepository.saveAll(subscriptions);
+        }
     }
 }

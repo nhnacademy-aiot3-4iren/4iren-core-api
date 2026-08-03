@@ -1,9 +1,6 @@
 package com.nhnacademy.core.repository.room;
 
-import com.nhnacademy.core.domain.QBuilding;
-import com.nhnacademy.core.domain.QDevice;
-import com.nhnacademy.core.domain.QRoom;
-import com.nhnacademy.core.domain.QSensorLocation;
+import com.nhnacademy.core.domain.*;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
@@ -11,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,8 +17,9 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-    private final QRoom room = QRoom.room;
     private final QBuilding building = QBuilding.building;
+    private final QRoom room = QRoom.room;
+    private final QRoomSubscription subscription = QRoomSubscription.roomSubscription;
     private final QSensorLocation sensor = QSensorLocation.sensorLocation;
     private final QDevice device = QDevice.device;
 
@@ -51,6 +50,25 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
                 )
                 .fetchOne()
         );
+    }
+
+    @Override
+    public List<Room> findAllUnsubscribedByTeamMemberAndTeam(TeamMember teamMember, Team team) {
+        return queryFactory
+                .selectFrom(room)
+                .join(room.building, building)
+                .where(
+                        building.team.eq(team),
+                        JPAExpressions
+                                .selectOne()
+                                .from(subscription)
+                                .where(
+                                        subscription.room.eq(room),
+                                        subscription.teamMember.eq(teamMember)
+                                )
+                                .notExists()
+                )
+                .fetch();
     }
 
     @Override
