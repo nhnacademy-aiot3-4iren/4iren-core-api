@@ -78,12 +78,12 @@ jobs:
 
           # 2. 첫 번째 컨테이너(1번) 교체 및 띄우기
           echo "1번 서버 업데이트 시작..."
-          docker compose up -d ${{ env.IMAGE_NAME }}-1
+          docker compose up -d --no-deps ${{ env.IMAGE_NAME }}-1
 
           echo "1번 서버 구동 대기 중..."
           # 최대 20번(약 100초) 대기하며 헬스체크
           for i in {1..20}; do
-            STATUS=$(docker exec ${{ env.IMAGE_NAME }}-1 wget -qO- http://localhost:8761/actuator/health 2>/dev/null | grep '"status":"UP"' || true)
+            STATUS=$(docker exec ${{ env.IMAGE_NAME }}-1 wget -qO- http://localhost:8080/actuator/health 2>/dev/null | grep '"status":"UP"' || true)
 
             if [ -n "$STATUS" ]; then
               echo "1번 서버 구동 완료!"
@@ -100,11 +100,11 @@ jobs:
 
           # 3. 두 번째 컨테이너(2번) 교체 및 띄우기
           echo "2번 서버 업데이트 시작..."
-          docker compose up -d ${{ env.IMAGE_NAME }}-2
+          docker compose up -d --no-deps ${{ env.IMAGE_NAME }}-2
 
           echo "2번 서버 구동 대기 중..."
           for i in {1..20}; do
-            STATUS=$(docker exec ${{ env.IMAGE_NAME }}-2 wget -qO- http://localhost:8762/actuator/health 2>/dev/null | grep '"status":"UP"' || true)
+            STATUS=$(docker exec ${{ env.IMAGE_NAME }}-2 wget -qO- http://localhost:8080/actuator/health 2>/dev/null | grep '"status":"UP"' || true)
 
             if [ -n "$STATUS" ]; then
               echo "2번 서버 구동 완료!"
