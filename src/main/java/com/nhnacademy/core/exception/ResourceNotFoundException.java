@@ -1,9 +1,17 @@
 package com.nhnacademy.core.exception;
 
-public class ResourceNotFoundException extends RuntimeException {
+import java.util.Map;
 
-    public ResourceNotFoundException(ResourceType resourceType, String field, Object value) {
-        super("존재하지 않는 %s입니다. %s=%s"
-                .formatted(resourceType.displayName(), field, value));
+public class ResourceNotFoundException extends ApplicationException {
+
+    public ResourceNotFoundException(ErrorCode errorCode) {
+        super(errorCode);
+    }
+
+    public ResourceNotFoundException(
+            ErrorCode errorCode,
+            Map<String, Object> metadata
+    ) {
+        super(errorCode, metadata);
     }
 }

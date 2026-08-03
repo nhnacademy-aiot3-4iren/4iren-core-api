@@ -8,15 +8,17 @@ import com.nhnacademy.core.dto.sensor.SensorTelemetryContextResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationCreateRequest;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationUpdateRequest;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.sensor.SensorLocationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +38,7 @@ public class SensorLocationService {
         SensorLocation sensorLocation = new SensorLocation(room, request.devEui(), request.locationDetail());
 
         if (sensorLocationRepository.existsByDevEui(sensorLocation.getDevEui())) {
-            throw new ResourceConflictException("이미 등록된 DevEUI입니다.");
+            throw new ResourceConflictException(ErrorCode.SENSOR_DEV_EUI_DUPLICATED);
         }
 
         return SensorLocationResponse.from(
@@ -72,7 +74,7 @@ public class SensorLocationService {
 
         return SensorTelemetryContextResponse.from(
                 sensorLocationRepository.findByDevEui(normalizedDevEui)
-                        .orElseThrow(() -> new ResourceNotFoundException(ResourceType.SENSOR_LOCATION, "devEui", normalizedDevEui))
+                        .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SENSOR_LOCATION_NOT_FOUND))
         );
     }
 
@@ -108,11 +110,17 @@ public class SensorLocationService {
 
     private Room getRoomOrThrow(Long roomId, Long teamId) {
         return roomRepository.findByIdAndBuilding_Team_Id(roomId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "id", roomId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.ROOM_NOT_FOUND,
+                        Map.of("roomId", roomId, "teamId", teamId)
+                ));
     }
 
     private SensorLocation getSensorLocationOrThrow(Long sensorLocationId, Long teamId) {
         return sensorLocationRepository.findByIdAndRoom_Building_Team_Id(sensorLocationId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.SENSOR_LOCATION, "id", sensorLocationId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.SENSOR_LOCATION_NOT_FOUND,
+                        Map.of("sensorLocationId", sensorLocationId, "teamId", teamId)
+                ));
     }
 }

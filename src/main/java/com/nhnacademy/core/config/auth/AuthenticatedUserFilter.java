@@ -1,13 +1,14 @@
 package com.nhnacademy.core.config.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nhnacademy.core.dto.ErrorResponse;
+import com.nhnacademy.core.exception.ErrorCode;
+import com.nhnacademy.core.exception.response.ErrorResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -15,8 +16,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthenticatedUserFilter extends OncePerRequestFilter {
@@ -35,7 +36,8 @@ public class AuthenticatedUserFilter extends OncePerRequestFilter {
         try {
             authenticatedUser = parseUser(request);
         } catch (IllegalArgumentException e) {
-            writeBadRequestResponse(response, "사용자 정보를 확인할 수 없습니다.");
+            log.warn("인증 헤더를 파싱할 수 없습니다. code={}, path={}", ErrorCode.INVALID_AUTH_HEADER.getCode(), request.getRequestURI());
+            writeBadRequestResponse(request, response);
             return;
         }
 
@@ -65,15 +67,18 @@ public class AuthenticatedUserFilter extends OncePerRequestFilter {
         }
     }
 
-    private void writeBadRequestResponse(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpStatus.BAD_REQUEST.value());
+    private void writeBadRequestResponse(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
+        ErrorCode errorCode = ErrorCode.INVALID_AUTH_HEADER;
+        response.setStatus(errorCode.getStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-        objectMapper.writeValue(response.getOutputStream(), new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                message,
-                LocalDateTime.now()
-        ));
+        objectMapper.writeValue(
+                response.getOutputStream(),
+                ErrorResponse.of(errorCode, request.getRequestURI())
+        );
     }
 }

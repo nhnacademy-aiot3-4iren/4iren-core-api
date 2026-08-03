@@ -8,9 +8,9 @@ import com.nhnacademy.core.dto.building.BuildingCreateRequest;
 import com.nhnacademy.core.dto.building.BuildingDetailResponse;
 import com.nhnacademy.core.dto.building.BuildingResponse;
 import com.nhnacademy.core.dto.building.BuildingUpdateRequest;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.building.BuildingRepository;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +47,10 @@ public class BuildingService {
         );
 
         if (buildingRepository.existsByTeamAndBuildingName(team, building.getBuildingName())) {
-            throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.BUILDING_NAME_DUPLICATED,
+                    Map.of("teamId", teamId)
+            );
         }
 
         return BuildingResponse.from(
@@ -70,7 +75,10 @@ public class BuildingService {
 
         return BuildingDetailResponse.from(
                 buildingRepository.findDetailByIdAndTeamId(buildingId, teamId)
-                        .orElseThrow(() -> new ResourceNotFoundException(ResourceType.BUILDING, "id", buildingId))
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                ErrorCode.BUILDING_NOT_FOUND,
+                                Map.of("buildingId", buildingId, "teamId", teamId)
+                        ))
         );
     }
 
@@ -90,7 +98,10 @@ public class BuildingService {
                         normalizedBuildingName,
                         buildingId
                 )) {
-                    throw new ResourceConflictException("이미 사용 중인 건물명입니다.");
+                    throw new ResourceConflictException(
+                            ErrorCode.BUILDING_NAME_DUPLICATED,
+                            Map.of("buildingId", buildingId, "teamId", teamId)
+                    );
                 }
 
                 building.changeName(requestedBuildingName);
@@ -120,18 +131,27 @@ public class BuildingService {
         Building building = getBuildingOrThrow(buildingId, teamId);
 
         if (roomRepository.existsByBuilding(building)) {
-            throw new ResourceConflictException("건물에 등록된 공간이 있어 삭제할 수 없습니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.BUILDING_HAS_ROOMS,
+                    Map.of("buildingId", buildingId, "teamId", teamId)
+            );
         }
         buildingRepository.delete(building);
     }
 
     private Team getTeamOrThrow(Long teamId) {
         return teamRepository.findById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.TEAM_NOT_FOUND,
+                        Map.of("teamId", teamId)
+                ));
     }
 
     private Building getBuildingOrThrow(Long buildingId, Long teamId) {
         return buildingRepository.findByIdAndTeam_Id(buildingId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.BUILDING, "id", buildingId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.BUILDING_NOT_FOUND,
+                        Map.of("buildingId", buildingId, "teamId", teamId)
+                ));
     }
 }

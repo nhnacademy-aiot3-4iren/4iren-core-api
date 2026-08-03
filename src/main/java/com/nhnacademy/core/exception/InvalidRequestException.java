@@ -2,13 +2,13 @@ package com.nhnacademy.core.exception;
 
 import java.util.Map;
 
-public class ForbiddenException extends ApplicationException {
+public class InvalidRequestException extends ApplicationException {
 
-    public ForbiddenException(ErrorCode errorCode) {
+    public InvalidRequestException(ErrorCode errorCode) {
         super(errorCode);
     }
 
-    public ForbiddenException(
+    public InvalidRequestException(
             ErrorCode errorCode,
             Map<String, Object> metadata
     ) {

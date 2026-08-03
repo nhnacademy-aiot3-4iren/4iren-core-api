@@ -9,10 +9,10 @@ import com.nhnacademy.core.dto.team.TeamCreateRequest;
 import com.nhnacademy.core.dto.team.TeamDetailResponse;
 import com.nhnacademy.core.dto.team.TeamResponse;
 import com.nhnacademy.core.dto.team.TeamUpdateRequest;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.building.BuildingRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
@@ -40,7 +40,7 @@ public class TeamService {
     @Transactional
     public TeamResponse createTeam(Long userId, UserRole userRole, TeamCreateRequest request) {
         if (userRole != UserRole.ADMIN) {
-            throw new ForbiddenException("팀 생성 권한이 없습니다.");
+            throw new ForbiddenException(ErrorCode.TEAM_CREATE_FORBIDDEN);
         }
 
         Team team = new Team(request.teamName(), request.description());
@@ -90,7 +90,10 @@ public class TeamService {
         return TeamDetailResponse.from(
                 myRole,
                 teamRepository.findDetailById(teamId)
-                        .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId))
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                ErrorCode.TEAM_NOT_FOUND,
+                                Map.of("teamId", teamId)
+                        ))
         );
     }
 
@@ -117,7 +120,10 @@ public class TeamService {
         teamAuthorizationService.requireTeamOwner(userId, teamId);
 
         if (buildingRepository.existsByTeam(team)) {
-            throw new ResourceConflictException("팀에 등록된 건물이 있어 삭제할 수 없습니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_HAS_BUILDINGS,
+                    Map.of("teamId", teamId)
+            );
         }
         teamRepository.delete(team);
     }
@@ -141,6 +147,9 @@ public class TeamService {
 
     private Team lockTeamOrThrow(Long teamId) {
         return teamRepository.findLockedById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.TEAM_NOT_FOUND,
+                        Map.of("teamId", teamId)
+                ));
     }
 }
