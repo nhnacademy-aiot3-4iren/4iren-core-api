@@ -4,14 +4,16 @@ import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamInvitationCode;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeCreateRequest;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeResponse;
-import com.nhnacademy.core.exception.ResourceConflictException;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.exception.ResourceType;
+import com.nhnacademy.core.exception.ServiceUnavailableException;
 import com.nhnacademy.core.repository.team.TeamInvitationCodeRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class TeamInvitationCodeService {
     private final TeamRepository teamRepository;
     private final TeamInvitationCodeRepository teamInvitationCodeRepository;
     private final TeamAuthorizationService teamAuthorizationService;
+    private final InvitationCodeHasher invitationCodeHasher;
 
     // 팀 초대 코드 생성
     @Transactional
@@ -30,10 +33,16 @@ public class TeamInvitationCodeService {
         Team team = lockTeamOrThrow(teamId);
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
-        TeamInvitationCode invitationCode = new TeamInvitationCode(team, generateCode(), request.expiresAt());
+        GeneratedInvitationCode generatedCode = generateCode();
+        TeamInvitationCode invitationCode = new TeamInvitationCode(
+                team,
+                generatedCode.codeHash(),
+                request.expiresAt()
+        );
 
         return TeamInvitationCodeResponse.from(
-                teamInvitationCodeRepository.save(invitationCode)
+                teamInvitationCodeRepository.save(invitationCode),
+                generatedCode.rawCode()
         );
     }
 
@@ -44,25 +53,39 @@ public class TeamInvitationCodeService {
         teamAuthorizationService.requireTeamManager(userId, teamId);
 
         TeamInvitationCode invitationCode = teamInvitationCodeRepository.findByIdAndTeam(invitationCodeId, team)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.INVITATION_CODE, "id", invitationCodeId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.INVITATION_CODE_NOT_FOUND,
+                        Map.of("invitationCodeId", invitationCodeId, "teamId", teamId)
+                ));
 
         invitationCode.deactivate();
     }
 
     // 중복되지 않는 초대 코드 생성
-    private String generateCode() {
+    private GeneratedInvitationCode generateCode() {
         for (int attempt = 0; attempt < MAX_CODE_GENERATION_ATTEMPTS; attempt++) {
-            String code = InvitationCodeGenerator.generate();
-            if (!teamInvitationCodeRepository.existsByCode(code)) {
-                return code;
+            String rawCode = InvitationCodeGenerator.generate();
+            String codeHash = invitationCodeHasher.hash(rawCode);
+
+            if (!teamInvitationCodeRepository.existsByCodeHash(codeHash)) {
+                return new GeneratedInvitationCode(rawCode, codeHash);
             }
         }
 
-        throw new ResourceConflictException("초대 코드를 생성하지 못했습니다. 다시 시도해 주세요.");
+        throw new ServiceUnavailableException(ErrorCode.INVITATION_CODE_GENERATION_FAILED);
     }
 
     private Team lockTeamOrThrow(Long teamId) {
         return teamRepository.findLockedById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.TEAM_NOT_FOUND,
+                        Map.of("teamId", teamId)
+                ));
+    }
+
+    private record GeneratedInvitationCode(
+            String rawCode,
+            String codeHash
+    ) {
     }
 }
