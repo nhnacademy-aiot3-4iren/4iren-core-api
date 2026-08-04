@@ -20,7 +20,7 @@ public class MeasurementUnit extends VersionedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "measurement_id")
+    @Column(name = "measurement_unit_id")
     private Long id;
 
     @Column(name = "ucum_code",
@@ -53,3 +53,74 @@ public class MeasurementUnit extends VersionedEntity {
         this.enabled = enabled;
     }
 }
+/*
+CREATE TABLE metric_types (
+    metric_type_id BIGINT NOT NULL AUTO_INCREMENT,
+
+    metric_code VARCHAR(50)
+        CHARACTER SET ascii
+        COLLATE ascii_bin
+        NOT NULL,
+
+    display_name VARCHAR(50) NOT NULL,
+    description VARCHAR(200) NULL,
+
+    canonical_unit_id BIGINT NOT NULL,
+
+    data_type VARCHAR(20) NOT NULL,
+    default_aggregation VARCHAR(20) NOT NULL,
+
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at DATETIME(6) NOT NULL,
+    created_by BIGINT NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    updated_by BIGINT NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (metric_type_id),
+
+    CONSTRAINT uq_metric_types_metric_code
+        UNIQUE (metric_code),
+
+    CONSTRAINT chk_metric_types_data_type
+        CHECK (
+            data_type IN ('NUMBER', 'BOOLEAN', 'TEXT')
+        ),
+
+    CONSTRAINT chk_metric_types_default_aggregation
+        CHECK (
+            default_aggregation IN (
+                'AVG',
+                'LAST',
+                'SUM',
+                'MIN',
+                'MAX',
+                'COUNT'
+            )
+        ),
+
+    CONSTRAINT fk_metric_types_canonical_unit_id
+        FOREIGN KEY (canonical_unit_id)
+        REFERENCES measurement_units (measurement_unit_id)
+        ON UPDATE RESTRICT
+        ON DELETE RESTRICT,
+
+    INDEX idx_metric_types_canonical_unit_id (
+        canonical_unit_id
+    )
+) ENGINE = InnoDB
+  DEFAULT CHARACTER SET = utf8mb4
+  COMMENT = '센서 측정항목 카탈로그';
+ */
+
+/*
+metric_type_id
+metric_code
+display_name
+value_type // DOUBLE, LONG, BOOLEAN, STRING
+metric_kind // GAUGE, COUNTER, STATE
+canonical_unit_id
+status // ACTIVE, INACTIVE, DEPRECATED
+description
+ */
