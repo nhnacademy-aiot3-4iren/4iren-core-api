@@ -1,5 +1,6 @@
 package com.nhnacademy.core.controller;
 
+import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.UserRoomSubscriptionsResponse;
 import com.nhnacademy.core.service.RoomSubscriptionService;
 import jakarta.validation.constraints.Positive;
@@ -29,5 +30,12 @@ public class InternalRoomSubscriptionController {
             @PathVariable @Positive Long userId
     ) {
         return roomSubscriptionService.getUserSubscriptionsInTeam(userId, teamId);
+    }
+
+    @GetMapping("/rooms/{roomId}/subscribers")
+    public RoomSubscribersResponse getRoomSubscribers(
+            @PathVariable @Positive Long roomId
+    ) {
+        return roomSubscriptionService.getRoomSubscribers(roomId);
     }
 }

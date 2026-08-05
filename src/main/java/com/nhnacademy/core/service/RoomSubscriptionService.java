@@ -2,6 +2,7 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.*;
 import com.nhnacademy.core.dto.PageResponse;
+import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionUpdateRequest;
 import com.nhnacademy.core.dto.subscription.UserRoomSubscriptionsResponse;
@@ -110,6 +111,15 @@ public class RoomSubscriptionService {
                         teamId
                 )
         );
+    }
+
+    // roomId로 구독 조회
+    public RoomSubscribersResponse getRoomSubscribers(Long roomId) {
+        return roomSubscriptionRepository.findSubscribersByRoomId(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.ROOM_NOT_FOUND,
+                        Map.of("roomId", roomId)
+                ));
     }
 
     // 구독 정보 수정
