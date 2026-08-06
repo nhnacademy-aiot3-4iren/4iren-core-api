@@ -2,18 +2,19 @@ package com.nhnacademy.core.dto.building;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openapitools.jackson.nullable.JsonNullable;
-import org.springframework.util.StringUtils;
 
 @NoArgsConstructor
 @Getter
 @Setter
 public final class BuildingUpdateRequest {
 
+    @NotBlank(message = "건물 이름은 null 또는 공백일 수 없습니다.")
     @Size(max = 100, message = "건물 이름은 100자 이하여야 합니다.")
     private JsonNullable<String> buildingName = JsonNullable.undefined();
 
@@ -37,11 +38,5 @@ public final class BuildingUpdateRequest {
                 || roadAddress.isPresent()
                 || detailAddress.isPresent()
                 || regionName.isPresent();
-    }
-
-    @AssertTrue(message = "건물 이름은 null 또는 공백일 수 없습니다.")
-    @JsonIgnore
-    public boolean isBuildingNameValid() {
-        return !buildingName.isPresent() || StringUtils.hasText(buildingName.orElse(null));
     }
 }

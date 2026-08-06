@@ -2,18 +2,19 @@ package com.nhnacademy.core.dto.team;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openapitools.jackson.nullable.JsonNullable;
-import org.springframework.util.StringUtils;
 
 @NoArgsConstructor
 @Getter
 @Setter
 public final class TeamUpdateRequest {
 
+    @NotBlank(message = "팀 이름은 null 또는 공백일 수 없습니다.")
     @Size(max = 50, message = "팀 이름은 50자 이하여야 합니다.")
     private JsonNullable<String> teamName = JsonNullable.undefined();
 
@@ -24,11 +25,5 @@ public final class TeamUpdateRequest {
     @JsonIgnore
     public boolean isAnyFieldPresent() {
         return teamName.isPresent() || description.isPresent();
-    }
-
-    @AssertTrue(message = "팀 이름은 null 또는 공백일 수 없습니다.")
-    @JsonIgnore
-    public boolean isTeamNameValid() {
-        return !teamName.isPresent() || StringUtils.hasText(teamName.orElse(null));
     }
 }
