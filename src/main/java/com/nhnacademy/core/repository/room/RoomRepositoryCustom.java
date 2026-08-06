@@ -4,6 +4,7 @@ import com.nhnacademy.core.domain.Room;
 import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
+import com.nhnacademy.core.dto.room.RoomRegionNameQueryResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +13,9 @@ public interface RoomRepositoryCustom {
 
     Optional<RoomDetailQueryResult> findDetailByIdAndTeamId(Long roomId, Long teamId);
 
+    Optional<RoomDetailQueryResult> findDetailById(Long roomId);
+
     List<Room> findAllUnsubscribedByTeamMemberAndTeam(TeamMember teamMember, Team team);
 
-    Optional<String> findRegionNameById(Long roomId);
+    Optional<RoomRegionNameQueryResult> findRegionNameById(Long roomId);
 }

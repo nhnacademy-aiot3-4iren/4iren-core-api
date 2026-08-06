@@ -2,6 +2,7 @@ package com.nhnacademy.core.repository.room;
 
 import com.nhnacademy.core.domain.*;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
+import com.nhnacademy.core.dto.room.RoomRegionNameQueryResult;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -53,6 +54,32 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
     }
 
     @Override
+    public Optional<RoomDetailQueryResult> findDetailById(Long roomId) {
+        return Optional.ofNullable(queryFactory
+                .select(Projections.constructor(
+                        RoomDetailQueryResult.class,
+                        room.id,
+                        building.id,
+                        building.buildingName,
+                        room.roomName,
+                        room.description,
+                        JPAExpressions
+                                .select(sensor.count())
+                                .from(sensor)
+                                .where(sensor.room.id.eq(roomId)),
+                        JPAExpressions
+                                .select(device.count())
+                                .from(device)
+                                .where(device.room.id.eq(roomId))
+                ))
+                .from(room)
+                .join(room.building, building)
+                .where(room.id.eq(roomId))
+                .fetchOne()
+        );
+    }
+
+    @Override
     public List<Room> findAllUnsubscribedByTeamMemberAndTeam(TeamMember teamMember, Team team) {
         return queryFactory
                 .selectFrom(room)
@@ -72,9 +99,13 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
     }
 
     @Override
-    public Optional<String> findRegionNameById(Long roomId) {
+    public Optional<RoomRegionNameQueryResult> findRegionNameById(Long roomId) {
         return Optional.ofNullable(queryFactory
-                .select(building.regionName)
+                .select(Projections.constructor(
+                        RoomRegionNameQueryResult.class,
+                        room.id,
+                        building.regionName
+                ))
                 .from(room)
                 .join(room.building, building)
                 .where(room.id.eq(roomId))

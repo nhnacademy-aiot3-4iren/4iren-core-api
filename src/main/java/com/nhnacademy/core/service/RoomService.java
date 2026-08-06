@@ -83,13 +83,56 @@ public class RoomService {
         );
     }
 
+    public RoomDetailResponse getInternalRoom(Long roomId) {
+        return RoomDetailResponse.from(
+                roomRepository.findDetailById(roomId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                ErrorCode.ROOM_NOT_FOUND,
+                                Map.of("roomId", roomId)
+                        ))
+        );
+    }
+
     public String getRegionName(Long roomId) {
-        return roomRepository.findRegionNameById(roomId)
-                // 공간은 존재하지만, regionName이 null인 경우도 예외
+        RoomRegionNameQueryResult result = roomRepository.findRegionNameById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         ErrorCode.ROOM_NOT_FOUND,
                         Map.of("roomId", roomId)
                 ));
+
+        if (result.regionName() == null) {
+            throw new ResourceConflictException(
+                    ErrorCode.BUILDING_REGION_NOT_CONFIGURED,
+                    Map.of("roomId", roomId)
+            );
+        }
+
+        return result.regionName();
+    }
+
+    public RoomRegionResponse getInternalRoomRegion(Long roomId) {
+        return new RoomRegionResponse(
+                roomId,
+                getRegionName(roomId)
+        );
+    }
+
+    public RoomDevicesResponse getInternalRoomDevices(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.ROOM_NOT_FOUND,
+                        Map.of("roomId", roomId)
+                ));
+
+        List<RoomDevicesResponse.DeviceSummary> devices = deviceRepository.findAllByRoomOrderByIdAsc(room).stream()
+                .map(RoomDevicesResponse.DeviceSummary::from)
+                .toList();
+
+        return new RoomDevicesResponse(
+                roomId,
+                room.getRoomName(),
+                devices
+        );
     }
 
     // 팀 내 공간 이름으로 조회
