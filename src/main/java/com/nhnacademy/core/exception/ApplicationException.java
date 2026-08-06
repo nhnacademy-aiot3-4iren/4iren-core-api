@@ -9,7 +9,7 @@ import java.util.Objects;
 public abstract class ApplicationException extends RuntimeException {
 
     private final ErrorCode errorCode;
-    private final Map<String, Object> metadata;
+    private final Map<String, Object> context;
 
     protected ApplicationException(ErrorCode errorCode) {
         this(errorCode, Map.of());
@@ -17,9 +17,9 @@ public abstract class ApplicationException extends RuntimeException {
 
     protected ApplicationException(
             ErrorCode errorCode,
-            Map<String, Object> metadata
+            Map<String, Object> context
     ) {
-        this(errorCode, metadata, null);
+        this(errorCode, context, null);
     }
 
     protected ApplicationException(
@@ -31,11 +31,11 @@ public abstract class ApplicationException extends RuntimeException {
 
     protected ApplicationException(
             ErrorCode errorCode,
-            Map<String, Object> metadata,
+            Map<String, Object> context,
             Throwable cause
     ) {
         super(Objects.requireNonNull(errorCode, "errorCode는 null일 수 없습니다.").getMessage(), cause);
         this.errorCode = errorCode;
-        this.metadata = Map.copyOf(Objects.requireNonNull(metadata, "metadata는 null일 수 없습니다."));
+        this.context = Map.copyOf(Objects.requireNonNull(context, "context는 null일 수 없습니다."));
     }
 }

@@ -10,8 +10,8 @@ public class ResourceConflictException extends ApplicationException {
 
     public ResourceConflictException(
             ErrorCode errorCode,
-            Map<String, Object> metadata
+            Map<String, Object> context
     ) {
-        super(errorCode, metadata);
+        super(errorCode, context);
     }
 }

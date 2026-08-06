@@ -17,16 +17,16 @@ public class ServiceUnavailableException extends ApplicationException {
 
     public ServiceUnavailableException(
             ErrorCode errorCode,
-            Map<String, Object> metadata
+            Map<String, Object> context
     ) {
-        super(errorCode, metadata);
+        super(errorCode, context);
     }
 
     public ServiceUnavailableException(
             ErrorCode errorCode,
-            Map<String, Object> metadata,
+            Map<String, Object> context,
             Throwable cause
     ) {
-        super(errorCode, metadata, cause);
+        super(errorCode, context, cause);
     }
 }

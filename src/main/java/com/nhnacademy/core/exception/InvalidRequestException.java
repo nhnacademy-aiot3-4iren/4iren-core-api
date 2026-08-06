@@ -10,8 +10,8 @@ public class InvalidRequestException extends ApplicationException {
 
     public InvalidRequestException(
             ErrorCode errorCode,
-            Map<String, Object> metadata
+            Map<String, Object> context
     ) {
-        super(errorCode, metadata);
+        super(errorCode, context);
     }
 }
