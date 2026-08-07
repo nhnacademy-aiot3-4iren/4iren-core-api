@@ -21,7 +21,7 @@ import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/teams/{teamId}/buildings")
+@RequestMapping("/teams/{team-id}/buildings")
 public class BuildingController {
 
     private final BuildingService buildingService;
@@ -29,14 +29,14 @@ public class BuildingController {
     @PostMapping
     public ResponseEntity<BuildingResponse> createBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
+            @PathVariable("team-id") @Positive Long teamId,
             @Valid @RequestBody BuildingCreateRequest request
     ) {
         BuildingResponse response = buildingService.createBuilding(user.id(), teamId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{buildingId}")
+                .path("/{building-id}")
                 .buildAndExpand(response.buildingId())
                 .toUri();
 
@@ -47,36 +47,36 @@ public class BuildingController {
     @GetMapping
     public PageResponse<BuildingResponse> getBuildings(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
+            @PathVariable("team-id") @Positive Long teamId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return buildingService.getBuildings(user.id(), teamId, pageable);
     }
 
-    @GetMapping("/{buildingId}")
+    @GetMapping("/{building-id}")
     public BuildingDetailResponse getBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long buildingId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("building-id") @Positive Long buildingId
     ) {
         return buildingService.getBuilding(user.id(), teamId, buildingId);
     }
 
-    @PatchMapping("/{buildingId}")
+    @PatchMapping("/{building-id}")
     public BuildingResponse updateBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long buildingId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("building-id") @Positive Long buildingId,
             @Valid @RequestBody BuildingUpdateRequest request
     ) {
         return buildingService.updateBuilding(user.id(), teamId, buildingId, request);
     }
 
-    @DeleteMapping("/{buildingId}")
+    @DeleteMapping("/{building-id}")
     public ResponseEntity<Void> deleteBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long buildingId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("building-id") @Positive Long buildingId
     ) {
         buildingService.deleteBuilding(user.id(), teamId, buildingId);
 

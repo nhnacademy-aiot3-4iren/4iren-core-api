@@ -17,9 +17,9 @@ public class InternalSensorController {
 
     private final SensorLocationService sensorLocationService;
 
-    @GetMapping("/{devEui}/telemetry-context")
+    @GetMapping("/{dev-eui}/telemetry-context")
     public SensorTelemetryContextResponse getSensorTelemetryContext(
-            @PathVariable
+            @PathVariable("dev-eui")
             @NotBlank
             @Pattern(regexp = "[0-9a-fA-F]{16}", message = "DevEUI는 16자리 16진수여야 합니다.")
             String devEui

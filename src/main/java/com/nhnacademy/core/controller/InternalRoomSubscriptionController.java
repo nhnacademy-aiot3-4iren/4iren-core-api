@@ -17,24 +17,24 @@ public class InternalRoomSubscriptionController {
 
     private final RoomSubscriptionService roomSubscriptionService;
 
-    @GetMapping("/users/{userId}/room-subscriptions")
+    @GetMapping("/users/{user-id}/room-subscriptions")
     public UserRoomSubscriptionsResponse getUserSubscriptions(
-            @PathVariable @Positive Long userId
+            @PathVariable("user-id") @Positive Long userId
     ) {
         return roomSubscriptionService.getUserSubscriptions(userId);
     }
 
-    @GetMapping("/teams/{teamId}/users/{userId}/room-subscriptions")
+    @GetMapping("/teams/{team-id}/users/{user-id}/room-subscriptions")
     public UserRoomSubscriptionsResponse getUserSubscriptionsInTeam(
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long userId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("user-id") @Positive Long userId
     ) {
         return roomSubscriptionService.getUserSubscriptionsInTeam(userId, teamId);
     }
 
-    @GetMapping("/rooms/{roomId}/subscribers")
+    @GetMapping("/rooms/{room-id}/subscribers")
     public RoomSubscribersResponse getRoomSubscribers(
-            @PathVariable @Positive Long roomId
+            @PathVariable("room-id") @Positive Long roomId
     ) {
         return roomSubscriptionService.getRoomSubscribers(roomId);
     }

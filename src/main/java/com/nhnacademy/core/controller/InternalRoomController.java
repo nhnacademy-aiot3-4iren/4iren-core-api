@@ -18,23 +18,23 @@ public class InternalRoomController {
 
     private final RoomService roomService;
 
-    @GetMapping("/{roomId}")
+    @GetMapping("/{room-id}")
     public RoomDetailResponse getRoom(
-            @PathVariable @Positive Long roomId
+            @PathVariable("room-id") @Positive Long roomId
     ) {
         return roomService.getInternalRoom(roomId);
     }
 
-    @GetMapping("/{roomId}/region")
+    @GetMapping("/{room-id}/region")
     public RoomRegionResponse getRoomRegion(
-            @PathVariable @Positive Long roomId
+            @PathVariable("room-id") @Positive Long roomId
     ) {
         return roomService.getInternalRoomRegion(roomId);
     }
 
-    @GetMapping("/{roomId}/devices")
+    @GetMapping("/{room-id}/devices")
     public RoomDevicesResponse getRoomDevices(
-            @PathVariable @Positive Long roomId
+            @PathVariable("room-id") @Positive Long roomId
     ) {
         return roomService.getInternalRoomDevices(roomId);
     }

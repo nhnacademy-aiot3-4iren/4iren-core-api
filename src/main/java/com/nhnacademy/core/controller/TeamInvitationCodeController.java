@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/teams/{teamId}/invitation-codes")
+@RequestMapping("/teams/{team-id}/invitation-codes")
 public class TeamInvitationCodeController {
 
     private final TeamInvitationCodeService teamInvitationCodeService;
@@ -23,7 +23,7 @@ public class TeamInvitationCodeController {
     @PostMapping
     public ResponseEntity<TeamInvitationCodeResponse> createInvitationCode(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
+            @PathVariable("team-id") @Positive Long teamId,
             @Valid @RequestBody TeamInvitationCodeCreateRequest request
     ) {
         TeamInvitationCodeResponse response = teamInvitationCodeService
@@ -34,11 +34,11 @@ public class TeamInvitationCodeController {
                 .body(response);
     }
 
-    @DeleteMapping("/{invitationCodeId}")
+    @DeleteMapping("/{invitation-code-id}")
     public ResponseEntity<Void> deactivateInvitationCode(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long invitationCodeId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("invitation-code-id") @Positive Long invitationCodeId
     ) {
         teamInvitationCodeService.deactivateInvitationCode(user.id(), teamId, invitationCodeId);
 

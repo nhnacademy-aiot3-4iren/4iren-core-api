@@ -20,23 +20,23 @@ import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/teams/{teamId}")
+@RequestMapping("/teams/{team-id}")
 public class DeviceController {
 
     private final DeviceService deviceService;
 
-    @PostMapping("/rooms/{roomId}/devices")
+    @PostMapping("/rooms/{room-id}/devices")
     public ResponseEntity<DeviceResponse> createDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long roomId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId,
             @Valid @RequestBody DeviceCreateRequest request
     ) {
         DeviceResponse response = deviceService.createDevice(user.id(), teamId, roomId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
-                .path("/api/teams/{teamId}/devices/{deviceId}")
+                .path("/api/teams/{team-id}/devices/{device-id}")
                 .buildAndExpand(teamId, response.deviceId())
                 .toUri();
 
@@ -44,40 +44,40 @@ public class DeviceController {
                 .body(response);
     }
 
-    @GetMapping("/rooms/{roomId}/devices")
+    @GetMapping("/rooms/{room-id}/devices")
     public PageResponse<DeviceResponse> getDevices(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long roomId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return deviceService.getDevices(user.id(), teamId, roomId, pageable);
     }
 
-    @GetMapping("/devices/{deviceId}")
+    @GetMapping("/devices/{device-id}")
     public DeviceResponse getDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long deviceId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("device-id") @Positive Long deviceId
     ) {
         return deviceService.getDevice(user.id(), teamId, deviceId);
     }
 
-    @PatchMapping("/devices/{deviceId}")
+    @PatchMapping("/devices/{device-id}")
     public DeviceResponse updateDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long deviceId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("device-id") @Positive Long deviceId,
             @Valid @RequestBody DeviceUpdateRequest request
     ) {
         return deviceService.updateDevice(user.id(), teamId, deviceId, request);
     }
 
-    @DeleteMapping("/devices/{deviceId}")
+    @DeleteMapping("/devices/{device-id}")
     public ResponseEntity<Void> deleteDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long deviceId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("device-id") @Positive Long deviceId
     ) {
         deviceService.deleteDevice(user.id(), teamId, deviceId);
 

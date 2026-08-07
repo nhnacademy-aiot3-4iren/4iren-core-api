@@ -35,7 +35,7 @@ public class TeamController {
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{teamId}")
+                .path("/{team-id}")
                 .buildAndExpand(response.teamId())
                 .toUri();
 
@@ -51,27 +51,27 @@ public class TeamController {
         return teamService.getTeams(user.id(), user.role(), pageable);
     }
 
-    @GetMapping("/{teamId}")
+    @GetMapping("/{team-id}")
     public TeamDetailResponse getTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId
+            @PathVariable("team-id") @Positive Long teamId
     ) {
         return teamService.getTeam(user.id(), user.role(), teamId);
     }
 
-    @PatchMapping("/{teamId}")
+    @PatchMapping("/{team-id}")
     public TeamResponse updateTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
+            @PathVariable("team-id") @Positive Long teamId,
             @Valid @RequestBody TeamUpdateRequest request
     ) {
         return teamService.updateTeam(user.id(), teamId, request);
     }
 
-    @DeleteMapping("/{teamId}")
+    @DeleteMapping("/{team-id}")
     public ResponseEntity<Void> deleteTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId
+            @PathVariable("team-id") @Positive Long teamId
     ) {
         teamService.deleteTeam(user.id(), teamId);
 
