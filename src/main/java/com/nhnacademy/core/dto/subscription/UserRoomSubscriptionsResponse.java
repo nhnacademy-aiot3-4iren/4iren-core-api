@@ -1,6 +1,6 @@
 package com.nhnacademy.core.dto.subscription;
 
-import com.nhnacademy.core.domain.RoomSubscription;
+import com.nhnacademy.core.domain.room.RoomSubscription;
 
 import java.util.List;
 

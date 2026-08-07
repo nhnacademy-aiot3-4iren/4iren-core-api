@@ -1,6 +1,6 @@
 package com.nhnacademy.core.dto.device;
 
-import com.nhnacademy.core.domain.Device;
+import com.nhnacademy.core.domain.device.Device;
 
 public record DeviceResponse(
         Long deviceId,

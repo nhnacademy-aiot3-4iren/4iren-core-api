@@ -1,6 +1,6 @@
 package com.nhnacademy.core.dto.team.invitation;
 
-import com.nhnacademy.core.domain.TeamInvitationCode;
+import com.nhnacademy.core.domain.team.TeamInvitationCode;
 import com.nhnacademy.core.domain.normalizer.TeamInvitationCodeNormalizer;
 
 import java.time.LocalDateTime;

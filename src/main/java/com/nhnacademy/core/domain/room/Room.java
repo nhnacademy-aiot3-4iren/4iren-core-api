@@ -1,5 +1,7 @@
-package com.nhnacademy.core.domain;
+package com.nhnacademy.core.domain.room;
 
+import com.nhnacademy.core.domain.Building;
+import com.nhnacademy.core.domain.VersionedEntity;
 import com.nhnacademy.core.domain.normalizer.RoomNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

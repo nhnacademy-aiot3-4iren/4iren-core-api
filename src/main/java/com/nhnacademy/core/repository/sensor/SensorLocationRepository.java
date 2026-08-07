@@ -1,7 +1,7 @@
 package com.nhnacademy.core.repository.sensor;
 
-import com.nhnacademy.core.domain.Room;
-import com.nhnacademy.core.domain.SensorLocation;
+import com.nhnacademy.core.domain.room.Room;
+import com.nhnacademy.core.domain.sensor.SensorLocation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

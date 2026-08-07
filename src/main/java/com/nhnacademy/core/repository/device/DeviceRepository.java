@@ -1,7 +1,7 @@
 package com.nhnacademy.core.repository.device;
 
-import com.nhnacademy.core.domain.Device;
-import com.nhnacademy.core.domain.Room;
+import com.nhnacademy.core.domain.device.Device;
+import com.nhnacademy.core.domain.room.Room;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,8 +1,8 @@
 package com.nhnacademy.core.repository.team;
 
-import com.nhnacademy.core.domain.Team;
-import com.nhnacademy.core.domain.TeamMember;
-import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamRole;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

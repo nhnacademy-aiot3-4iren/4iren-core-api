@@ -1,9 +1,9 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.domain.Team;
-import com.nhnacademy.core.domain.TeamInvitationCode;
-import com.nhnacademy.core.domain.TeamMember;
-import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamInvitationCode;
+import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.member.TeamJoinRequest;
 import com.nhnacademy.core.dto.team.member.TeamMemberResponse;

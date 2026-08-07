@@ -1,7 +1,7 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.domain.Team;
-import com.nhnacademy.core.domain.TeamInvitationCode;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamInvitationCode;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeCreateRequest;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeResponse;
 import com.nhnacademy.core.exception.ErrorCode;

@@ -1,7 +1,7 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.domain.Room;
-import com.nhnacademy.core.domain.SensorLocation;
+import com.nhnacademy.core.domain.room.Room;
+import com.nhnacademy.core.domain.sensor.SensorLocation;
 import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.sensor.SensorTelemetryContextResponse;

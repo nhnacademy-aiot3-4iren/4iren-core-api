@@ -1,6 +1,6 @@
 package com.nhnacademy.core.dto.room;
 
-import com.nhnacademy.core.domain.Room;
+import com.nhnacademy.core.domain.room.Room;
 
 public record RoomResponse(
         Long roomId,

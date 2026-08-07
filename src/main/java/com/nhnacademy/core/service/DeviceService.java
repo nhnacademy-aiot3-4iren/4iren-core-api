@@ -1,7 +1,7 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.domain.Device;
-import com.nhnacademy.core.domain.Room;
+import com.nhnacademy.core.domain.device.Device;
+import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.device.DeviceCreateRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;

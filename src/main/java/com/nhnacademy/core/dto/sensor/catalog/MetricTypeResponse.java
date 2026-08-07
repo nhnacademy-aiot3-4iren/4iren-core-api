@@ -1,7 +1,7 @@
 package com.nhnacademy.core.dto.sensor.catalog;
 
-import com.nhnacademy.core.domain.MetricKind;
-import com.nhnacademy.core.domain.MetricStatus;
+import com.nhnacademy.core.domain.sensor.MetricKind;
+import com.nhnacademy.core.domain.sensor.MetricStatus;
 
 public record MetricTypeResponse(
         String metricCode,

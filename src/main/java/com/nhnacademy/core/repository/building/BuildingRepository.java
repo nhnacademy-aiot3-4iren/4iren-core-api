@@ -1,7 +1,7 @@
 package com.nhnacademy.core.repository.building;
 
 import com.nhnacademy.core.domain.Building;
-import com.nhnacademy.core.domain.Team;
+import com.nhnacademy.core.domain.team.Team;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-package com.nhnacademy.core.domain;
+package com.nhnacademy.core.domain.team;
 
 import java.util.Arrays;
 import java.util.Set;

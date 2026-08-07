@@ -1,6 +1,10 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.domain.*;
+import com.nhnacademy.core.domain.room.Room;
+import com.nhnacademy.core.domain.room.RoomSubscription;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;

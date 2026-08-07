@@ -1,7 +1,7 @@
 package com.nhnacademy.core.dto.team.member;
 
-import com.nhnacademy.core.domain.TeamMember;
-import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamRole;
 
 public record TeamMemberResponse(
         Long teamMemberId,

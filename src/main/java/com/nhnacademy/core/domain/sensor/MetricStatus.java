@@ -1,4 +1,4 @@
-package com.nhnacademy.core.domain;
+package com.nhnacademy.core.domain.sensor;
 
 public enum MetricStatus {
     ACTIVE,

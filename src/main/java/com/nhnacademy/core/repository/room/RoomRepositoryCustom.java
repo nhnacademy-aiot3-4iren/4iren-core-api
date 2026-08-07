@@ -1,8 +1,8 @@
 package com.nhnacademy.core.repository.room;
 
-import com.nhnacademy.core.domain.Room;
-import com.nhnacademy.core.domain.Team;
-import com.nhnacademy.core.domain.TeamMember;
+import com.nhnacademy.core.domain.room.Room;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamMember;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
 import com.nhnacademy.core.dto.room.RoomRegionNameQueryResult;
 

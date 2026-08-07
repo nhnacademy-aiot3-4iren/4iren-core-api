@@ -1,7 +1,7 @@
 package com.nhnacademy.core.service;
 
-import com.nhnacademy.core.domain.TeamMember;
-import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamRole;
 import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;

@@ -1,8 +1,8 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Building;
-import com.nhnacademy.core.domain.Room;
-import com.nhnacademy.core.domain.Team;
+import com.nhnacademy.core.domain.room.Room;
+import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.normalizer.RoomNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.room.*;

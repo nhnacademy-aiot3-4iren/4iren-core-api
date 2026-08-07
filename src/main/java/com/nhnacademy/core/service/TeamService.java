@@ -1,9 +1,9 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.config.auth.UserRole;
-import com.nhnacademy.core.domain.Team;
-import com.nhnacademy.core.domain.TeamMember;
-import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.TeamCreateRequest;
 import com.nhnacademy.core.dto.team.TeamDetailResponse;
