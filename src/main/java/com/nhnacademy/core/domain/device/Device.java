@@ -1,6 +1,8 @@
-package com.nhnacademy.core.domain;
+package com.nhnacademy.core.domain.device;
 
+import com.nhnacademy.core.domain.VersionedEntity;
 import com.nhnacademy.core.domain.normalizer.DeviceNormalizer;
+import com.nhnacademy.core.domain.room.Room;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -34,6 +36,10 @@ public class Device extends VersionedEntity {
     @Column(name = "device_name", nullable = false, length = 50)
     private String deviceName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "device_status", nullable = false, length = 20)
+    private DeviceStatus status = DeviceStatus.ACTIVE;
+
     public Device(Room room, String deviceName) {
         this.room = requireRoom(room);
         this.deviceName = DeviceNormalizer.normalizeName(deviceName);
@@ -45,6 +51,14 @@ public class Device extends VersionedEntity {
 
     public void changeName(String deviceName) {
         this.deviceName = DeviceNormalizer.normalizeName(deviceName);
+    }
+
+    public void changeStatus(DeviceStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("기기 상태는 null일 수 없습니다.");
+        }
+
+        this.status = status;
     }
 
     private Room requireRoom(Room room) {
