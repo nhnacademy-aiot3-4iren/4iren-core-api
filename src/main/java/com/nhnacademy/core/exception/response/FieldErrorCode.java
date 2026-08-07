@@ -6,38 +6,39 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum FieldErrorCode {
 
-    REQUIRED("FIELD.REQUIRED"), // @NotNull, @NotBlank
-    TOO_LONG("FIELD.TOO_LONG"), // @Size
-    TOO_SHORT("FIELD.TOO_SHORT"), // @Size
-    INVALID_FORMAT("FIELD.INVALID_FORMAT"), // @Pattern
-    MUST_BE_POSITIVE("FIELD.MUST_BE_POSITIVE"), // @Positive
-    MUST_BE_FUTURE("FIELD.MUST_BE_FUTURE"), // @Future
-    OUT_OF_RANGE("FIELD.OUT_OF_RANGE"), // @Min, @Max, @DecimalMin, @DecimalMax
+    // 단일 필드 검증
+    // @NotNull, @NotEmpty, @NotBlank
+    REQUIRED("FIELD.REQUIRED"),
+
+    // @Size
+    INVALID_SIZE("FIELD.INVALID_SIZE"),
+
+    // @Pattern, @Email
+    INVALID_FORMAT("FIELD.INVALID_FORMAT"),
+
+    // @Min, @Max, @DecimalMin, @DecimalMax, @Digits
+    // @PositiveOrZero, @Negative, @NegativeOrZero
+    OUT_OF_RANGE("FIELD.OUT_OF_RANGE"),
+
+    // @Positive
+    MUST_BE_POSITIVE("FIELD.MUST_BE_POSITIVE"),
+
+    // @Future, @FutureOrPresent
+    MUST_BE_FUTURE("FIELD.MUST_BE_FUTURE"),
+
+    // 요청 값의 타입 변환 실패
     TYPE_MISMATCH("FIELD.TYPE_MISMATCH"),
-    UNSUPPORTED_VALUE("FIELD.UNSUPPORTED_VALUE"),
+
+    // isAnyFieldPresent()의 @AssertTrue 검증 실패: 수정할 필드가 하나도 전달되지 않음
     EMPTY_UPDATE("FIELD.EMPTY_UPDATE"),
+
+    // @AssertTrue, 클래스 수준 커스텀 검증: 여러 필드의 조합 조건 위반
     INVALID_COMBINATION("FIELD.INVALID_COMBINATION"),
-    UNKNOWN_FIELD("FIELD.UNKNOWN_FIELD"),
-    NOT_UNIQUE("FIELD.NOT_UNIQUE"),
-    INVALID_VALUE("FIELD.INVALID_VALUE"); // 등록 되지 않은 constraintCode
+
+    // 기본 오류
+    INVALID_VALUE("FIELD.INVALID_VALUE");
 
     private final String code;
-
-    public static FieldErrorCode fromConstraint(String constraintCode) {
-        if (constraintCode == null) {
-            return INVALID_VALUE;
-        }
-
-        return switch (constraintCode) {
-            case "NotBlank", "NotNull" -> REQUIRED;
-            case "Size" -> TOO_LONG;
-            case "Pattern" -> INVALID_FORMAT;
-            case "Positive" -> MUST_BE_POSITIVE;
-            case "Future" -> MUST_BE_FUTURE;
-            case "Min", "Max", "DecimalMin", "DecimalMax" -> OUT_OF_RANGE;
-            default -> INVALID_VALUE;
-        };
-    }
 
     @JsonValue
     public String code() {

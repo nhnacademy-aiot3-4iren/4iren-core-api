@@ -38,7 +38,7 @@ public class SensorLocationService {
         SensorLocation sensorLocation = new SensorLocation(room, request.devEui(), request.locationDetail());
 
         if (sensorLocationRepository.existsByDevEui(sensorLocation.getDevEui())) {
-            throw new ResourceConflictException(ErrorCode.SENSOR_DEV_EUI_DUPLICATED);
+            throw new ResourceConflictException(ErrorCode.SENSOR_LOCATION_DEV_EUI_DUPLICATED);
         }
 
         return SensorLocationResponse.from(

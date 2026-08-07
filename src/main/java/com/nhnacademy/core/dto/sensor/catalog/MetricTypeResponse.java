@@ -1,12 +1,13 @@
 package com.nhnacademy.core.dto.sensor.catalog;
 
+import com.nhnacademy.core.domain.MetricKind;
+import com.nhnacademy.core.domain.MetricStatus;
+
 public record MetricTypeResponse(
-        String devEui,
-        Long metricTypeId,
         String metricCode,
         String displayName,
-        String metricKind,
-        String status,
+        MetricKind metricKind,
+        MetricStatus status,
         String description,
         String ucumCode,
         String unitDisplayName,

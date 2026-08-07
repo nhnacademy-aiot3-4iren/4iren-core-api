@@ -36,7 +36,7 @@ public class AuthenticatedUserFilter extends OncePerRequestFilter {
         try {
             authenticatedUser = parseUser(request);
         } catch (IllegalArgumentException e) {
-            log.warn("인증 헤더를 파싱할 수 없습니다. code={}, path={}", ErrorCode.INVALID_AUTH_HEADER.getCode(), request.getRequestURI());
+            log.warn("인증 헤더를 파싱할 수 없습니다. code={}, path={}", ErrorCode.INVALID_AUTH_HEADER.code(), request.getRequestURI());
             writeBadRequestResponse(request, response);
             return;
         }
@@ -72,7 +72,7 @@ public class AuthenticatedUserFilter extends OncePerRequestFilter {
             HttpServletResponse response
     ) throws IOException {
         ErrorCode errorCode = ErrorCode.INVALID_AUTH_HEADER;
-        response.setStatus(errorCode.getStatus().value());
+        response.setStatus(errorCode.status().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 

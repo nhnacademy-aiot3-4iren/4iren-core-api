@@ -65,7 +65,7 @@ public class TeamMemberService {
         TeamMember teamMember = new TeamMember(team, userId, TeamRole.MEMBER);
         if (teamMemberRepository.existsByTeamAndUserId(team, teamMember.getUserId())) {
             throw new ResourceConflictException(
-                    ErrorCode.TEAM_ALREADY_JOINED,
+                    ErrorCode.TEAM_MEMBER_ALREADY_JOINED,
                     Map.of("teamId", teamId)
             );
         }
@@ -97,14 +97,14 @@ public class TeamMemberService {
         // OWNER Role 변경 불가
         if (request.teamRole() == TeamRole.OWNER) {
             throw new ResourceConflictException(
-                    ErrorCode.OWNER_ROLE_NOT_ASSIGNABLE,
+                    ErrorCode.TEAM_MEMBER_OWNER_ROLE_NOT_ASSIGNABLE,
                     Map.of("teamId", teamId, "teamMemberId", teamMemberId)
             );
         }
         // OWNER의 Role은 변경 불가
         if (teamMember.getTeamRole().isOwner()) {
             throw new ResourceConflictException(
-                    ErrorCode.OWNER_ROLE_IMMUTABLE,
+                    ErrorCode.TEAM_MEMBER_OWNER_ROLE_IMMUTABLE,
                     Map.of("teamId", teamId, "teamMemberId", teamMemberId)
             );
         }
@@ -143,7 +143,7 @@ public class TeamMemberService {
         TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
         if (teamMember.getTeamRole().isOwner()) {
             throw new ResourceConflictException(
-                    ErrorCode.OWNER_CANNOT_LEAVE,
+                    ErrorCode.TEAM_MEMBER_OWNER_CANNOT_LEAVE,
                     Map.of("teamId", teamId)
             );
         }
@@ -161,7 +161,7 @@ public class TeamMemberService {
 
         if (currentOwner.getId().equals(newOwner.getId())) {
             throw new ResourceConflictException(
-                    ErrorCode.OWNERSHIP_TRANSFER_TO_SELF,
+                    ErrorCode.TEAM_MEMBER_OWNERSHIP_TRANSFER_TO_SELF,
                     Map.of("teamId", teamId, "teamMemberId", newOwner.getId())
             );
         }

@@ -4,11 +4,11 @@ import com.nhnacademy.core.exception.ErrorCode;
 
 import org.springframework.http.HttpStatusCode;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record ErrorResponse(
-        LocalDateTime timestamp,
+        Instant timestamp,
         int status,
         String code,
         String message,
@@ -23,14 +23,7 @@ public record ErrorResponse(
             ErrorCode errorCode,
             String path
     ) {
-        return new ErrorResponse(
-                LocalDateTime.now(),
-                errorCode.getStatus().value(),
-                errorCode.getCode(),
-                errorCode.getMessage(),
-                path,
-                List.of()
-        );
+        return of(errorCode, path, List.of());
     }
 
     public static ErrorResponse of(
@@ -39,10 +32,10 @@ public record ErrorResponse(
             List<FieldErrorResponse> fieldErrors
     ) {
         return new ErrorResponse(
-                LocalDateTime.now(),
-                errorCode.getStatus().value(),
-                errorCode.getCode(),
-                errorCode.getMessage(),
+                Instant.now(),
+                errorCode.status().value(),
+                errorCode.code(),
+                errorCode.message(),
                 path,
                 fieldErrors
         );
@@ -55,7 +48,7 @@ public record ErrorResponse(
             String path
     ) {
         return new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 status.value(),
                 code,
                 message,

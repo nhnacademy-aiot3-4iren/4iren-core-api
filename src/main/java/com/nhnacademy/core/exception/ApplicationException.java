@@ -1,11 +1,8 @@
 package com.nhnacademy.core.exception;
 
-import lombok.Getter;
-
 import java.util.Map;
 import java.util.Objects;
 
-@Getter
 public abstract class ApplicationException extends RuntimeException {
 
     private final ErrorCode errorCode;
@@ -34,8 +31,16 @@ public abstract class ApplicationException extends RuntimeException {
             Map<String, Object> context,
             Throwable cause
     ) {
-        super(Objects.requireNonNull(errorCode, "errorCode는 null일 수 없습니다.").getMessage(), cause);
+        super(Objects.requireNonNull(errorCode, "errorCode는 null일 수 없습니다.").message(), cause);
         this.errorCode = errorCode;
         this.context = Map.copyOf(Objects.requireNonNull(context, "context는 null일 수 없습니다."));
+    }
+
+    public ErrorCode errorCode() {
+        return errorCode;
+    }
+
+    public Map<String, Object> context() {
+        return context;
     }
 }
