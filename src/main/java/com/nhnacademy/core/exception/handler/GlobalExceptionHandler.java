@@ -68,6 +68,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
     }
 
+    // 잘못된 요청 값(IllegalArgumentException)을 400 오류로 변환한다.
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException exception,
+            HttpServletRequest request
+    ) {
+        return handleRequestException(
+                exception,
+                ErrorCode.INVALID_REQUEST,
+                request,
+                Map.of()
+        );
+    }
+
     // 별도로 분류되지 않은 예외는 내부 서버 오류로 처리한다.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpectedException(
