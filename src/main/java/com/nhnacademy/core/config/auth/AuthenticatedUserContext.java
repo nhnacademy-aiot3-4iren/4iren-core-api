@@ -27,6 +27,6 @@ public class AuthenticatedUserContext {
 
     public AuthenticatedUser getRequired() {
         return getOptional()
-                .orElseThrow(() -> new UnauthorizedException("현재 사용자 정보가 없습니다."));
+                .orElseThrow(UnauthorizedException::new);
     }
 }

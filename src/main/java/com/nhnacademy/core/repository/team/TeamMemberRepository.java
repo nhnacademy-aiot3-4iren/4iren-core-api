@@ -2,6 +2,7 @@ package com.nhnacademy.core.repository.team;
 
 import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamMember;
+import com.nhnacademy.core.domain.TeamRole;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Lock;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
 
@@ -19,7 +21,8 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<TeamMember> findLockedByTeam_IdAndUserId(Long teamId, Long userId);
 
-    Optional<TeamMember> findByIdAndTeam_Id(Long teamMemberId, Long teamId);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<TeamMember> findLockedByIdAndTeam_Id(Long teamMemberId, Long teamId);
 
     Page<TeamMember> findAllByTeam(Team team, Pageable pageable);
 
@@ -27,6 +30,8 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     Page<TeamMember> findAllByUserId(Long userId, Pageable pageable);
 
     List<TeamMember> findAllByUserIdAndTeam_IdIn(Long userId, List<Long> teamIds);
+
+    List<TeamMember> findAllByTeamAndTeamRoleIn(Team team, Set<TeamRole> teamRoles);
 
     boolean existsByTeamAndUserId(Team team, Long userId);
 }

@@ -1,16 +1,15 @@
 package com.nhnacademy.core.repository.room;
 
-import com.nhnacademy.core.domain.QBuilding;
-import com.nhnacademy.core.domain.QDevice;
-import com.nhnacademy.core.domain.QRoom;
-import com.nhnacademy.core.domain.QSensorLocation;
+import com.nhnacademy.core.domain.*;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
+import com.nhnacademy.core.dto.room.RoomRegionNameQueryResult;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,8 +18,9 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-    private final QRoom room = QRoom.room;
     private final QBuilding building = QBuilding.building;
+    private final QRoom room = QRoom.room;
+    private final QRoomSubscription subscription = QRoomSubscription.roomSubscription;
     private final QSensorLocation sensor = QSensorLocation.sensorLocation;
     private final QDevice device = QDevice.device;
 
@@ -54,9 +54,58 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
     }
 
     @Override
-    public Optional<String> findRegionNameById(Long roomId) {
+    public Optional<RoomDetailQueryResult> findDetailById(Long roomId) {
         return Optional.ofNullable(queryFactory
-                .select(building.regionName)
+                .select(Projections.constructor(
+                        RoomDetailQueryResult.class,
+                        room.id,
+                        building.id,
+                        building.buildingName,
+                        room.roomName,
+                        room.description,
+                        JPAExpressions
+                                .select(sensor.count())
+                                .from(sensor)
+                                .where(sensor.room.id.eq(roomId)),
+                        JPAExpressions
+                                .select(device.count())
+                                .from(device)
+                                .where(device.room.id.eq(roomId))
+                ))
+                .from(room)
+                .join(room.building, building)
+                .where(room.id.eq(roomId))
+                .fetchOne()
+        );
+    }
+
+    @Override
+    public List<Room> findAllUnsubscribedByTeamMemberAndTeam(TeamMember teamMember, Team team) {
+        return queryFactory
+                .selectFrom(room)
+                .join(room.building, building)
+                .where(
+                        building.team.eq(team),
+                        JPAExpressions
+                                .selectOne()
+                                .from(subscription)
+                                .where(
+                                        subscription.room.eq(room),
+                                        subscription.teamMember.eq(teamMember)
+                                )
+                                .notExists()
+                )
+                .fetch();
+    }
+
+    @Override
+    public Optional<RoomRegionNameQueryResult> findRegionNameById(Long roomId) {
+        return Optional.ofNullable(queryFactory
+                .select(Projections.constructor(
+                        RoomRegionNameQueryResult.class,
+                        room.id,
+                        building.regionName
+                ))
                 .from(room)
                 .join(room.building, building)
                 .where(room.id.eq(roomId))

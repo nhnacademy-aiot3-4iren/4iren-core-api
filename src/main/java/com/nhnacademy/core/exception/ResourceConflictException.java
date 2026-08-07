@@ -1,8 +1,17 @@
 package com.nhnacademy.core.exception;
 
-public class ResourceConflictException extends RuntimeException {
+import java.util.Map;
 
-    public ResourceConflictException(String message) {
-        super(message);
+public class ResourceConflictException extends ApplicationException {
+
+    public ResourceConflictException(ErrorCode errorCode) {
+        super(errorCode);
+    }
+
+    public ResourceConflictException(
+            ErrorCode errorCode,
+            Map<String, Object> context
+    ) {
+        super(errorCode, context);
     }
 }

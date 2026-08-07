@@ -6,14 +6,16 @@ import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.device.DeviceCreateRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;
 import com.nhnacademy.core.dto.device.DeviceUpdateRequest;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.device.DeviceRepository;
 import com.nhnacademy.core.repository.room.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -91,11 +93,17 @@ public class DeviceService {
 
     private Room getRoomOrThrow(Long roomId, Long teamId) {
         return roomRepository.findByIdAndBuilding_Team_Id(roomId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.ROOM, "id", roomId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.ROOM_NOT_FOUND,
+                        Map.of("roomId", roomId, "teamId", teamId)
+                ));
     }
 
     private Device getDeviceOrThrow(Long deviceId, Long teamId) {
         return deviceRepository.findByIdAndRoom_Building_Team_Id(deviceId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.DEVICE, "id", deviceId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.DEVICE_NOT_FOUND,
+                        Map.of("deviceId", deviceId, "teamId", teamId)
+                ));
     }
 }

@@ -2,11 +2,14 @@ package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -18,14 +21,20 @@ public class TeamAuthorizationService {
     // 팀 구성원 권한 확인
     public TeamMember requireTeamMember(Long userId, Long teamId) {
         return teamMemberRepository.findByTeam_IdAndUserId(teamId, userId)
-                .orElseThrow(() -> new ForbiddenException("팀 접근 권한이 없습니다."));
+                .orElseThrow(() -> new ForbiddenException(
+                        ErrorCode.TEAM_ACCESS_FORBIDDEN,
+                        Map.of("teamId", teamId)
+                ));
     }
 
     // 팀 관리자 권한 확인
     public TeamMember requireTeamManager(Long userId, Long teamId) {
         TeamMember teamMember = requireTeamMember(userId, teamId);
         if (!teamMember.getTeamRole().isManager()) {
-            throw new ForbiddenException("팀 관리 권한이 없습니다.");
+            throw new ForbiddenException(
+                    ErrorCode.TEAM_MANAGER_REQUIRED,
+                    Map.of("teamId", teamId)
+            );
         }
 
         return teamMember;
@@ -35,7 +44,10 @@ public class TeamAuthorizationService {
     public TeamMember requireTeamOwner(Long userId, Long teamId) {
         TeamMember teamMember = requireTeamMember(userId, teamId);
         if (!teamMember.getTeamRole().isOwner()) {
-            throw new ForbiddenException("팀 소유자 권한이 없습니다.");
+            throw new ForbiddenException(
+                    ErrorCode.TEAM_OWNER_REQUIRED,
+                    Map.of("teamId", teamId)
+            );
         }
 
         return teamMember;

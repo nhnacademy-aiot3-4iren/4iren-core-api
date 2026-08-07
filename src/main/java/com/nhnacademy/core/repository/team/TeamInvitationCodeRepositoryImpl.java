@@ -16,11 +16,11 @@ public class TeamInvitationCodeRepositoryImpl implements TeamInvitationCodeRepos
     private final QTeamInvitationCode invitationCode = QTeamInvitationCode.teamInvitationCode;
 
     @Override
-    public Optional<Long> findTeamIdByCode(String code) {
+    public Optional<Long> findTeamIdByCodeHash(String codeHash) {
         return Optional.ofNullable(queryFactory
                 .select(invitationCode.team.id)
                 .from(invitationCode)
-                .where(invitationCode.code.eq(code))
+                .where(invitationCode.codeHash.eq(codeHash))
                 .fetchOne()
         );
     }

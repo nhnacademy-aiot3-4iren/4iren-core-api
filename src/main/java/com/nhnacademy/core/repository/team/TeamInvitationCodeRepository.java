@@ -10,7 +10,7 @@ public interface TeamInvitationCodeRepository extends JpaRepository<TeamInvitati
 
     Optional<TeamInvitationCode> findByIdAndTeam(Long invitationCodeId, Team team);
 
-    Optional<TeamInvitationCode> findByCodeAndTeam(String code, Team team);
+    Optional<TeamInvitationCode> findByCodeHashAndTeam(String codeHash, Team team);
 
-    boolean existsByCode(String code);
+    boolean existsByCodeHash(String codeHash);
 }

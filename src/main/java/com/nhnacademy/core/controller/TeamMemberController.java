@@ -15,12 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Validated
 public class TeamMemberController {
 
     private final TeamMemberService teamMemberService;
@@ -36,39 +34,39 @@ public class TeamMemberController {
                 .body(response);
     }
 
-    @GetMapping("/teams/{teamId}/members")
+    @GetMapping("/teams/{team-id}/members")
     public PageResponse<TeamMemberResponse> getTeamMembers(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
+            @PathVariable("team-id") @Positive Long teamId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return teamMemberService.getTeamMembers(user.id(), teamId, pageable);
     }
 
-    @PatchMapping("/teams/{teamId}/members/{teamMemberId}/role")
+    @PatchMapping("/teams/{team-id}/members/{team-member-id}/role")
     public TeamMemberResponse changeTeamMemberRole(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long teamMemberId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("team-member-id") @Positive Long teamMemberId,
             @Valid @RequestBody TeamMemberRoleChangeRequest request
     ) {
         return teamMemberService.changeTeamMemberRole(user.id(), teamId, teamMemberId, request);
     }
 
-    @PatchMapping("/teams/{teamId}/owner")
+    @PatchMapping("/teams/{team-id}/owner")
     public TeamMemberResponse transferTeamOwnership(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
+            @PathVariable("team-id") @Positive Long teamId,
             @Valid @RequestBody TeamOwnerChangeRequest request
     ) {
         return teamMemberService.transferTeamOwnership(user.id(), teamId, request);
     }
 
-    @DeleteMapping("/teams/{teamId}/members/{teamMemberId}")
+    @DeleteMapping("/teams/{team-id}/members/{team-member-id}")
     public ResponseEntity<Void> removeTeamMember(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long teamMemberId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("team-member-id") @Positive Long teamMemberId
     ) {
         teamMemberService.removeTeamMember(user.id(), teamId, teamMemberId);
 
@@ -76,10 +74,10 @@ public class TeamMemberController {
                 .build();
     }
 
-    @DeleteMapping("/teams/{teamId}/members/me")
+    @DeleteMapping("/teams/{team-id}/members/me")
     public ResponseEntity<Void> leaveTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId
+            @PathVariable("team-id") @Positive Long teamId
     ) {
         teamMemberService.leaveTeam(user.id(), teamId);
 

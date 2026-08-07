@@ -2,6 +2,7 @@ package com.nhnacademy.core.dto.sensor.location;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -14,6 +15,7 @@ import org.openapitools.jackson.nullable.JsonNullable;
 @Setter
 public final class SensorLocationUpdateRequest {
 
+    @NotNull(message = "공간 ID는 null일 수 없습니다.")
     @Positive(message = "공간 ID는 양수여야 합니다.")
     private JsonNullable<Long> roomId = JsonNullable.undefined();
 
@@ -24,11 +26,5 @@ public final class SensorLocationUpdateRequest {
     @JsonIgnore
     public boolean isAnyFieldPresent() {
         return roomId.isPresent() || locationDetail.isPresent();
-    }
-
-    @AssertTrue(message = "공간 ID는 null일 수 없습니다.")
-    @JsonIgnore
-    public boolean isRoomIdValid() {
-        return !roomId.isPresent() || roomId.orElse(null) != null;
     }
 }

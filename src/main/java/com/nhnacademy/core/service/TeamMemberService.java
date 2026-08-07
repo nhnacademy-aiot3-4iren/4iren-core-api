@@ -4,16 +4,15 @@ import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.TeamInvitationCode;
 import com.nhnacademy.core.domain.TeamMember;
 import com.nhnacademy.core.domain.TeamRole;
-import com.nhnacademy.core.domain.normalizer.TeamInvitationCodeNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.member.TeamJoinRequest;
 import com.nhnacademy.core.dto.team.member.TeamMemberResponse;
 import com.nhnacademy.core.dto.team.member.TeamMemberRoleChangeRequest;
 import com.nhnacademy.core.dto.team.member.TeamOwnerChangeRequest;
+import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
-import com.nhnacademy.core.exception.ResourceType;
 import com.nhnacademy.core.repository.team.TeamInvitationCodeRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import com.nhnacademy.core.repository.team.TeamRepository;
@@ -24,6 +23,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -33,28 +33,41 @@ public class TeamMemberService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final TeamInvitationCodeRepository teamInvitationCodeRepository;
+    private final RoomSubscriptionService roomSubscriptionService;
     private final TeamAuthorizationService teamAuthorizationService;
+    private final InvitationCodeHasher invitationCodeHasher;
 
     // 팀 가입
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public TeamMemberResponse joinTeam(Long userId, TeamJoinRequest request) {
-        String invitationCode = TeamInvitationCodeNormalizer.normalizeCode(request.invitationCode());
-        Long teamId = teamInvitationCodeRepository.findTeamIdByCode(invitationCode)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.INVITATION_CODE, "code", invitationCode));
+        // 초대 코드 해시 조회
+        String invitationCodeHash = invitationCodeHasher.hash(request.invitationCode());
+        Long teamId = teamInvitationCodeRepository.findTeamIdByCodeHash(invitationCodeHash)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.INVITATION_CODE_NOT_FOUND));
 
         // 팀 잠금 및 존재 여부 확인
         Team team = lockTeamOrThrow(teamId);
-        TeamInvitationCode invitation = teamInvitationCodeRepository.findByCodeAndTeam(invitationCode, team)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.INVITATION_CODE, "code", invitationCode));
+        TeamInvitationCode invitation = teamInvitationCodeRepository.findByCodeHashAndTeam(invitationCodeHash, team)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.INVITATION_CODE_NOT_FOUND,
+                        Map.of("teamId", teamId)
+                ));
 
         // 초대 코드 유효성 확인
         if (!invitation.isValidAt(LocalDateTime.now())) {
-            throw new ResourceConflictException("만료되었거나 비활성화된 초대 코드입니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.INVITATION_CODE_UNAVAILABLE,
+                    Map.of("teamId", teamId)
+            );
         }
 
+        // 이미 가입된 팀인지 확인
         TeamMember teamMember = new TeamMember(team, userId, TeamRole.MEMBER);
         if (teamMemberRepository.existsByTeamAndUserId(team, teamMember.getUserId())) {
-            throw new ResourceConflictException("이미 가입한 팀입니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MEMBER_ALREADY_JOINED,
+                    Map.of("teamId", teamId)
+            );
         }
 
         return TeamMemberResponse.from(
@@ -83,12 +96,21 @@ public class TeamMemberService {
 
         // OWNER Role 변경 불가
         if (request.teamRole() == TeamRole.OWNER) {
-            throw new ResourceConflictException("Role을 OWNER로 변경할 수 없습니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MEMBER_OWNER_ROLE_NOT_ASSIGNABLE,
+                    Map.of("teamId", teamId, "teamMemberId", teamMemberId)
+            );
         }
+        // OWNER의 Role은 변경 불가
         if (teamMember.getTeamRole().isOwner()) {
-            throw new ResourceConflictException("OWNER의 Role은 변경할 수 없습니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MEMBER_OWNER_ROLE_IMMUTABLE,
+                    Map.of("teamId", teamId, "teamMemberId", teamMemberId)
+            );
         }
+        TeamRole previousRole = teamMember.getTeamRole();
         teamMember.changeRole(request.teamRole());
+        subscribeToAllRooms(teamMember, previousRole);
 
         return TeamMemberResponse.from(teamMember);
     }
@@ -104,7 +126,10 @@ public class TeamMemberService {
 
         if (!((requesterRole.isOwner() && !targetRole.isOwner())
                 || (requesterRole == TeamRole.ADMIN && targetRole == TeamRole.MEMBER))) {
-            throw new ForbiddenException("팀 구성원 삭제 권한이 없습니다.");
+            throw new ForbiddenException(
+                    ErrorCode.TEAM_MEMBER_REMOVAL_FORBIDDEN,
+                    Map.of("teamId", teamId, "teamMemberId", teamMemberId)
+            );
         }
 
         teamMemberRepository.delete(targetMember);
@@ -117,7 +142,10 @@ public class TeamMemberService {
 
         TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
         if (teamMember.getTeamRole().isOwner()) {
-            throw new ResourceConflictException("팀 소유자는 소유권 이전 후 탈퇴할 수 있습니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MEMBER_OWNER_CANNOT_LEAVE,
+                    Map.of("teamId", teamId)
+            );
         }
 
         teamMemberRepository.delete(teamMember);
@@ -132,22 +160,40 @@ public class TeamMemberService {
         TeamMember newOwner = getTeamMemberOrThrow(request.teamMemberId(), teamId);
 
         if (currentOwner.getId().equals(newOwner.getId())) {
-            throw new ResourceConflictException("현재 소유자에게 소유권을 이전할 수 없습니다.");
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MEMBER_OWNERSHIP_TRANSFER_TO_SELF,
+                    Map.of("teamId", teamId, "teamMemberId", newOwner.getId())
+            );
         }
+
+        TeamRole previousNewOwnerRole = newOwner.getTeamRole();
 
         currentOwner.changeRole(TeamRole.ADMIN);
         newOwner.changeRole(TeamRole.OWNER);
+        subscribeToAllRooms(newOwner, previousNewOwnerRole);
 
         return TeamMemberResponse.from(newOwner);
     }
 
     private Team lockTeamOrThrow(Long teamId) {
         return teamRepository.findLockedById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM, "id", teamId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.TEAM_NOT_FOUND,
+                        Map.of("teamId", teamId)
+                ));
     }
 
     private TeamMember getTeamMemberOrThrow(Long teamMemberId, Long teamId) {
-        return teamMemberRepository.findByIdAndTeam_Id(teamMemberId, teamId)
-                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.TEAM_MEMBER, "id", teamMemberId));
+        return teamMemberRepository.findLockedByIdAndTeam_Id(teamMemberId, teamId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.TEAM_MEMBER_NOT_FOUND,
+                        Map.of("teamMemberId", teamMemberId, "teamId", teamId)
+                ));
+    }
+
+    private void subscribeToAllRooms(TeamMember teamMember, TeamRole previousRole) {
+        if (!previousRole.isManager() && teamMember.getTeamRole().isManager()) {
+            roomSubscriptionService.subscribeManagerToAllRooms(teamMember);
+        }
     }
 }

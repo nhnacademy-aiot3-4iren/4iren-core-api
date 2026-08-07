@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -21,17 +20,16 @@ import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
-@Validated
-@RequestMapping("/teams/{teamId}")
+@RequestMapping("/teams/{team-id}")
 public class SensorLocationController {
 
     private final SensorLocationService sensorLocationService;
 
-    @PostMapping("/rooms/{roomId}/sensor-locations")
+    @PostMapping("/rooms/{room-id}/sensor-locations")
     public ResponseEntity<SensorLocationResponse> createSensorLocation(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long roomId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId,
             @Valid @RequestBody SensorLocationCreateRequest request
     ) {
         SensorLocationResponse response =
@@ -39,7 +37,7 @@ public class SensorLocationController {
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
-                .path("/api/teams/{teamId}/sensor-locations/{sensorLocationId}")
+                .path("/api/teams/{team-id}/sensor-locations/{sensor-location-id}")
                 .buildAndExpand(teamId, response.sensorLocationId())
                 .toUri();
 
@@ -47,40 +45,40 @@ public class SensorLocationController {
                 .body(response);
     }
 
-    @GetMapping("/rooms/{roomId}/sensor-locations")
+    @GetMapping("/rooms/{room-id}/sensor-locations")
     public PageResponse<SensorLocationResponse> getSensorLocations(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long roomId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return sensorLocationService.getSensorLocations(user.id(), teamId, roomId, pageable);
     }
 
-    @GetMapping("/sensor-locations/{sensorLocationId}")
+    @GetMapping("/sensor-locations/{sensor-location-id}")
     public SensorLocationResponse getSensorLocation(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long sensorLocationId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("sensor-location-id") @Positive Long sensorLocationId
     ) {
         return sensorLocationService.getSensorLocation(user.id(), teamId, sensorLocationId);
     }
 
-    @PatchMapping("/sensor-locations/{sensorLocationId}")
+    @PatchMapping("/sensor-locations/{sensor-location-id}")
     public SensorLocationResponse updateSensorLocation(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long sensorLocationId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("sensor-location-id") @Positive Long sensorLocationId,
             @Valid @RequestBody SensorLocationUpdateRequest request
     ) {
         return sensorLocationService.updateSensorLocation(user.id(), teamId, sensorLocationId, request);
     }
 
-    @DeleteMapping("/sensor-locations/{sensorLocationId}")
+    @DeleteMapping("/sensor-locations/{sensor-location-id}")
     public ResponseEntity<Void> deleteSensorLocation(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long sensorLocationId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("sensor-location-id") @Positive Long sensorLocationId
     ) {
         sensorLocationService.deleteSensorLocation(user.id(), teamId, sensorLocationId);
 

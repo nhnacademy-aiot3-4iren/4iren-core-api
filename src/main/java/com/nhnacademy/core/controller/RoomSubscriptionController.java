@@ -12,22 +12,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Validated
-@RequestMapping("/teams/{teamId}")
+@RequestMapping("/teams/{team-id}")
 public class RoomSubscriptionController {
 
     private final RoomSubscriptionService roomSubscriptionService;
 
-    @PutMapping("/rooms/{roomId}/subscription")
+    @PutMapping("/rooms/{room-id}/subscription")
     public RoomSubscriptionResponse subscribeToRoom(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long roomId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId
     ) {
         return roomSubscriptionService.subscribeToRoom(user.id(), teamId, roomId);
     }
@@ -35,27 +33,27 @@ public class RoomSubscriptionController {
     @GetMapping("/room-subscriptions")
     public PageResponse<RoomSubscriptionResponse> getSubscriptions(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
+            @PathVariable("team-id") @Positive Long teamId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return roomSubscriptionService.getSubscriptions(user.id(), teamId, pageable);
     }
 
-    @PatchMapping("/rooms/{roomId}/subscription")
+    @PatchMapping("/rooms/{room-id}/subscription")
     public RoomSubscriptionResponse updateSubscription(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long roomId,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId,
             @Valid @RequestBody RoomSubscriptionUpdateRequest request
     ) {
         return roomSubscriptionService.updateSubscription(user.id(), teamId, roomId, request);
     }
 
-    @DeleteMapping("/rooms/{roomId}/subscription")
+    @DeleteMapping("/rooms/{room-id}/subscription")
     public ResponseEntity<Void> unsubscribeFromRoom(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable @Positive Long teamId,
-            @PathVariable @Positive Long roomId
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId
     ) {
         roomSubscriptionService.unsubscribeFromRoom(user.id(), teamId, roomId);
 

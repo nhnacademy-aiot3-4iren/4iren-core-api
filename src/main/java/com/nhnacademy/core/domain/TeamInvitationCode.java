@@ -1,6 +1,5 @@
 package com.nhnacademy.core.domain;
 
-import com.nhnacademy.core.domain.normalizer.TeamInvitationCodeNormalizer;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,13 +8,15 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Entity
 @Table(
         name = "team_invitation_codes",
         uniqueConstraints = @UniqueConstraint(
-                name = "uq_team_invitation_codes_code",
-                columnNames = "code"
+                name = "uq_team_invitation_codes_code_hash",
+                columnNames = "code_hash"
         ),
         indexes = @Index(
                 name = "idx_team_invitation_codes_team_id_active_expires_at",
@@ -25,6 +26,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class TeamInvitationCode extends VersionedEntity {
+
+    private static final Pattern CODE_HASH_PATTERN = Pattern.compile("^[0-9a-f]{64}$");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,8 +43,8 @@ public class TeamInvitationCode extends VersionedEntity {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Team team;
 
-    @Column(name = "code", nullable = false, length = 8, columnDefinition = "CHAR(8)")
-    private String code;
+    @Column(name = "code_hash", nullable = false, length = 64, columnDefinition = "CHAR(64)")
+    private String codeHash;
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
@@ -49,9 +52,9 @@ public class TeamInvitationCode extends VersionedEntity {
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
-    public TeamInvitationCode(Team team, String code, LocalDateTime expiresAt) {
+    public TeamInvitationCode(Team team, String codeHash, LocalDateTime expiresAt) {
         this.team = requireTeam(team);
-        this.code = TeamInvitationCodeNormalizer.normalizeCode(code);
+        this.codeHash = normalizeCodeHash(codeHash);
         this.expiresAt = requireExpiresAt(expiresAt);
     }
 
@@ -77,5 +80,18 @@ public class TeamInvitationCode extends VersionedEntity {
         }
 
         return expiresAt;
+    }
+
+    private static String normalizeCodeHash(String codeHash) {
+        if (codeHash == null || codeHash.isBlank()) {
+            throw new IllegalArgumentException("초대 코드 해시는 비어있을 수 없습니다.");
+        }
+
+        String normalizedCodeHash = codeHash.strip().toLowerCase(Locale.ROOT);
+        if (!CODE_HASH_PATTERN.matcher(normalizedCodeHash).matches()) {
+            throw new IllegalArgumentException("초대 코드 해시는 HMAC-SHA-256 형식이어야 합니다.");
+        }
+
+        return normalizedCodeHash;
     }
 }
