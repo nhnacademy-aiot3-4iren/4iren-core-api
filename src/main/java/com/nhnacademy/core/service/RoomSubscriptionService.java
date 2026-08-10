@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.adaptor.UserStatusClient;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.room.RoomSubscription;
 import com.nhnacademy.core.domain.team.Team;
@@ -10,6 +11,8 @@ import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionUpdateRequest;
 import com.nhnacademy.core.dto.subscription.UserRoomSubscriptionsResponse;
+import com.nhnacademy.core.dto.user.UserStatusBatchRequest;
+import com.nhnacademy.core.dto.user.UserStatusResponse;
 import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
@@ -24,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +39,7 @@ public class RoomSubscriptionService {
     private final RoomRepository roomRepository;
     private final RoomSubscriptionRepository roomSubscriptionRepository;
     private final TeamAuthorizationService teamAuthorizationService;
+    private final UserStatusClient userStatusClient;
 
     // 공간 구독
     @Transactional
@@ -119,11 +125,32 @@ public class RoomSubscriptionService {
 
     // roomId로 구독 조회
     public RoomSubscribersResponse getRoomSubscribers(Long roomId) {
-        return roomSubscriptionRepository.findSubscribersByRoomId(roomId)
+        RoomSubscribersResponse subscribers = roomSubscriptionRepository.findSubscribersByRoomId(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         ErrorCode.ROOM_NOT_FOUND,
                         Map.of("roomId", roomId)
                 ));
+        if (subscribers.subscribers().isEmpty()) {
+            return subscribers;
+        }
+
+        List<Long> subscriberIds = subscribers.subscribers().stream()
+                .map(RoomSubscribersResponse.Subscriber::userId)
+                .toList();
+        Set<Long> activeUserIds = userStatusClient.getUserStatuses(new UserStatusBatchRequest(subscriberIds)).stream()
+                .filter(UserStatusResponse::isActive)
+                .map(UserStatusResponse::userId)
+                .collect(Collectors.toSet());
+
+        List<RoomSubscribersResponse.Subscriber> activeSubscribers = subscribers.subscribers().stream()
+                .filter(subscriber -> activeUserIds.contains(subscriber.userId()))
+                .toList();
+
+        return new RoomSubscribersResponse(
+                subscribers.roomId(),
+                subscribers.roomName(),
+                activeSubscribers
+        );
     }
 
     // 구독 정보 수정
