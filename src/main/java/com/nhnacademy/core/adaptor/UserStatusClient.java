@@ -12,10 +12,10 @@ import java.util.List;
 
 @FeignClient(
         name = "4iren-account",
-        contextId = "accountClient",
+        contextId = "userStatusClient",
         path = "/api/account/internal/users"
 )
-public interface AccountClient {
+public interface UserStatusClient {
 
     // GET /api/account/internal/users/{user-id}/status
     @GetMapping("/{user-id}/status")

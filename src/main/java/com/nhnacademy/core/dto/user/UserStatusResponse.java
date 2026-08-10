@@ -4,9 +4,9 @@ import com.nhnacademy.core.domain.team.UserStatus;
 
 public record UserStatusResponse(
         Long userId,
-        UserStatus userStatus
+        UserStatus status
 ) {
     public boolean isActive() {
-        return userStatus == UserStatus.ACTIVE;
+        return status == UserStatus.ACTIVE;
     }
 }
