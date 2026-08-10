@@ -2,12 +2,12 @@ package com.nhnacademy.core.dto.sensor.catalog;
 
 import java.util.List;
 
-public record SensorBatchRequest(
+public record SensorMetricTypeBatchRequest(
         List<String> devEuis
 ) {
-    public SensorBatchRequest {
+    public SensorMetricTypeBatchRequest {
         if (devEuis == null) {
-            throw new IllegalArgumentException("devEuis는 null일 수 없습니다.");
+            throw new IllegalArgumentException("devEui 목록은 null일 수 없습니다.");
         }
 
         devEuis = List.copyOf(devEuis);
