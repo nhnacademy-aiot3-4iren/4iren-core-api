@@ -1,6 +1,11 @@
 package com.nhnacademy.core.repository.room;
 
+import com.nhnacademy.core.domain.QBuilding;
+import com.nhnacademy.core.domain.device.QDevice;
+import com.nhnacademy.core.domain.room.QRoom;
+import com.nhnacademy.core.domain.room.QRoomSubscription;
 import com.nhnacademy.core.domain.room.Room;
+import com.nhnacademy.core.domain.sensor.QSensorLocation;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;

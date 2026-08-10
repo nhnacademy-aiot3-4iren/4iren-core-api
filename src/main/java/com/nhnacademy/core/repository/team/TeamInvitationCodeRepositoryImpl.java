@@ -1,6 +1,6 @@
 package com.nhnacademy.core.repository.team;
 
-import com.nhnacademy.core.domain.QTeamInvitationCode;
+import com.nhnacademy.core.domain.team.QTeamInvitationCode;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
