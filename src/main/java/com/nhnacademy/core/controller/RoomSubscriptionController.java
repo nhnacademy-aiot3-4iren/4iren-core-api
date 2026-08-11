@@ -14,6 +14,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}")
@@ -37,6 +39,14 @@ public class RoomSubscriptionController {
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return roomSubscriptionService.getSubscriptions(user.id(), teamId, pageable);
+    }
+
+    @GetMapping("/room-subscriptions/all")
+    public List<RoomSubscriptionResponse> getSubscriptions(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable("team-id") @Positive Long teamId
+    ) {
+        return roomSubscriptionService.getSubscriptions(user.id(), teamId);
     }
 
     @PatchMapping("/rooms/{room-id}/subscription")

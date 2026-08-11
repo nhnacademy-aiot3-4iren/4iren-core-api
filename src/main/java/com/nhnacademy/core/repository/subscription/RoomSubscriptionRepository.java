@@ -5,6 +5,7 @@ import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,6 +17,8 @@ public interface RoomSubscriptionRepository extends JpaRepository<RoomSubscripti
     Optional<RoomSubscription> findByRoom_IdAndTeamMemberAndRoom_Building_Team(Long roomId, TeamMember teamMember, Team team);
 
     Page<RoomSubscription> findAllByTeamMemberAndRoom_Building_Team(TeamMember teamMember, Team team, Pageable pageable);
+
+    List<RoomSubscription> findAllByTeamMemberAndRoom_Building_Team(TeamMember teamMember, Team team, Sort sort);
 
     @EntityGraph(attributePaths = "room")
     List<RoomSubscription> findAllByTeamMember_UserId(Long userId);

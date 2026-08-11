@@ -21,6 +21,7 @@ import com.nhnacademy.core.repository.subscription.RoomSubscriptionRepository;
 import com.nhnacademy.core.repository.team.TeamMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,6 +102,18 @@ public class RoomSubscriptionService {
                 roomSubscriptionRepository.findAllByTeamMemberAndRoom_Building_Team(teamMember, teamMember.getTeam(), pageable)
                         .map(RoomSubscriptionResponse::from)
         );
+    }
+
+    public List<RoomSubscriptionResponse> getSubscriptions(Long userId, Long teamId) {
+        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
+
+        return roomSubscriptionRepository.findAllByTeamMemberAndRoom_Building_Team(
+                        teamMember,
+                        teamMember.getTeam(),
+                        Sort.by(Sort.Order.asc("room.id"))
+                ).stream()
+                .map(RoomSubscriptionResponse::from)
+                .toList();
     }
 
     // 사용자 ID로 전체 구독 조회
