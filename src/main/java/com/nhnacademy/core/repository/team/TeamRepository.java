@@ -1,6 +1,6 @@
 package com.nhnacademy.core.repository.team;
 
-import com.nhnacademy.core.domain.Team;
+import com.nhnacademy.core.domain.team.Team;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

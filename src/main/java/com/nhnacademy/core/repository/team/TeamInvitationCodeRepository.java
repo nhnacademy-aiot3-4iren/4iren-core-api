@@ -1,7 +1,7 @@
 package com.nhnacademy.core.repository.team;
 
-import com.nhnacademy.core.domain.Team;
-import com.nhnacademy.core.domain.TeamInvitationCode;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamInvitationCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

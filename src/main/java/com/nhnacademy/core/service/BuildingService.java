@@ -1,8 +1,8 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Building;
-import com.nhnacademy.core.domain.Team;
 import com.nhnacademy.core.domain.normalizer.BuildingNormalizer;
+import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.building.BuildingCreateRequest;
 import com.nhnacademy.core.dto.building.BuildingDetailResponse;
@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -67,6 +68,15 @@ public class BuildingService {
                 buildingRepository.findAllByTeam(team, pageable)
                         .map(BuildingResponse::from)
         );
+    }
+
+    public List<BuildingResponse> getBuildings(Long userId, Long teamId) {
+        Team team = teamAuthorizationService.requireTeamManager(userId, teamId)
+                .getTeam();
+
+        return buildingRepository.findAllByTeamOrderById(team).stream()
+                .map(BuildingResponse::from)
+                .toList();
     }
 
     // 건물 상세 조회

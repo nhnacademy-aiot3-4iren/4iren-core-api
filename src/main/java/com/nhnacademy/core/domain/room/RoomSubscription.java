@@ -1,5 +1,7 @@
-package com.nhnacademy.core.domain;
+package com.nhnacademy.core.domain.room;
 
+import com.nhnacademy.core.domain.VersionedEntity;
+import com.nhnacademy.core.domain.team.TeamMember;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

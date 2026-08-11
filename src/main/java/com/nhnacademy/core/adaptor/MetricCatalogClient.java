@@ -1,7 +1,7 @@
 package com.nhnacademy.core.adaptor;
 
 import com.nhnacademy.core.dto.sensor.catalog.MetricTypeResponse;
-import com.nhnacademy.core.dto.sensor.catalog.SensorBatchRequest;
+import com.nhnacademy.core.dto.sensor.catalog.SensorMetricTypeBatchRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,22 +12,25 @@ import java.util.List;
 import java.util.Map;
 
 @FeignClient(
-        name = "4iren-gateway",
-        contextId = "processingMetricClient",
+        name = "4iren-processing",
+        contextId = "metricCatalogClient",
         path = "/api/processing"
 )
-public interface ProcessingMetricClient {
+public interface MetricCatalogClient {
 
-    @GetMapping("/metric_type")
+    // GET /api/processing/metric-type?devEui=
+    @GetMapping("/metric-type")
     Map<String, List<MetricTypeResponse>> getSensorMetricTypes(
-            @RequestParam("dev_eui") String devEui
+            @RequestParam("devEui") String devEui
     );
 
+    // GET /api/processing/internal/metric-catalog
     @GetMapping("/internal/metric-catalog")
     List<MetricTypeResponse> getMetricCatalog();
 
+    // POST /api/processing/internal/sensors/batch
     @PostMapping("/internal/sensors/batch")
-    Map<String, List<MetricTypeResponse>> getSensorMetricTypesBatch(
-            @RequestBody SensorBatchRequest request
+    Map<String, List<MetricTypeResponse>> getSensorMetricTypesByDevEuis(
+            @RequestBody SensorMetricTypeBatchRequest request
     );
 }

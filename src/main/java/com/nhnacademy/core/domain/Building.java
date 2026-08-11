@@ -1,6 +1,7 @@
 package com.nhnacademy.core.domain;
 
 import com.nhnacademy.core.domain.normalizer.BuildingNormalizer;
+import com.nhnacademy.core.domain.team.Team;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

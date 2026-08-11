@@ -1,8 +1,8 @@
 package com.nhnacademy.core.repository.subscription;
 
-import com.nhnacademy.core.domain.QRoom;
-import com.nhnacademy.core.domain.QRoomSubscription;
-import com.nhnacademy.core.domain.QTeamMember;
+import com.nhnacademy.core.domain.room.QRoom;
+import com.nhnacademy.core.domain.room.QRoomSubscription;
+import com.nhnacademy.core.domain.team.QTeamMember;
 import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;

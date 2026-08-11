@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,6 +50,13 @@ public class TeamController {
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return teamService.getTeams(user.id(), user.role(), pageable);
+    }
+
+    @GetMapping("/all")
+    public List<TeamResponse> getTeams(
+            @CurrentUser AuthenticatedUser user
+    ) {
+        return teamService.getTeams(user.id(), user.role());
     }
 
     @GetMapping("/{team-id}")

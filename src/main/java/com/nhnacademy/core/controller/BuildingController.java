@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,6 +52,14 @@ public class BuildingController {
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return buildingService.getBuildings(user.id(), teamId, pageable);
+    }
+
+    @GetMapping("/all")
+    public List<BuildingResponse> getBuildings(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable("team-id") @Positive Long teamId
+    ) {
+        return buildingService.getBuildings(user.id(), teamId);
     }
 
     @GetMapping("/{building-id}")

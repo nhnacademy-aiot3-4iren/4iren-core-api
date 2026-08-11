@@ -1,6 +1,6 @@
 package com.nhnacademy.core.dto.sensor.location;
 
-import com.nhnacademy.core.domain.SensorLocation;
+import com.nhnacademy.core.domain.sensor.SensorLocation;
 
 public record SensorLocationResponse(
         Long sensorLocationId,

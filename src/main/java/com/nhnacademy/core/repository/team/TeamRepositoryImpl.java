@@ -1,6 +1,11 @@
 package com.nhnacademy.core.repository.team;
 
-import com.nhnacademy.core.domain.*;
+import com.nhnacademy.core.domain.QBuilding;
+import com.nhnacademy.core.domain.device.QDevice;
+import com.nhnacademy.core.domain.room.QRoom;
+import com.nhnacademy.core.domain.sensor.QSensorLocation;
+import com.nhnacademy.core.domain.team.QTeam;
+import com.nhnacademy.core.domain.team.QTeamMember;
 import com.nhnacademy.core.dto.team.TeamDetailQueryResult;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;

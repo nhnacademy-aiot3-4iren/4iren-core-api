@@ -55,6 +55,15 @@ public class RoomController {
         return roomService.getRooms(user.id(), teamId, buildingId, pageable);
     }
 
+    @GetMapping("/buildings/{building-id}/rooms/all")
+    public List<RoomResponse> getRooms(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("building-id") @Positive Long buildingId
+    ) {
+        return roomService.getRooms(user.id(), teamId, buildingId);
+    }
+
     @GetMapping("/rooms/{room-id}")
     public RoomDetailResponse getRoom(
             @CurrentUser AuthenticatedUser user,

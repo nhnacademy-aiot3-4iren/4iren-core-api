@@ -1,9 +1,9 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.config.auth.UserRole;
-import com.nhnacademy.core.domain.Team;
-import com.nhnacademy.core.domain.TeamMember;
-import com.nhnacademy.core.domain.TeamRole;
+import com.nhnacademy.core.domain.team.Team;
+import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.TeamCreateRequest;
 import com.nhnacademy.core.dto.team.TeamDetailResponse;
@@ -19,6 +19,7 @@ import com.nhnacademy.core.repository.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +77,29 @@ public class TeamService {
                         roles.get(team.getId())
                 ))
         );
+    }
+
+    public List<TeamResponse> getTeams(Long userId, UserRole userRole) {
+        // ADMIN 권한이 없는 경우, 사용자가 소속된 팀만 조회
+        if (userRole != UserRole.ADMIN) {
+            return teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId).stream()
+                    .map(teamMember -> TeamResponse.from(
+                            teamMember.getTeam(),
+                            teamMember.getTeamRole()
+                    ))
+                    .toList();
+        }
+
+        // ADMIN 권한이 있는 경우, 모든 팀 조회
+        List<Team> teams = teamRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        Map<Long, TeamRole> roles = getUserTeamRoles(userId, teams);
+
+        return teams.stream()
+                .map(team -> TeamResponse.from(
+                        team,
+                        roles.get(team.getId())
+                ))
+                .toList();
     }
 
     // 팀 상세 조회

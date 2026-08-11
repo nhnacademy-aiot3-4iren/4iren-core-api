@@ -1,7 +1,7 @@
 package com.nhnacademy.core.dto.room;
 
 import com.nhnacademy.core.domain.Building;
-import com.nhnacademy.core.domain.Room;
+import com.nhnacademy.core.domain.room.Room;
 
 public record RoomMatchResponse(
         Long roomId,

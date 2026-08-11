@@ -1,6 +1,8 @@
-package com.nhnacademy.core.domain;
+package com.nhnacademy.core.domain.sensor;
 
+import com.nhnacademy.core.domain.VersionedEntity;
 import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
+import com.nhnacademy.core.domain.room.Room;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

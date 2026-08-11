@@ -1,6 +1,6 @@
 package com.nhnacademy.core.dto.room;
 
-import com.nhnacademy.core.domain.Device;
+import com.nhnacademy.core.domain.device.Device;
 
 import java.util.List;
 
