@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -50,6 +51,17 @@ public class DeviceService {
                 deviceRepository.findAllByRoom(room, pageable)
                         .map(DeviceResponse::from)
         );
+    }
+
+    public List<DeviceResponse> getDevices(Long userId, Long teamId, Long roomId) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
+        // 공간 존재 여부 확인
+        Room room = getRoomOrThrow(roomId, teamId);
+
+        return deviceRepository.findAllByRoomOrderById(room).stream()
+                .map(DeviceResponse::from)
+                .toList();
     }
 
     // 기기 상세 조회

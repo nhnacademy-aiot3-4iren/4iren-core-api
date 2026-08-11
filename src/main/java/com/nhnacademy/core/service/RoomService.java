@@ -1,9 +1,9 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.Building;
+import com.nhnacademy.core.domain.normalizer.RoomNormalizer;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.team.Team;
-import com.nhnacademy.core.domain.normalizer.RoomNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.room.*;
 import com.nhnacademy.core.exception.ErrorCode;
@@ -70,6 +70,17 @@ public class RoomService {
         );
     }
 
+    public List<RoomResponse> getRooms(Long userId, Long teamId, Long buildingId) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
+        // 건물 존재 여부 확인
+        Building building = getBuildingOrThrow(buildingId, teamId);
+
+        return roomRepository.findAllByBuildingOrderById(building).stream()
+                .map(RoomResponse::from)
+                .toList();
+    }
+
     // 공간 상세 조회
     public RoomDetailResponse getRoom(Long userId, Long teamId, Long roomId) {
         teamAuthorizationService.requireTeamMember(userId, teamId);
@@ -124,7 +135,7 @@ public class RoomService {
                         Map.of("roomId", roomId)
                 ));
 
-        List<RoomDevicesResponse.DeviceSummary> devices = deviceRepository.findAllByRoomOrderByIdAsc(room).stream()
+        List<RoomDevicesResponse.DeviceSummary> devices = deviceRepository.findAllByRoomOrderById(room).stream()
                 .map(RoomDevicesResponse.DeviceSummary::from)
                 .toList();
 

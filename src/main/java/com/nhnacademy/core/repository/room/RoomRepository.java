@@ -17,6 +17,8 @@ public interface RoomRepository extends JpaRepository<Room, Long>, RoomRepositor
 
     Page<Room> findAllByBuilding(Building building, Pageable pageable);
 
+    List<Room> findAllByBuildingOrderById(Building building);
+
     Optional<Room> findByBuildingAndRoomName(Building building, String roomName);
 
     @EntityGraph(attributePaths = "building")

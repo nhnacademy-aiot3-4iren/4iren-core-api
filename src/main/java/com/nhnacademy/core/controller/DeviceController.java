@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -52,6 +53,15 @@ public class DeviceController {
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return deviceService.getDevices(user.id(), teamId, roomId, pageable);
+    }
+
+    @GetMapping("/rooms/{room-id}/devices/all")
+    public List<DeviceResponse> getDevices(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId
+    ) {
+        return deviceService.getDevices(user.id(), teamId, roomId);
     }
 
     @GetMapping("/devices/{device-id}")

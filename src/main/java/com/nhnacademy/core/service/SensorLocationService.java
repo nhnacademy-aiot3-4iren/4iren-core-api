@@ -1,8 +1,8 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.sensor.SensorLocation;
-import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.sensor.SensorTelemetryContextResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationCreateRequest;
@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -57,6 +58,17 @@ public class SensorLocationService {
                 sensorLocationRepository.findAllByRoom(room, pageable)
                         .map(SensorLocationResponse::from)
         );
+    }
+
+    public List<SensorLocationResponse> getSensorLocations(Long userId, Long teamId, Long roomId) {
+        teamAuthorizationService.requireTeamMember(userId, teamId);
+
+        // 공간 존재 여부 확인
+        Room room = getRoomOrThrow(roomId, teamId);
+
+        return sensorLocationRepository.findAllByRoomOrderById(room).stream()
+                .map(SensorLocationResponse::from)
+                .toList();
     }
 
     // 센서 위치 상세 조회

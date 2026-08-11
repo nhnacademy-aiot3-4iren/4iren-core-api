@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SensorLocationRepository extends JpaRepository<SensorLocation, Long> {
@@ -14,9 +15,17 @@ public interface SensorLocationRepository extends JpaRepository<SensorLocation, 
 
     Page<SensorLocation> findAllByRoom(Room room, Pageable pageable);
 
+    List<SensorLocation> findAllByRoomOrderById(Room room);
+
+    List<SensorDevEuiProjection> findByRoom_IdOrderByDevEuiAsc(Long roomId);
+
     Optional<SensorLocation> findByDevEui(String devEui);
 
     boolean existsByDevEui(String devEui);
 
     boolean existsByRoom(Room room);
+
+    interface SensorDevEuiProjection {
+        String getDevEui();
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface BuildingRepository extends JpaRepository<Building, Long>, BuildingRepositoryCustom {
@@ -13,6 +14,8 @@ public interface BuildingRepository extends JpaRepository<Building, Long>, Build
     Optional<Building> findByIdAndTeam_Id(Long buildingId, Long teamId);
 
     Page<Building> findAllByTeam(Team team, Pageable pageable);
+
+    List<Building> findAllByTeamOrderById(Team team);
 
     boolean existsByTeam(Team team);
 

@@ -15,7 +15,7 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
 
     Page<Device> findAllByRoom(Room room, Pageable pageable);
 
-    List<Device> findAllByRoomOrderByIdAsc(Room room);
+    List<Device> findAllByRoomOrderById(Room room);
 
     boolean existsByRoom(Room room);
 }
