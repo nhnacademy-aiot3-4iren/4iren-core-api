@@ -5,8 +5,6 @@ import com.nhnacademy.core.config.auth.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.member.TeamJoinRequest;
 import com.nhnacademy.core.dto.team.member.TeamMemberResponse;
-import com.nhnacademy.core.dto.team.member.TeamMemberRoleChangeRequest;
-import com.nhnacademy.core.dto.team.member.TeamOwnerChangeRequest;
 import com.nhnacademy.core.service.TeamMemberService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -28,7 +26,7 @@ public class TeamMemberController {
             @CurrentUser AuthenticatedUser user,
             @Valid @RequestBody TeamJoinRequest request
     ) {
-        TeamMemberResponse response = teamMemberService.joinTeam(user.id(), request);
+        TeamMemberResponse response = teamMemberService.joinTeam(user.id(), user.role(), request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
@@ -43,32 +41,13 @@ public class TeamMemberController {
         return teamMemberService.getTeamMembers(user.id(), teamId, pageable);
     }
 
-    @PatchMapping("/teams/{team-id}/members/{team-member-id}/role")
-    public TeamMemberResponse changeTeamMemberRole(
-            @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("team-member-id") @Positive Long teamMemberId,
-            @Valid @RequestBody TeamMemberRoleChangeRequest request
-    ) {
-        return teamMemberService.changeTeamMemberRole(user.id(), teamId, teamMemberId, request);
-    }
-
-    @PatchMapping("/teams/{team-id}/owner")
-    public TeamMemberResponse transferTeamOwnership(
-            @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @Valid @RequestBody TeamOwnerChangeRequest request
-    ) {
-        return teamMemberService.transferTeamOwnership(user.id(), teamId, request);
-    }
-
     @DeleteMapping("/teams/{team-id}/members/{team-member-id}")
     public ResponseEntity<Void> removeTeamMember(
             @CurrentUser AuthenticatedUser user,
             @PathVariable("team-id") @Positive Long teamId,
             @PathVariable("team-member-id") @Positive Long teamMemberId
     ) {
-        teamMemberService.removeTeamMember(user.id(), teamId, teamMemberId);
+        teamMemberService.removeTeamMember(user.id(), user.role(), teamId, teamMemberId);
 
         return ResponseEntity.noContent()
                 .build();
@@ -79,7 +58,7 @@ public class TeamMemberController {
             @CurrentUser AuthenticatedUser user,
             @PathVariable("team-id") @Positive Long teamId
     ) {
-        teamMemberService.leaveTeam(user.id(), teamId);
+        teamMemberService.leaveTeam(user.id(), user.role(), teamId);
 
         return ResponseEntity.noContent()
                 .build();

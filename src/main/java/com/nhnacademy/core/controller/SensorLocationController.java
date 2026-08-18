@@ -34,7 +34,7 @@ public class SensorLocationController {
             @Valid @RequestBody SensorLocationCreateRequest request
     ) {
         SensorLocationResponse response =
-                sensorLocationService.createSensorLocation(user.id(), teamId, roomId, request);
+                sensorLocationService.createSensorLocation(user.id(), user.role(), teamId, roomId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
@@ -81,7 +81,7 @@ public class SensorLocationController {
             @PathVariable("sensor-location-id") @Positive Long sensorLocationId,
             @Valid @RequestBody SensorLocationUpdateRequest request
     ) {
-        return sensorLocationService.updateSensorLocation(user.id(), teamId, sensorLocationId, request);
+        return sensorLocationService.updateSensorLocation(user.id(), user.role(), teamId, sensorLocationId, request);
     }
 
     @DeleteMapping("/sensor-locations/{sensor-location-id}")
@@ -90,7 +90,7 @@ public class SensorLocationController {
             @PathVariable("team-id") @Positive Long teamId,
             @PathVariable("sensor-location-id") @Positive Long sensorLocationId
     ) {
-        sensorLocationService.deleteSensorLocation(user.id(), teamId, sensorLocationId);
+        sensorLocationService.deleteSensorLocation(user.id(), user.role(), teamId, sensorLocationId);
 
         return ResponseEntity.noContent()
                 .build();

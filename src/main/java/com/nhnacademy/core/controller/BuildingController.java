@@ -33,7 +33,7 @@ public class BuildingController {
             @PathVariable("team-id") @Positive Long teamId,
             @Valid @RequestBody BuildingCreateRequest request
     ) {
-        BuildingResponse response = buildingService.createBuilding(user.id(), teamId, request);
+        BuildingResponse response = buildingService.createBuilding(user.id(), user.role(), teamId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -78,7 +78,7 @@ public class BuildingController {
             @PathVariable("building-id") @Positive Long buildingId,
             @Valid @RequestBody BuildingUpdateRequest request
     ) {
-        return buildingService.updateBuilding(user.id(), teamId, buildingId, request);
+        return buildingService.updateBuilding(user.id(), user.role(), teamId, buildingId, request);
     }
 
     @DeleteMapping("/{building-id}")
@@ -87,7 +87,7 @@ public class BuildingController {
             @PathVariable("team-id") @Positive Long teamId,
             @PathVariable("building-id") @Positive Long buildingId
     ) {
-        buildingService.deleteBuilding(user.id(), teamId, buildingId);
+        buildingService.deleteBuilding(user.id(), user.role(), teamId, buildingId);
 
         return ResponseEntity.noContent()
                 .build();
