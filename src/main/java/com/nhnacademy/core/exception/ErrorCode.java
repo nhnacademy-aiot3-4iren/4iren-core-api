@@ -87,6 +87,28 @@ public enum ErrorCode {
             "센서 데이터 저장소를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
     ),
 
+    // 기상청 좌표 오류
+    KMA_COORDINATE_FILE_UNAVAILABLE(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "KMA_COORDINATE.FILE_UNAVAILABLE",
+            "기상청 좌표 정보를 사용할 수 없습니다."
+    ),
+    KMA_REGION_NAME_REQUIRED(
+            HttpStatus.BAD_REQUEST,
+            "KMA_COORDINATE.REGION_NAME_REQUIRED",
+            "지역명을 입력하세요."
+    ),
+    KMA_REGION_COORDINATE_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "KMA_COORDINATE.NOT_FOUND",
+            "지역 좌표를 찾을 수 없습니다."
+    ),
+    KMA_REGION_NAME_AMBIGUOUS(
+            HttpStatus.BAD_REQUEST,
+            "KMA_COORDINATE.REGION_NAME_AMBIGUOUS",
+            "지역명이 모호합니다."
+    ),
+
     // 인증 오류
     INVALID_AUTH_HEADER(
             HttpStatus.BAD_REQUEST,

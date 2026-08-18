@@ -1,4 +1,4 @@
-@api = http://localhost:8765/api
+@api = http://localhost:8765/api/core
 @teamId = 3
 @teamMemberId = 2
 @userId = 1

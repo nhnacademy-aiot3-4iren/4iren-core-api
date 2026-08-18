@@ -24,27 +24,27 @@ public class KmaController {
      * @param regionName 조회할 지역명
      * @return 현재 날씨
      */
-    @GetMapping("/ultraSrtNcst")
+    @GetMapping("/current-weather")
     public ResponseEntity<KmaCurrentWeatherResponseDto> getNcst(@RequestParam String regionName) {
         KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstForLLM(regionName);
-        log.info("초단기실황조회 호출결과: {}", response);
+        log.info("초단기실황조회(현재 날씨 조회) 호출결과: {}", response);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/ultraSrtFcst")
+    @GetMapping("/forecast-weather")
     public ResponseEntity<KmaForecastWeatherResponseDto> getFcst(@RequestParam String regionName){
         KmaForecastWeatherResponseDto response = kmaService.getUltraSrtFcstForLLM(regionName);
-        log.info("초단기예보조회 호출결과: {}", response);
+        log.info("초단기예보조회(날씨 예보) 호출결과: {}", response);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/internal/ultraSrtNcst")
+    @GetMapping("/internal/current-weather")
     public ResponseEntity<KmaCurrentWeatherDto> getInternalNcst(@RequestParam String regionName) {
         KmaCurrentWeatherDto response = kmaService.getCurrentUltraSrtNcst(regionName);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/internal/ultraSrtFcst")
+    @GetMapping("/internal/forecast-weather")
     public ResponseEntity<KmaForecastWeatherDto> getInternalFcst(@RequestParam String regionName) {
         KmaForecastWeatherDto response = kmaService.getUltraSrtFcst(regionName);
         return ResponseEntity.ok(response);
