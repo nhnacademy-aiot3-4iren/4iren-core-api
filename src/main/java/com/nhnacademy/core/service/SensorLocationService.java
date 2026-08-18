@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.sensor.SensorLocation;
@@ -28,12 +29,12 @@ public class SensorLocationService {
 
     private final RoomRepository roomRepository;
     private final SensorLocationRepository sensorLocationRepository;
-    private final TeamAuthorizationService teamAuthorizationService;
+    private final TeamAuthorizer teamAuthorizer;
 
     // 센서 위치 등록
     @Transactional
-    public SensorLocationResponse createSensorLocation(Long userId, Long teamId, Long roomId, SensorLocationCreateRequest request) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public SensorLocationResponse createSensorLocation(Long userId, UserRole userRole, Long teamId, Long roomId, SensorLocationCreateRequest request) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
         SensorLocation sensorLocation = new SensorLocation(room, request.devEui(), request.locationDetail());
@@ -49,7 +50,7 @@ public class SensorLocationService {
 
     // 센서 위치 목록 조회
     public PageResponse<SensorLocationResponse> getSensorLocations(Long userId, Long teamId, Long roomId, Pageable pageable) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         // 공간 존재 여부 확인
         Room room = getRoomOrThrow(roomId, teamId);
@@ -61,7 +62,7 @@ public class SensorLocationService {
     }
 
     public List<SensorLocationResponse> getSensorLocations(Long userId, Long teamId, Long roomId) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         // 공간 존재 여부 확인
         Room room = getRoomOrThrow(roomId, teamId);
@@ -73,7 +74,7 @@ public class SensorLocationService {
 
     // 센서 위치 상세 조회
     public SensorLocationResponse getSensorLocation(Long userId, Long teamId, Long sensorLocationId) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         SensorLocation sensorLocation = getSensorLocationOrThrow(sensorLocationId, teamId);
 
@@ -92,8 +93,8 @@ public class SensorLocationService {
 
     // 센서 위치 수정
     @Transactional
-    public SensorLocationResponse updateSensorLocation(Long userId, Long teamId, Long sensorLocationId, SensorLocationUpdateRequest request) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public SensorLocationResponse updateSensorLocation(Long userId, UserRole userRole, Long teamId, Long sensorLocationId, SensorLocationUpdateRequest request) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         SensorLocation sensorLocation = getSensorLocationOrThrow(sensorLocationId, teamId);
         Room destinationRoom = request.getRoomId().isPresent()
@@ -112,8 +113,8 @@ public class SensorLocationService {
 
     // 센서 위치 삭제
     @Transactional
-    public void deleteSensorLocation(Long userId, Long teamId, Long sensorLocationId) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public void deleteSensorLocation(Long userId, UserRole userRole, Long teamId, Long sensorLocationId) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         SensorLocation sensorLocation = getSensorLocationOrThrow(sensorLocationId, teamId);
 

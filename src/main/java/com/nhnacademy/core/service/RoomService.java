@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.Building;
 import com.nhnacademy.core.domain.normalizer.RoomNormalizer;
 import com.nhnacademy.core.domain.room.Room;
@@ -30,16 +31,15 @@ public class RoomService {
     private final TeamRepository teamRepository;
     private final BuildingRepository buildingRepository;
     private final RoomRepository roomRepository;
-    private final RoomSubscriptionService roomSubscriptionService;
     private final SensorLocationRepository sensorLocationRepository;
     private final DeviceRepository deviceRepository;
-    private final TeamAuthorizationService teamAuthorizationService;
+    private final TeamAuthorizer teamAuthorizer;
 
     // 공간 생성
     @Transactional
-    public RoomResponse createRoom(Long userId, Long teamId, Long buildingId, RoomCreateRequest request) {
+    public RoomResponse createRoom(Long userId, UserRole userRole, Long teamId, Long buildingId, RoomCreateRequest request) {
         lockTeamOrThrow(teamId);
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Building building = getBuildingOrThrow(buildingId, teamId);
         Room room = new Room(building, request.roomName(), request.description());
@@ -51,15 +51,12 @@ public class RoomService {
             );
         }
 
-        Room savedRoom = roomRepository.save(room);
-        roomSubscriptionService.subscribeManagersToRoom(savedRoom);
-
-        return RoomResponse.from(savedRoom);
+        return RoomResponse.from(roomRepository.save(room));
     }
 
     // 공간 목록 조회
     public PageResponse<RoomResponse> getRooms(Long userId, Long teamId, Long buildingId, Pageable pageable) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         // 건물 존재 여부 확인
         Building building = getBuildingOrThrow(buildingId, teamId);
@@ -70,8 +67,9 @@ public class RoomService {
         );
     }
 
+    // 공간 목록 조회, List
     public List<RoomResponse> getRooms(Long userId, Long teamId, Long buildingId) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         // 건물 존재 여부 확인
         Building building = getBuildingOrThrow(buildingId, teamId);
@@ -83,7 +81,7 @@ public class RoomService {
 
     // 공간 상세 조회
     public RoomDetailResponse getRoom(Long userId, Long teamId, Long roomId) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         return RoomDetailResponse.from(
                 roomRepository.findDetailByIdAndTeamId(roomId, teamId)
@@ -94,6 +92,7 @@ public class RoomService {
         );
     }
 
+    // 공간 상세 조회, 내부 API
     public RoomDetailResponse getInternalRoom(Long roomId) {
         return RoomDetailResponse.from(
                 roomRepository.findDetailById(roomId)
@@ -148,7 +147,7 @@ public class RoomService {
 
     // 팀 내 공간 이름으로 조회
     public List<RoomMatchResponse> searchRoomsInTeam(Long userId, Long teamId, String roomName) {
-        Team team = teamAuthorizationService.requireTeamMember(userId, teamId)
+        Team team = teamAuthorizer.requireTeamMember(userId, teamId)
                 .getTeam();
 
         String normalizedRoomName = RoomNormalizer.normalizeName(roomName);
@@ -160,7 +159,7 @@ public class RoomService {
 
     // 건물 내 공간 이름으로 조회
     public RoomMatchResponse searchRoomInBuilding(Long userId, Long teamId, Long buildingId, String roomName) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         Building building = getBuildingOrThrow(buildingId, teamId);
         String normalizedName = RoomNormalizer.normalizeName(roomName);
@@ -175,8 +174,8 @@ public class RoomService {
 
     // 공간 이름, 설명 수정
     @Transactional
-    public RoomResponse updateRoom(Long userId, Long teamId, Long roomId, RoomUpdateRequest request) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public RoomResponse updateRoom(Long userId, UserRole userRole, Long teamId, Long roomId, RoomUpdateRequest request) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
 
@@ -203,8 +202,8 @@ public class RoomService {
 
     // 공간 삭제
     @Transactional
-    public void deleteRoom(Long userId, Long teamId, Long roomId) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public void deleteRoom(Long userId, UserRole userRole, Long teamId, Long roomId) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
 

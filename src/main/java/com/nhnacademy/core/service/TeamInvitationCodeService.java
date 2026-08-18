@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamInvitationCode;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeCreateRequest;
@@ -24,14 +25,14 @@ public class TeamInvitationCodeService {
 
     private final TeamRepository teamRepository;
     private final TeamInvitationCodeRepository teamInvitationCodeRepository;
-    private final TeamAuthorizationService teamAuthorizationService;
+    private final TeamAuthorizer teamAuthorizer;
     private final InvitationCodeHasher invitationCodeHasher;
 
     // 팀 초대 코드 생성
     @Transactional
-    public TeamInvitationCodeResponse createInvitationCode(Long userId, Long teamId, TeamInvitationCodeCreateRequest request) {
+    public TeamInvitationCodeResponse createInvitationCode(Long userId, UserRole userRole, Long teamId, TeamInvitationCodeCreateRequest request) {
         Team team = lockTeamOrThrow(teamId);
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         GeneratedInvitationCode generatedCode = generateCode();
         TeamInvitationCode invitationCode = new TeamInvitationCode(
@@ -48,9 +49,9 @@ public class TeamInvitationCodeService {
 
     // 팀 초대 코드 비활성화
     @Transactional
-    public void deactivateInvitationCode(Long userId, Long teamId, Long invitationCodeId) {
+    public void deactivateInvitationCode(Long userId, UserRole userRole, Long teamId, Long invitationCodeId) {
         Team team = lockTeamOrThrow(teamId);
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         TeamInvitationCode invitationCode = teamInvitationCodeRepository.findByIdAndTeam(invitationCodeId, team)
                 .orElseThrow(() -> new ResourceNotFoundException(
