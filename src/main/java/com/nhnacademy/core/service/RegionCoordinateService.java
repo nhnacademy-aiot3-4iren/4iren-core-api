@@ -1,15 +1,16 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.domain.GeoCoordinate;
 import com.nhnacademy.core.domain.RegionCoordinate;
+import com.nhnacademy.core.exception.ErrorCode;
+import com.nhnacademy.core.exception.InvalidRequestException;
+import com.nhnacademy.core.exception.ResourceNotFoundException;
+import com.nhnacademy.core.exception.ServiceUnavailableException;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.util.ZipSecureFile;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -18,18 +19,16 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class RegionCoordinateService {
+    private static final double EARTH_RADIUS_KM = 6371.0088;
+
+    private final KakaoGeocodingService kakaoGeocodingService;
     private final DataFormatter dataFormatter = new DataFormatter();
     private final ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
 
@@ -54,7 +53,11 @@ public class RegionCoordinateService {
             coordinateByNormalizedRegionName = Map.copyOf(coordinates);
             log.info("기상청 제공 지역 좌표 로드: {}건", coordinateByNormalizedRegionName.size());
         } catch (IOException e) {
-            throw new IllegalStateException("기상청 좌표 엑셀 파일을 읽을 수 없습니다.", e);
+            throw new ServiceUnavailableException(
+                    ErrorCode.KMA_COORDINATE_FILE_UNAVAILABLE,
+                    Map.of("coordinateFile", String.valueOf(coordinateFile)),
+                    e
+            );
         }
     }
 
@@ -77,18 +80,25 @@ public class RegionCoordinateService {
                             .findFirst()
                             .orElse(null));
         } catch (IOException e) {
-            throw new IllegalStateException("기상청 좌표 엑셀 파일을 탐색할 수 없습니다.", e);
+            throw new ServiceUnavailableException(
+                    ErrorCode.KMA_COORDINATE_FILE_UNAVAILABLE,
+                    Map.of("coordinateFile", String.valueOf(coordinateFile)),
+                    e
+            );
         }
     }
 
     public RegionCoordinate findByRegionName(String regionName) {
         if (coordinateByNormalizedRegionName.isEmpty()) {
-            throw new IllegalStateException("기상청 좌표 정보가 로드되지 않았습니다. 엑셀 파일 경로를 확인하세요.");
+            throw new ServiceUnavailableException(
+                    ErrorCode.KMA_COORDINATE_FILE_UNAVAILABLE,
+                    Map.of("coordinateFile", String.valueOf(coordinateFile))
+            );
         }
 
         String normalizedRegionName = normalize(regionName);
         if (normalizedRegionName.isBlank()) {
-            throw new IllegalArgumentException("지역명을 입력하세요.");
+            throw new InvalidRequestException(ErrorCode.KMA_REGION_NAME_REQUIRED);
         }
 
         RegionCoordinate exactMatch = coordinateByNormalizedRegionName.get(normalizedRegionName);
@@ -98,21 +108,36 @@ public class RegionCoordinateService {
 
         List<RegionCoordinate> matches = selectBestMatches(regionName, findMatches(regionName));
         if (matches.isEmpty()) {
-            matches = findUpperRegionMatches(regionName);
+            Optional<RegionCoordinate> nearestMatch = kakaoGeocodingService.geocode(regionName)
+                    .flatMap(this::findNearestByCoordinate);
+            if (nearestMatch.isPresent()) {
+                RegionCoordinate coordinate = nearestMatch.get();
+                log.info("지역명 좌표 매칭 실패, 지오코딩 기반 가장 가까운 기상청 좌표 사용: {} -> {}", regionName, coordinate.regionName());
+                return coordinate;
+            }
         }
 
         if (matches.size() == 1) {
             return matches.getFirst();
         }
         if (matches.isEmpty()) {
-            throw new IllegalArgumentException("지역 좌표를 찾을 수 없습니다: " + regionName);
+            throw new ResourceNotFoundException(
+                    ErrorCode.KMA_REGION_COORDINATE_NOT_FOUND,
+                    Map.of("regionName", regionName)
+            );
         }
 
         String candidates = matches.stream()
                 .map(RegionCoordinate::regionName)
                 .limit(10)
                 .collect(Collectors.joining(", "));
-        throw new IllegalArgumentException("지역명이 모호합니다: " + regionName + " 후보: " + candidates);
+        throw new InvalidRequestException(
+                ErrorCode.KMA_REGION_NAME_AMBIGUOUS,
+                Map.of(
+                        "regionName", regionName,
+                        "candidates", candidates
+                )
+        );
     }
 
     private List<RegionCoordinate> findMatches(String regionName) {
@@ -123,18 +148,6 @@ public class RegionCoordinateService {
                 .map(Map.Entry::getValue)
                 .distinct()
                 .toList();
-    }
-
-    private List<RegionCoordinate> findUpperRegionMatches(String regionName) {
-        List<String> keywords = splitKeywords(regionName);
-        for (int size = keywords.size() - 1; size >= 2; size--) {
-            String upperRegionName = String.join(" ", keywords.subList(0, size));
-            List<RegionCoordinate> matches = selectBestMatches(upperRegionName, findMatches(upperRegionName));
-            if (!matches.isEmpty()) {
-                return matches;
-            }
-        }
-        return List.of();
     }
 
     private List<RegionCoordinate> selectBestMatches(String regionName, List<RegionCoordinate> matches) {
@@ -155,7 +168,7 @@ public class RegionCoordinateService {
 
     private Map<String, RegionCoordinate> readCoordinates(Sheet sheet) {
         Row headerRow = findHeaderRow(sheet)
-                .orElseThrow(() -> new IllegalStateException("좌표 엑셀 파일에서 헤더 행을 찾을 수 없습니다."));
+                .orElseThrow(() -> coordinateFileException("headerRow", "헤더 행"));
         Map<String, Integer> headerIndexes = readHeaderIndexes(headerRow);
 
         int firstLevelIndex = findColumnIndex(headerIndexes, "1단계");
@@ -163,6 +176,8 @@ public class RegionCoordinateService {
         int thirdLevelIndex = findColumnIndex(headerIndexes, "3단계");
         int nxIndex = findColumnIndex(headerIndexes, "격자X", "격자 X");
         int nyIndex = findColumnIndex(headerIndexes, "격자Y", "격자 Y");
+        int longitudeIndex = findColumnIndex(headerIndexes, "경도", "경도(초/100)", "longitude", "lon");
+        int latitudeIndex = findColumnIndex(headerIndexes, "위도", "위도(초/100)", "latitude", "lat");
 
         Map<String, RegionCoordinate> coordinates = new LinkedHashMap<>();
         for (int rowIndex = headerRow.getRowNum() + 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
@@ -182,7 +197,9 @@ public class RegionCoordinateService {
 
             Integer nx = parseInteger(cellText(row, nxIndex));
             Integer ny = parseInteger(cellText(row, nyIndex));
-            RegionCoordinate coordinate = new RegionCoordinate(regionName, nx, ny, levels.size());
+            Double longitude = parseDouble(cellText(row, longitudeIndex));
+            Double latitude = parseDouble(cellText(row, latitudeIndex));
+            RegionCoordinate coordinate = new RegionCoordinate(regionName, nx, ny, longitude, latitude, levels.size());
             coordinates.putIfAbsent(normalize(regionName), coordinate);
         }
 
@@ -222,7 +239,7 @@ public class RegionCoordinateService {
                 return columnIndex;
             }
         }
-        throw new IllegalStateException("좌표 엑셀 파일에서 컬럼을 찾을 수 없습니다: " + String.join(", ", candidates));
+        throw coordinateFileException("missingColumns", String.join(", ", candidates));
     }
 
     private String cellText(Row row, int columnIndex) {
@@ -231,9 +248,39 @@ public class RegionCoordinateService {
 
     private Integer parseInteger(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalStateException("좌표 엑셀 파일에 빈 격자 좌표가 있습니다.");
+            throw coordinateFileException("gridCoordinate", "격자 좌표");
         }
-        return (int) Double.parseDouble(value.replace(",", ""));
+        try {
+            return (int) Double.parseDouble(value.replace(",", ""));
+        } catch (NumberFormatException e) {
+            throw coordinateFileException("gridCoordinate", value, e);
+        }
+    }
+
+    private Double parseDouble(String value) {
+        if (value == null || value.isBlank()) {
+            throw coordinateFileException("geoCoordinate", "위경도 좌표");
+        }
+        try {
+            return Double.parseDouble(value.replace(",", ""));
+        } catch (NumberFormatException e) {
+            throw coordinateFileException("geoCoordinate", value, e);
+        }
+    }
+
+    private ServiceUnavailableException coordinateFileException(String field, Object value) {
+        return coordinateFileException(field, value, null);
+    }
+
+    private ServiceUnavailableException coordinateFileException(String field, Object value, Throwable cause) {
+        return new ServiceUnavailableException(
+                ErrorCode.KMA_COORDINATE_FILE_UNAVAILABLE,
+                Map.of(
+                        "coordinateFile", String.valueOf(coordinateFile),
+                        field, String.valueOf(value)
+                ),
+                cause
+        );
     }
 
     private List<String> readLevels(String... levels) {
@@ -258,6 +305,25 @@ public class RegionCoordinateService {
             return true;
         }
         return keywords.stream().allMatch(regionName::contains);
+    }
+
+    private Optional<RegionCoordinate> findNearestByCoordinate(GeoCoordinate coordinate) {
+        return coordinateByNormalizedRegionName.values().stream()
+                .distinct()
+                .filter(regionCoordinate -> regionCoordinate.longitude() != null && regionCoordinate.latitude() != null)
+                .min(Comparator.comparingDouble(regionCoordinate -> distanceKm(coordinate, regionCoordinate)));
+    }
+
+    private double distanceKm(GeoCoordinate source, RegionCoordinate target) {
+        double sourceLatitude = Math.toRadians(source.latitude());
+        double targetLatitude = Math.toRadians(target.latitude());
+        double deltaLatitude = targetLatitude - sourceLatitude;
+        double deltaLongitude = Math.toRadians(target.longitude() - source.longitude());
+
+        double haversine = Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2)
+                + Math.cos(sourceLatitude) * Math.cos(targetLatitude)
+                * Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2);
+        return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(haversine));
     }
 
     private String normalize(String value) {
