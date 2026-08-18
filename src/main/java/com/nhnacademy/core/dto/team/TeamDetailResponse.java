@@ -1,12 +1,12 @@
 package com.nhnacademy.core.dto.team;
 
-import com.nhnacademy.core.domain.team.TeamRole;
+import com.nhnacademy.core.config.auth.UserRole;
 
 public record TeamDetailResponse(
         Long teamId,
         String teamName,
         String description,
-        TeamRole myRole,
+        UserRole myRole,
         long memberCount,
         long buildingCount,
         long roomCount,
@@ -14,7 +14,7 @@ public record TeamDetailResponse(
         long deviceCount
 ) {
     public static TeamDetailResponse from(
-            TeamRole myRole,
+            UserRole myRole,
             TeamDetailQueryResult result
     ) {
         return new TeamDetailResponse(
