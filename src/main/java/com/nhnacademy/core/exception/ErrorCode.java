@@ -86,6 +86,26 @@ public enum ErrorCode {
             "INFRASTRUCTURE.SENSOR_DATA_STORE_UNAVAILABLE",
             "센서 데이터 저장소를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
     ),
+    PROCESSING_METRIC_SERVICE_UNAVAILABLE(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "INFRASTRUCTURE.PROCESSING_METRIC_SERVICE_UNAVAILABLE",
+            "센서 메타데이터 서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
+    ),
+    PROCESSING_METRIC_SERVICE_BAD_RESPONSE(
+            HttpStatus.BAD_GATEWAY,
+            "INFRASTRUCTURE.PROCESSING_METRIC_SERVICE_BAD_RESPONSE",
+            "센서 메타데이터 서비스의 응답을 처리할 수 없습니다."
+    ),
+    ACCOUNT_USER_ROLE_SERVICE_UNAVAILABLE(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "INFRASTRUCTURE.ACCOUNT_USER_ROLE_SERVICE_UNAVAILABLE",
+            "사용자 권한 서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
+    ),
+    ACCOUNT_USER_ROLE_SERVICE_BAD_RESPONSE(
+            HttpStatus.BAD_GATEWAY,
+            "INFRASTRUCTURE.ACCOUNT_USER_ROLE_SERVICE_BAD_RESPONSE",
+            "사용자 권한 서비스의 응답을 처리할 수 없습니다."
+    ),
 
     // 인증 오류
     INVALID_AUTH_HEADER(
@@ -147,25 +167,20 @@ public enum ErrorCode {
             "TEAM_MEMBER.ALREADY_JOINED",
             "이미 해당 팀에 가입되어 있습니다."
     ),
-    TEAM_MEMBER_OWNER_ROLE_NOT_ASSIGNABLE(
+    TEAM_OWNER_ALREADY_ASSIGNED(
             HttpStatus.CONFLICT,
-            "TEAM_MEMBER.OWNER_ROLE_NOT_ASSIGNABLE",
-            "팀 소유자 권한은 소유권 이전을 통해서만 부여할 수 있습니다."
+            "TEAM_MEMBER.OWNER_ALREADY_ASSIGNED",
+            "팀 소유자는 하나의 팀에만 소속될 수 있습니다."
     ),
-    TEAM_MEMBER_OWNER_ROLE_IMMUTABLE(
-            HttpStatus.CONFLICT,
-            "TEAM_MEMBER.OWNER_ROLE_IMMUTABLE",
-            "팀 소유자의 권한은 소유권 이전을 통해서만 변경할 수 있습니다."
+    TEAM_JOIN_ROLE_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "TEAM_MEMBER.JOIN_ROLE_FORBIDDEN",
+            "NORMAL 권한의 사용자만 초대 코드로 팀에 가입할 수 있습니다."
     ),
-    TEAM_MEMBER_OWNER_CANNOT_LEAVE(
-            HttpStatus.CONFLICT,
-            "TEAM_MEMBER.OWNER_CANNOT_LEAVE",
-            "팀 소유자는 소유권 이전 후 탈퇴할 수 있습니다."
-    ),
-    TEAM_MEMBER_OWNERSHIP_TRANSFER_TO_SELF(
-            HttpStatus.CONFLICT,
-            "TEAM_MEMBER.OWNERSHIP_TRANSFER_TO_SELF",
-            "현재 소유자에게 소유권을 이전할 수 없습니다."
+    TEAM_LEAVE_ROLE_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "TEAM_MEMBER.LEAVE_ROLE_FORBIDDEN",
+            "NORMAL 권한의 사용자만 팀에서 직접 탈퇴할 수 있습니다."
     ),
 
     // 초대 코드 오류
