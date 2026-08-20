@@ -33,7 +33,7 @@ public class DeviceController {
             @PathVariable("room-id") @Positive Long roomId,
             @Valid @RequestBody DeviceCreateRequest request
     ) {
-        DeviceResponse response = deviceService.createDevice(user.id(), teamId, roomId, request);
+        DeviceResponse response = deviceService.createDevice(user.id(), user.role(), teamId, roomId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
@@ -80,7 +80,7 @@ public class DeviceController {
             @PathVariable("device-id") @Positive Long deviceId,
             @Valid @RequestBody DeviceUpdateRequest request
     ) {
-        return deviceService.updateDevice(user.id(), teamId, deviceId, request);
+        return deviceService.updateDevice(user.id(), user.role(), teamId, deviceId, request);
     }
 
     @DeleteMapping("/devices/{device-id}")
@@ -89,7 +89,7 @@ public class DeviceController {
             @PathVariable("team-id") @Positive Long teamId,
             @PathVariable("device-id") @Positive Long deviceId
     ) {
-        deviceService.deleteDevice(user.id(), teamId, deviceId);
+        deviceService.deleteDevice(user.id(), user.role(), teamId, deviceId);
 
         return ResponseEntity.noContent()
                 .build();

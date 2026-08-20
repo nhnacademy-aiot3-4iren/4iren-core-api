@@ -14,16 +14,16 @@ public abstract class ApplicationException extends RuntimeException {
 
     protected ApplicationException(
             ErrorCode errorCode,
-            Map<String, Object> context
+            Throwable cause
     ) {
-        this(errorCode, context, null);
+        this(errorCode, Map.of(), cause);
     }
 
     protected ApplicationException(
             ErrorCode errorCode,
-            Throwable cause
+            Map<String, Object> context
     ) {
-        this(errorCode, Map.of(), cause);
+        this(errorCode, context, null);
     }
 
     protected ApplicationException(

@@ -27,7 +27,7 @@ public class TeamInvitationCodeController {
             @Valid @RequestBody TeamInvitationCodeCreateRequest request
     ) {
         TeamInvitationCodeResponse response = teamInvitationCodeService
-                .createInvitationCode(user.id(), teamId, request);
+                .createInvitationCode(user.id(), user.role(), teamId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .cacheControl(CacheControl.noStore())
@@ -40,7 +40,7 @@ public class TeamInvitationCodeController {
             @PathVariable("team-id") @Positive Long teamId,
             @PathVariable("invitation-code-id") @Positive Long invitationCodeId
     ) {
-        teamInvitationCodeService.deactivateInvitationCode(user.id(), teamId, invitationCodeId);
+        teamInvitationCodeService.deactivateInvitationCode(user.id(), user.role(), teamId, invitationCodeId);
 
         return ResponseEntity.noContent()
                 .build();

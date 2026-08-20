@@ -8,7 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "teams")
+@Table(
+        name = "teams",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_teams_created_by",
+                columnNames = "created_by"
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Team extends VersionedEntity {

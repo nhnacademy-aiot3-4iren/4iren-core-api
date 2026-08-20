@@ -73,7 +73,7 @@ public class TeamController {
             @PathVariable("team-id") @Positive Long teamId,
             @Valid @RequestBody TeamUpdateRequest request
     ) {
-        return teamService.updateTeam(user.id(), teamId, request);
+        return teamService.updateTeam(user.id(), user.role(), teamId, request);
     }
 
     @DeleteMapping("/{team-id}")
@@ -81,7 +81,7 @@ public class TeamController {
             @CurrentUser AuthenticatedUser user,
             @PathVariable("team-id") @Positive Long teamId
     ) {
-        teamService.deleteTeam(user.id(), teamId);
+        teamService.deleteTeam(user.id(), user.role(), teamId);
 
         return ResponseEntity.noContent()
                 .build();

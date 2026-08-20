@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.device.Device;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.dto.PageResponse;
@@ -25,12 +26,12 @@ public class DeviceService {
 
     private final RoomRepository roomRepository;
     private final DeviceRepository deviceRepository;
-    private final TeamAuthorizationService teamAuthorizationService;
+    private final TeamAuthorizer teamAuthorizer;
 
     // 기기 생성
     @Transactional
-    public DeviceResponse createDevice(Long userId, Long teamId, Long roomId, DeviceCreateRequest request) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public DeviceResponse createDevice(Long userId, UserRole userRole, Long teamId, Long roomId, DeviceCreateRequest request) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Room room = getRoomOrThrow(roomId, teamId);
         Device device = new Device(room, request.deviceName());
@@ -42,7 +43,7 @@ public class DeviceService {
 
     // 기기 목록 조회
     public PageResponse<DeviceResponse> getDevices(Long userId, Long teamId, Long roomId, Pageable pageable) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         // 공간 존재 여부 확인
         Room room = getRoomOrThrow(roomId, teamId);
@@ -53,8 +54,9 @@ public class DeviceService {
         );
     }
 
+    // 기기 목록 조회, List
     public List<DeviceResponse> getDevices(Long userId, Long teamId, Long roomId) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         // 공간 존재 여부 확인
         Room room = getRoomOrThrow(roomId, teamId);
@@ -66,7 +68,7 @@ public class DeviceService {
 
     // 기기 상세 조회
     public DeviceResponse getDevice(Long userId, Long teamId, Long deviceId) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         Device device = getDeviceOrThrow(deviceId, teamId);
 
@@ -75,8 +77,8 @@ public class DeviceService {
 
     // 기기 수정
     @Transactional
-    public DeviceResponse updateDevice(Long userId, Long teamId, Long deviceId, DeviceUpdateRequest request) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public DeviceResponse updateDevice(Long userId, UserRole userRole, Long teamId, Long deviceId, DeviceUpdateRequest request) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Device device = getDeviceOrThrow(deviceId, teamId);
         Room destinationRoom = request.getRoomId().isPresent()
@@ -95,8 +97,8 @@ public class DeviceService {
 
     // 기기 삭제
     @Transactional
-    public void deleteDevice(Long userId, Long teamId, Long deviceId) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public void deleteDevice(Long userId, UserRole userRole, Long teamId, Long deviceId) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Device device = getDeviceOrThrow(deviceId, teamId);
 

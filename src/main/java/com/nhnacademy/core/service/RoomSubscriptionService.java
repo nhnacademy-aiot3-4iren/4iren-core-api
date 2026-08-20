@@ -5,7 +5,6 @@ import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.room.RoomSubscription;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
-import com.nhnacademy.core.domain.team.TeamRole;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;
@@ -39,7 +38,7 @@ public class RoomSubscriptionService {
     private final TeamMemberRepository teamMemberRepository;
     private final RoomRepository roomRepository;
     private final RoomSubscriptionRepository roomSubscriptionRepository;
-    private final TeamAuthorizationService teamAuthorizationService;
+    private final TeamAuthorizer teamAuthorizer;
     private final UserStatusClient userStatusClient;
 
     // 공간 구독
@@ -61,34 +60,15 @@ public class RoomSubscriptionService {
         return RoomSubscriptionResponse.from(subscription);
     }
 
-    // 팀의 모든 관리자에게 새로운 공간 구독 생성
+    // ADMIN 배정 시 기존 공간에 일괄 구독 생성
     @Transactional
-    public void subscribeManagersToRoom(Room room) {
-        Team team = room.getBuilding().getTeam();
-
-        // 해당 팀의 관리자 역할을 가진 모든 팀 구성원에 대해 구독 생성
-        List<RoomSubscription> subscriptions = teamMemberRepository
-                .findAllByTeamAndTeamRoleIn(team, TeamRole.managerRoles())
-                .stream()
-                .map(manager -> new RoomSubscription(room, manager))
-                .toList();
-
-        saveSubscriptions(subscriptions);
-    }
-
-    // 기존 공간에 일괄 구독 생성
-    @Transactional
-    public void subscribeManagerToAllRooms(TeamMember teamMember) {
-        if (!teamMember.getTeamRole().isManager()) {
-            throw new IllegalArgumentException("관리자 권한이 있는 팀 구성원만 기존 공간에 일괄 구독할 수 있습니다.");
-        }
-
-        Team team = teamMember.getTeam();
+    public void subscribeAdminToExistingRooms(TeamMember adminMember) {
+        Team team = adminMember.getTeam();
         // 이미 구독 중인 공간을 제외한, 해당 팀의 모든 공간에 대해 구독 생성
         List<RoomSubscription> subscriptions = roomRepository
-                .findAllUnsubscribedByTeamMemberAndTeam(teamMember, team)
+                .findAllUnsubscribedByTeamMemberAndTeam(adminMember, team)
                 .stream()
-                .map(room -> new RoomSubscription(room, teamMember))
+                .map(room -> new RoomSubscription(room, adminMember))
                 .toList();
 
         saveSubscriptions(subscriptions);
@@ -96,7 +76,7 @@ public class RoomSubscriptionService {
 
     // 구독 목록 조회
     public PageResponse<RoomSubscriptionResponse> getSubscriptions(Long userId, Long teamId, Pageable pageable) {
-        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
+        TeamMember teamMember = teamAuthorizer.requireTeamMember(userId, teamId);
 
         return PageResponse.from(
                 roomSubscriptionRepository.findAllByTeamMemberAndRoom_Building_Team(teamMember, teamMember.getTeam(), pageable)
@@ -104,8 +84,9 @@ public class RoomSubscriptionService {
         );
     }
 
+    // 구독 목록 조회, List
     public List<RoomSubscriptionResponse> getSubscriptions(Long userId, Long teamId) {
-        TeamMember teamMember = teamAuthorizationService.requireTeamMember(userId, teamId);
+        TeamMember teamMember = teamAuthorizer.requireTeamMember(userId, teamId);
 
         return roomSubscriptionRepository.findAllByTeamMemberAndRoom_Building_Team(
                         teamMember,

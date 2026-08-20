@@ -41,18 +41,9 @@ public class TeamMember extends VersionedEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "team_role", nullable = false, length = 20)
-    private TeamRole teamRole;
-
-    public TeamMember(Team team, Long userId, TeamRole teamRole) {
+    public TeamMember(Team team, Long userId) {
         this.team = requireTeam(team);
         this.userId = requireUserId(userId);
-        this.teamRole = requireTeamRole(teamRole);
-    }
-
-    public void changeRole(TeamRole teamRole) {
-        this.teamRole = requireTeamRole(teamRole);
     }
 
     private Team requireTeam(Team team) {
@@ -69,13 +60,5 @@ public class TeamMember extends VersionedEntity {
         }
 
         return userId;
-    }
-
-    private TeamRole requireTeamRole(TeamRole teamRole) {
-        if (teamRole == null) {
-            throw new IllegalArgumentException("팀 Role은 null일 수 없습니다.");
-        }
-
-        return teamRole;
     }
 }

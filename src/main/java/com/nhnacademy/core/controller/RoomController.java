@@ -33,7 +33,7 @@ public class RoomController {
             @PathVariable("building-id") @Positive Long buildingId,
             @Valid @RequestBody RoomCreateRequest request
     ) {
-        RoomResponse response = roomService.createRoom(user.id(), teamId, buildingId, request);
+        RoomResponse response = roomService.createRoom(user.id(), user.role(), teamId, buildingId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
@@ -99,7 +99,7 @@ public class RoomController {
             @PathVariable("room-id") @Positive Long roomId,
             @Valid @RequestBody RoomUpdateRequest request
     ) {
-        return roomService.updateRoom(user.id(), teamId, roomId, request);
+        return roomService.updateRoom(user.id(), user.role(), teamId, roomId, request);
     }
 
     @DeleteMapping("/rooms/{room-id}")
@@ -108,7 +108,7 @@ public class RoomController {
             @PathVariable("team-id") @Positive Long teamId,
             @PathVariable("room-id") @Positive Long roomId
     ) {
-        roomService.deleteRoom(user.id(), teamId, roomId);
+        roomService.deleteRoom(user.id(), user.role(), teamId, roomId);
 
         return ResponseEntity.noContent()
                 .build();

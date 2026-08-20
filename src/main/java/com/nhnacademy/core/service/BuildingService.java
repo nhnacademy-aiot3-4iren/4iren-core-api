@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.Building;
 import com.nhnacademy.core.domain.normalizer.BuildingNormalizer;
 import com.nhnacademy.core.domain.team.Team;
@@ -30,12 +31,12 @@ public class BuildingService {
     private final TeamRepository teamRepository;
     private final BuildingRepository buildingRepository;
     private final RoomRepository roomRepository;
-    private final TeamAuthorizationService teamAuthorizationService;
+    private final TeamAuthorizer teamAuthorizer;
 
     // 건물 생성
     @Transactional
-    public BuildingResponse createBuilding(Long userId, Long teamId, BuildingCreateRequest request) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public BuildingResponse createBuilding(Long userId, UserRole userRole, Long teamId, BuildingCreateRequest request) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Team team = getTeamOrThrow(teamId);
         Building building = new Building(
@@ -61,7 +62,7 @@ public class BuildingService {
 
     // 건물 목록 조회
     public PageResponse<BuildingResponse> getBuildings(Long userId, Long teamId, Pageable pageable) {
-        Team team = teamAuthorizationService.requireTeamMember(userId, teamId)
+        Team team = teamAuthorizer.requireTeamMember(userId, teamId)
                 .getTeam();
 
         return PageResponse.from(
@@ -70,8 +71,9 @@ public class BuildingService {
         );
     }
 
+    // 건물 목록 조회, List
     public List<BuildingResponse> getBuildings(Long userId, Long teamId) {
-        Team team = teamAuthorizationService.requireTeamManager(userId, teamId)
+        Team team = teamAuthorizer.requireTeamMember(userId, teamId)
                 .getTeam();
 
         return buildingRepository.findAllByTeamOrderById(team).stream()
@@ -81,7 +83,7 @@ public class BuildingService {
 
     // 건물 상세 조회
     public BuildingDetailResponse getBuilding(Long userId, Long teamId, Long buildingId) {
-        teamAuthorizationService.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMember(userId, teamId);
 
         return BuildingDetailResponse.from(
                 buildingRepository.findDetailByIdAndTeamId(buildingId, teamId)
@@ -94,8 +96,8 @@ public class BuildingService {
 
     // 건물 이름, 설명, 주소 수정
     @Transactional
-    public BuildingResponse updateBuilding(Long userId, Long teamId, Long buildingId, BuildingUpdateRequest request) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public BuildingResponse updateBuilding(Long userId, UserRole userRole, Long teamId, Long buildingId, BuildingUpdateRequest request) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Building building = getBuildingOrThrow(buildingId, teamId);
 
@@ -135,8 +137,8 @@ public class BuildingService {
 
     // 건물 삭제
     @Transactional
-    public void deleteBuilding(Long userId, Long teamId, Long buildingId) {
-        teamAuthorizationService.requireTeamManager(userId, teamId);
+    public void deleteBuilding(Long userId, UserRole userRole, Long teamId, Long buildingId) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
 
         Building building = getBuildingOrThrow(buildingId, teamId);
 
