@@ -5,7 +5,7 @@
 @user1Id = 2
 @userRole = ADMIN
 @user1Role = NORMAL
-@buildingId = 5
+@buildingId = 6
 @roomId = 1
 @moveRoomId = 1
 @sensorLocationId = 1
@@ -120,9 +120,9 @@ X-User-Role: {{userRole}}
 }
 
 ### Building 목록 조회
-GET {{api}}/teams/{{teamId}}/buildings?page=0&size=20
-X-User-Id: {{userId}}
-X-User-Role: {{userRole}}
+GET {{api}}/teams/{{teamId}}/buildings/all
+X-User-Id: {{user1Id}}
+X-User-Role: {{user1Role}}
 
 ### Building 단건 조회
 GET {{api}}/teams/{{teamId}}/buildings/{{buildingId}}
@@ -155,8 +155,8 @@ X-User-Id: {{userId}}
 X-User-Role: {{userRole}}
 
 {
-  "roomName": "테스트 공간",
-  "description": "테스트 공간 설명"
+  "roomName": "새로운 강의실",
+  "description": "새로운 강의실입니다"
 }
 
 ### Room 목록 조회

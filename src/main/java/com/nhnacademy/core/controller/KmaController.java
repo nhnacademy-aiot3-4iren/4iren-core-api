@@ -4,12 +4,14 @@ import com.nhnacademy.core.dto.kma.llm.KmaCurrentWeatherResponseDto;
 import com.nhnacademy.core.dto.kma.llm.KmaForecastWeatherResponseDto;
 import com.nhnacademy.core.dto.kma.weather.KmaCurrentWeatherDto;
 import com.nhnacademy.core.dto.kma.weather.KmaForecastWeatherDto;
+import com.nhnacademy.core.dto.kma.weather.KmaWeatherHistoryResponseDto;
 import com.nhnacademy.core.service.KmaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @RestController
@@ -54,6 +56,18 @@ public class KmaController {
     public ResponseEntity<KmaCurrentWeatherResponseDto> getNcstToRoomId(@PathVariable Long roomId, @RequestParam LocalDateTime dateTime) {
         KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstToRoomIdForLLM(roomId, dateTime);
         log.info("초단기실황조회 호출결과: {}", response);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/weather-history")
+    public ResponseEntity<KmaWeatherHistoryResponseDto> getWeatherHistory(
+            @RequestParam String regionName,
+            @RequestParam LocalDate date,
+            @RequestParam(defaultValue = "9") Integer startHour,
+            @RequestParam(defaultValue = "18") Integer endHour
+    ) {
+        KmaWeatherHistoryResponseDto response = kmaService.getWeatherHistory(regionName, date, startHour, endHour);
+        log.info("외부 날씨 히스토리 조회 호출결과: {}", response);
         return ResponseEntity.ok(response);
     }
 
