@@ -11,22 +11,31 @@ import com.nhnacademy.core.dto.kma.ncst.KmaUltraSrtNcstRequestDto;
 import com.nhnacademy.core.dto.kma.ncst.KmaUltraSrtNcstResponseDto;
 import com.nhnacademy.core.dto.kma.weather.KmaCurrentWeatherDto;
 import com.nhnacademy.core.dto.kma.weather.KmaForecastWeatherDto;
+import com.nhnacademy.core.dto.kma.weather.KmaWeatherHistoryResponseDto;
 import com.nhnacademy.core.dto.kma.weather.KmaWeatherValueDto;
+import com.nhnacademy.core.exception.ApplicationException;
+import com.nhnacademy.core.exception.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class KmaService {
+    private static final int DEFAULT_HISTORY_START_HOUR = 9;
+    private static final int DEFAULT_HISTORY_END_HOUR = 18;
+
     private final KmaClient kmaClient;
     private final RegionCoordinateService regionCoordinateService;
     private final RoomService roomService;
@@ -41,6 +50,14 @@ public class KmaService {
 
     public KmaCurrentWeatherDto getCurrentUltraSrtNcstToDateTime(String regionName, LocalDateTime requestDateTime) {
         RegionCoordinate coordinate = regionCoordinateService.findByRegionName(regionName);
+        return getCurrentUltraSrtNcstToDateTime(regionName, requestDateTime, coordinate);
+    }
+
+    private KmaCurrentWeatherDto getCurrentUltraSrtNcstToDateTime(
+            String regionName,
+            LocalDateTime requestDateTime,
+            RegionCoordinate coordinate
+    ) {
         LocalDateTime baseDateTime = requestDateTime.minusMinutes(10);
         KmaUltraSrtNcstRequestDto request = new KmaUltraSrtNcstRequestDto(
                 baseDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd")),
@@ -169,6 +186,64 @@ public class KmaService {
         );
     }
 
+    public KmaWeatherHistoryResponseDto getWeatherHistory(String regionName, LocalDate date) {
+        return getWeatherHistory(regionName, date, DEFAULT_HISTORY_START_HOUR, DEFAULT_HISTORY_END_HOUR);
+    }
+
+    public KmaWeatherHistoryResponseDto getWeatherHistory(String regionName, LocalDate date, Integer startHour, Integer endHour) {
+        validateHistoryHourRange(startHour, endHour);
+        RegionCoordinate coordinate = regionCoordinateService.findByRegionName(regionName);
+        List<LocalDateTime> missingHours = new ArrayList<>();
+        List<KmaWeatherHistoryResponseDto.Snapshot> snapshots = new ArrayList<>();
+
+        for (int hour = startHour; hour <= endHour; hour++) {
+            LocalDateTime observedAt = date.atTime(hour, 0);
+            try {
+                KmaCurrentWeatherDto currentWeather = getCurrentUltraSrtNcstToDateTime(regionName, observedAt.plusMinutes(10), coordinate);
+                Optional<KmaWeatherHistoryResponseDto.Snapshot> snapshot = toHistorySnapshot(observedAt, currentWeather);
+                if (snapshot.isPresent()) {
+                    snapshots.add(snapshot.get());
+                } else {
+                    missingHours.add(observedAt);
+                }
+            } catch (ApplicationException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                missingHours.add(observedAt);
+                log.warn("외부 날씨 히스토리 시간대 조회 실패: regionName={}, observedAt={}, cause={}", regionName, observedAt, e.toString());
+            }
+        }
+
+        return new KmaWeatherHistoryResponseDto(
+                regionName,
+                coordinate.regionName(),
+                date,
+                KmaWeatherHistoryResponseDto.analysisPeriod(startHour, endHour),
+                expectedHistoryHours(startHour, endHour),
+                snapshots.size(),
+                missingHours.isEmpty(),
+                List.copyOf(missingHours),
+                List.copyOf(snapshots)
+        );
+    }
+
+    private int expectedHistoryHours(int startHour, int endHour) {
+        return endHour - startHour + 1;
+    }
+
+    private void validateHistoryHourRange(Integer startHour, Integer endHour) {
+        if (startHour == null || endHour == null
+                || startHour < 0 || startHour > 23
+                || endHour < 0 || endHour > 23
+                || startHour > endHour) {
+            throw new InvalidRequestException(Map.of(
+                    "startHour", String.valueOf(startHour),
+                    "endHour", String.valueOf(endHour),
+                    "message", "조회 시간은 0~23 사이이며 시작 시간이 종료 시간보다 늦을 수 없습니다."
+            ));
+        }
+    }
+
     private LocalDateTime parseDateTime(String date, String time) {
         return LocalDateTime.parse(date + time, DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
     }
@@ -185,6 +260,68 @@ public class KmaService {
                 category.parseValue(rawValue),
                 category.unit()
         );
+    }
+
+    private Optional<KmaWeatherHistoryResponseDto.Snapshot> toHistorySnapshot(LocalDateTime observedAt, KmaCurrentWeatherDto currentWeather) {
+        WeatherHistoryAccumulator weather = new WeatherHistoryAccumulator();
+        currentWeather.values().forEach(weather::put);
+        if (!weather.hasAnyValue()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new KmaWeatherHistoryResponseDto.Snapshot(
+                observedAt,
+                weather.temperature,
+                weather.humidity,
+                weather.precipitationType,
+                weather.precipitationAmount,
+                weather.windSpeed
+        ));
+    }
+
+    private Double parseDoubleValue(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalizedValue = value.trim();
+        if (normalizedValue.equals("없음") || normalizedValue.equals("강수없음")) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(normalizedValue.replace("mm", "").trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Integer parseIntegerValue(String value) {
+        Double parsedValue = parseDoubleValue(value);
+        if (parsedValue == null) {
+            return null;
+        }
+        return parsedValue.intValue();
+    }
+
+    private String parsePrecipitationType(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+        try {
+            int code = Integer.parseInt(rawValue);
+            return switch (code) {
+                case 0 -> "NONE";
+                case 1 -> "RAIN";
+                case 2 -> "RAIN_SNOW";
+                case 3 -> "SNOW";
+                case 4 -> "SHOWER";
+                case 5 -> "RAINDROP";
+                case 6 -> "RAINDROP_SNOW_FLURRY";
+                case 7 -> "SNOW_FLURRY";
+                default -> rawValue;
+            };
+        } catch (NumberFormatException e) {
+            return rawValue;
+        }
     }
 
     private String displayValue(KmaWeatherValueDto weatherValue) {
@@ -217,6 +354,34 @@ public class KmaService {
                 default -> {
                 }
             }
+        }
+    }
+
+    private class WeatherHistoryAccumulator {
+        private Double temperature;
+        private Integer humidity;
+        private String precipitationType;
+        private Double precipitationAmount;
+        private Double windSpeed;
+
+        private void put(KmaWeatherValueDto weatherValue) {
+            switch (weatherValue.category()) {
+                case T1H -> temperature = parseDoubleValue(weatherValue.rawValue());
+                case REH -> humidity = parseIntegerValue(weatherValue.rawValue());
+                case PTY -> precipitationType = parsePrecipitationType(weatherValue.rawValue());
+                case RN1 -> precipitationAmount = parseDoubleValue(weatherValue.rawValue());
+                case WSD -> windSpeed = parseDoubleValue(weatherValue.rawValue());
+                default -> {
+                }
+            }
+        }
+
+        private boolean hasAnyValue() {
+            return temperature != null
+                    || humidity != null
+                    || precipitationType != null
+                    || precipitationAmount != null
+                    || windSpeed != null;
         }
     }
 

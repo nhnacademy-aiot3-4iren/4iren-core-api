@@ -1,14 +1,20 @@
 ### UltraSrtNcst 초단기실황조회 llm
-GET http://localhost:8765/api/core/kma/ultraSrtNcst?regionName=광주 동구 서석동
+GET http://localhost:8765/api/core/kma/current-weather?regionName=광주 동구 서석동
 
 ### UltraSrtFcst 초단기예보조회 llm
-GET http://localhost:8765/api/core/kma/ultraSrtFcst?regionName=광주 동구 서석동
+GET http://localhost:8765/api/core/kma/forecast-weather?regionName=광주 동구 서석동
 
 ### UltraSrtNcst 초단기실황조회
-GET http://localhost:8765/api/core/kma/internal/ultraSrtNcst?regionName=서울
+GET http://localhost:8765/api/core/kma/internal/current-weather?regionName=서울
 
 ### UltraSrtFcst 초단기예보조회
-GET http://localhost:8765/api/core/kma/internal/ultraSrtFcst?regionName=광주 동구 서석동
+GET http://localhost:8765/api/core/kma/internal/forecast-weather?regionName=광주 동구 서석동
 
 ### UltraSrtNcst 초단기실황조회 llm 시간
-GET http://localhost:8765/api/core/kma/rooms/7/weather?dateTime=2026-07-30T09:52:52.006
+GET http://localhost:8765/api/core/kma/rooms/7/weather?dateTime=2026-08-20T09:52:52.006
+
+### 강의실 하루 요약 리포트용 외부날씨 히스토리 조회 (기본 09~18시)
+GET http://localhost:8765/api/core/kma/weather-history?regionName=광주 동구 서석동&date=2026-08-20
+
+### 강의실 하루 요약 리포트용 외부날씨 히스토리 조회 (시간 범위 지정)
+GET http://localhost:8765/api/core/kma/weather-history?regionName=광주 동구 서석동&date=2026-08-20&startHour=13&endHour=15
