@@ -1,6 +1,6 @@
 package com.nhnacademy.core.adaptor;
 
-import com.nhnacademy.core.dto.sensor.catalog.MetricTypeResponse;
+import com.nhnacademy.core.dto.sensor.catalog.ProcessingMetricTypeResponse;
 import com.nhnacademy.core.dto.sensor.catalog.SensorMetricTypeBatchRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +17,7 @@ import java.util.Map;
 public interface ProcessingMetricCatalogClient {
 
     @PostMapping("/internal/sensors/batch")
-    Map<String, List<MetricTypeResponse>> getSensorMetricTypesByDevEuis(
+    Map<String, List<ProcessingMetricTypeResponse>> getSensorMetricTypesByDevEuis(
             @RequestBody SensorMetricTypeBatchRequest request
     );
 }

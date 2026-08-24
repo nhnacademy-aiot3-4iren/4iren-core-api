@@ -3,6 +3,8 @@ package com.nhnacademy.core.property;
 import com.influxdb.LogLevel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.time.DurationMax;
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -17,9 +19,21 @@ public record InfluxDbProperties(
         @NotBlank String bucket,
         @NotBlank String clientType,
         @NotNull LogLevel logLevel,
-        @NotNull Duration connectTimeout,
-        @NotNull Duration readTimeout,
-        @NotNull Duration writeTimeout,
-        @NotNull Duration callTimeout
+        @NotNull
+        @DurationMin(millis = 1)
+        @DurationMax(minutes = 5)
+        Duration connectTimeout,
+        @NotNull
+        @DurationMin(millis = 1)
+        @DurationMax(minutes = 5)
+        Duration readTimeout,
+        @NotNull
+        @DurationMin(millis = 1)
+        @DurationMax(minutes = 5)
+        Duration writeTimeout,
+        @NotNull
+        @DurationMin(millis = 1)
+        @DurationMax(minutes = 5)
+        Duration callTimeout
 ) {
 }

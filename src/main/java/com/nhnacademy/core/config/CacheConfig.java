@@ -1,7 +1,15 @@
 package com.nhnacademy.core.config;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.nhnacademy.core.domain.sensor.SensorMetricDefinition;
+import com.nhnacademy.core.property.CacheNamespaceProperties;
+import com.nhnacademy.core.property.SensorMetricCatalogProperties;
+import com.nhnacademy.core.property.SensorMetricSnapshotCacheProperties;
+import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.LatestSnapshot;
+import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.SummarySnapshot;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
@@ -13,13 +21,15 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import java.time.Duration;
+import java.util.List;
 
 @Configuration
 @EnableCaching
+@EnableConfigurationProperties({
+        SensorMetricCatalogProperties.class,
+        SensorMetricSnapshotCacheProperties.class
+})
 public class CacheConfig {
-
-    @Value("${spring.profiles.active:default}")
-    private String activeProfile;
 
     @Bean("caffeineCacheManager")
     public CacheManager caffeineCacheManager() {
@@ -35,13 +45,49 @@ public class CacheConfig {
         return cacheManager;
     }
 
+    @Bean
+    public Cache<String, List<SensorMetricDefinition>> metricCatalogLocalCache(
+            SensorMetricCatalogProperties properties
+    ) {
+        return Caffeine.newBuilder()
+                .maximumSize(properties.cache().maximumSize())
+                .expireAfterWrite(properties.cache().l1Ttl())
+                .build();
+    }
+
+    @Bean("summarySnapshotLocalCache")
+    public Cache<String, SummarySnapshot> summarySnapshotLocalCache(
+            SensorMetricSnapshotCacheProperties properties
+    ) {
+        return Caffeine.newBuilder()
+                .maximumSize(properties.maximumSizePerType())
+                .expireAfterWrite(properties.l1Ttl())
+                .build();
+    }
+
+    @Bean("latestSnapshotLocalCache")
+    public Cache<String, LatestSnapshot> latestSnapshotLocalCache(
+            SensorMetricSnapshotCacheProperties properties
+    ) {
+        return Caffeine.newBuilder()
+                .maximumSize(properties.maximumSizePerType())
+                .expireAfterWrite(properties.l1Ttl())
+                .build();
+    }
+
     @Bean("redisCacheManager")
     @Primary
-    public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
+    public CacheManager redisCacheManager(
+            RedisConnectionFactory connectionFactory,
+            CacheNamespaceProperties namespaceProperties,
+            @Value("${spring.application.name}") String applicationName
+    ) {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10)) // 기본 만료 시간
                 .disableCachingNullValues() // null 결과는 Redis에 저장하지 않는다.
-                .computePrefixWith(cacheName -> "core-api::" + activeProfile + "::cache::" + cacheName + "::"); // Redis 키에 캐시 접두사 설정
+                .computePrefixWith(cacheName -> applicationName
+                        + "::" + namespaceProperties.deploymentId()
+                        + "::cache::" + cacheName + "::");
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(configuration)

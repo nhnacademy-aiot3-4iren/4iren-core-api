@@ -24,9 +24,11 @@ public interface RoomRepository extends JpaRepository<Room, Long>, RoomRepositor
     @EntityGraph(attributePaths = "building")
     List<Room> findAllByBuilding_TeamAndRoomName(Team team, String roomName);
 
+    boolean existsByIdAndBuilding_Team_Id(Long roomId, Long teamId);
+
+    boolean existsByBuilding(Building building);
+
     boolean existsByBuildingAndRoomName(Building building, String roomName);
 
     boolean existsByBuildingAndRoomNameAndIdNot(Building building, String roomName, Long roomId);
-
-    boolean existsByBuilding(Building building);
 }
