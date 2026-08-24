@@ -6,6 +6,7 @@ import com.nhnacademy.core.domain.room.QRoom;
 import com.nhnacademy.core.domain.room.QRoomSubscription;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.sensor.QSensorLocation;
+import com.nhnacademy.core.domain.team.QTeamMember;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
@@ -30,6 +31,7 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
     private final QRoomSubscription subscription = QRoomSubscription.roomSubscription;
     private final QSensorLocation sensor = QSensorLocation.sensorLocation;
     private final QDevice device = QDevice.device;
+    private final QTeamMember teamMember = QTeamMember.teamMember;
 
     @Override
     public Optional<RoomDetailQueryResult> findDetailByIdAndTeamId(Long roomId, Long teamId) {
@@ -118,5 +120,19 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
                 .where(room.id.eq(roomId))
                 .fetchOne()
         );
+    }
+
+    @Override
+    public boolean existsTeamMemberByRoomIdAndUserId(Long roomId, Long userId) {
+        return queryFactory
+                .selectOne()
+                .from(room)
+                .join(room.building, building)
+                .join(teamMember).on(teamMember.team.eq(building.team))
+                .where(
+                        room.id.eq(roomId),
+                        teamMember.userId.eq(userId)
+                )
+                .fetchFirst() != null;
     }
 }
