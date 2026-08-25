@@ -2,7 +2,7 @@ package com.nhnacademy.core.config;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nhnacademy.core.domain.sensor.SensorMetricDefinition;
+import com.nhnacademy.core.domain.sensor.MetricType;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.LatestSnapshot;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.SummarySnapshot;
 import org.springframework.context.annotation.Bean;
@@ -18,17 +18,17 @@ import java.util.List;
 public class RedisConfig {
 
     @Bean("metricCatalogTemplate")
-    public RedisTemplate<String, List<SensorMetricDefinition>> metricCatalogTemplate(
+    public RedisTemplate<String, List<MetricType>> metricCatalogTemplate(
             RedisConnectionFactory connectionFactory,
             ObjectMapper objectMapper
     ) {
-        RedisTemplate<String, List<SensorMetricDefinition>> redisTemplate = new RedisTemplate<>();
+        RedisTemplate<String, List<MetricType>> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);
 
         StringRedisSerializer keySerializer = new StringRedisSerializer();
         JavaType valueType = objectMapper.getTypeFactory()
-                .constructCollectionType(List.class, SensorMetricDefinition.class);
-        Jackson2JsonRedisSerializer<List<SensorMetricDefinition>> valueSerializer =
+                .constructCollectionType(List.class, MetricType.class);
+        Jackson2JsonRedisSerializer<List<MetricType>> valueSerializer =
                 new Jackson2JsonRedisSerializer<>(objectMapper, valueType);
 
         redisTemplate.setKeySerializer(keySerializer);

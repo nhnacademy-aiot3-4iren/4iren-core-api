@@ -62,14 +62,19 @@ public record SensorMetricCatalogProperties(
 
     public record Lock(
             Duration followerWaitTime,
+            Duration overallTimeout,
             Duration retryInitialInterval,
             Duration retryMaxInterval
     ) {
         public Lock {
             requirePositive("followerWaitTime", followerWaitTime);
+            requirePositive("overallTimeout", overallTimeout);
             requirePositive("retryInitialInterval", retryInitialInterval);
             requirePositive("retryMaxInterval", retryMaxInterval);
 
+            if (followerWaitTime.compareTo(overallTimeout) > 0) {
+                throw new IllegalArgumentException("followerWaitTime은 overallTimeout보다 클 수 없습니다.");
+            }
             if (retryInitialInterval.compareTo(retryMaxInterval) > 0) {
                 throw new IllegalArgumentException("retryInitialInterval은 retryMaxInterval보다 클 수 없습니다.");
             }

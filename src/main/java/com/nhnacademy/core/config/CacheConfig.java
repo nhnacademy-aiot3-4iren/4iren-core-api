@@ -2,7 +2,7 @@ package com.nhnacademy.core.config;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.nhnacademy.core.domain.sensor.SensorMetricDefinition;
+import com.nhnacademy.core.domain.sensor.MetricType;
 import com.nhnacademy.core.property.CacheNamespaceProperties;
 import com.nhnacademy.core.property.SensorMetricCatalogProperties;
 import com.nhnacademy.core.property.SensorMetricSnapshotCacheProperties;
@@ -46,7 +46,7 @@ public class CacheConfig {
     }
 
     @Bean
-    public Cache<String, List<SensorMetricDefinition>> metricCatalogLocalCache(
+    public Cache<String, List<MetricType>> metricCatalogLocalCache(
             SensorMetricCatalogProperties properties
     ) {
         return Caffeine.newBuilder()
