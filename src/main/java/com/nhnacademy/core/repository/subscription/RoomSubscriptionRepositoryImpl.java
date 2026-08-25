@@ -1,8 +1,10 @@
 package com.nhnacademy.core.repository.subscription;
 
+import com.nhnacademy.core.domain.QBuilding;
 import com.nhnacademy.core.domain.room.QRoom;
 import com.nhnacademy.core.domain.room.QRoomSubscription;
 import com.nhnacademy.core.domain.team.QTeamMember;
+import com.nhnacademy.core.domain.team.TeamStatus;
 import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -19,6 +21,7 @@ public class RoomSubscriptionRepositoryImpl implements RoomSubscriptionRepositor
     private final JPAQueryFactory queryFactory;
 
     private final QTeamMember teamMember = QTeamMember.teamMember;
+    private final QBuilding building = QBuilding.building;
     private final QRoom room = QRoom.room;
     private final QRoomSubscription subscription = QRoomSubscription.roomSubscription;
 
@@ -27,7 +30,11 @@ public class RoomSubscriptionRepositoryImpl implements RoomSubscriptionRepositor
         String roomName = queryFactory
                 .select(room.roomName)
                 .from(room)
-                .where(room.id.eq(roomId))
+                .join(room.building, building)
+                .where(
+                        room.id.eq(roomId),
+                        building.team.status.eq(TeamStatus.ACTIVE)
+                )
                 .fetchOne();
 
         if (roomName == null) {

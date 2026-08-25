@@ -4,10 +4,7 @@ import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.team.TeamCreateRequest;
-import com.nhnacademy.core.dto.team.TeamDetailResponse;
-import com.nhnacademy.core.dto.team.TeamResponse;
-import com.nhnacademy.core.dto.team.TeamUpdateRequest;
+import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ForbiddenException;
 import com.nhnacademy.core.exception.ResourceConflictException;
@@ -111,6 +108,17 @@ public class TeamService {
         if (request.getDescription().isPresent()) {
             team.changeDescription(request.getDescription().orElse(null));
         }
+
+        return TeamResponse.from(team, userRole);
+    }
+
+    // 팀 상태 변경
+    @Transactional
+    public TeamResponse updateTeamStatus(Long userId, UserRole userRole, Long teamId, TeamStatusUpdateRequest request) {
+        Team team = lockTeamOrThrow(teamId);
+        teamAuthorizer.requireTeamOwnerRegardlessOfStatus(userId, userRole, teamId);
+
+        team.changeStatus(request.status());
 
         return TeamResponse.from(team, userRole);
     }

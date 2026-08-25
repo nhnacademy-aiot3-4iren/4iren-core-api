@@ -3,10 +3,7 @@ package com.nhnacademy.core.controller;
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.team.TeamCreateRequest;
-import com.nhnacademy.core.dto.team.TeamDetailResponse;
-import com.nhnacademy.core.dto.team.TeamResponse;
-import com.nhnacademy.core.dto.team.TeamUpdateRequest;
+import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.service.TeamService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -74,6 +71,15 @@ public class TeamController {
             @Valid @RequestBody TeamUpdateRequest request
     ) {
         return teamService.updateTeam(user.id(), user.role(), teamId, request);
+    }
+
+    @PatchMapping("/{team-id}/status")
+    public TeamResponse updateTeamStatus(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable("team-id") @Positive Long teamId,
+            @Valid @RequestBody TeamStatusUpdateRequest request
+    ) {
+        return teamService.updateTeamStatus(user.id(), user.role(), teamId, request);
     }
 
     @DeleteMapping("/{team-id}")

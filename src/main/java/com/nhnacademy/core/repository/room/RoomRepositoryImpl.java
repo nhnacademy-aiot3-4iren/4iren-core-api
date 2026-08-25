@@ -9,6 +9,7 @@ import com.nhnacademy.core.domain.sensor.QSensorLocation;
 import com.nhnacademy.core.domain.team.QTeamMember;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamStatus;
 import com.nhnacademy.core.dto.room.RoomDetailQueryResult;
 import com.nhnacademy.core.dto.room.RoomRegionNameQueryResult;
 import com.querydsl.core.types.Projections;
@@ -131,6 +132,7 @@ public class RoomRepositoryImpl implements RoomRepositoryCustom {
                 .join(teamMember).on(teamMember.team.eq(building.team))
                 .where(
                         room.id.eq(roomId),
+                        building.team.status.eq(TeamStatus.ACTIVE),
                         teamMember.userId.eq(userId)
                 )
                 .fetchFirst() != null;

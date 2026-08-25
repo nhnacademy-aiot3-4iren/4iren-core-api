@@ -177,6 +177,11 @@ public enum ErrorCode {
             "TEAM.NOT_FOUND",
             "존재하지 않는 팀입니다."
     ),
+    TEAM_INACTIVE(
+            HttpStatus.CONFLICT,
+            "TEAM.INACTIVE",
+            "비활성화된 팀에는 접근할 수 없습니다."
+    ),
     TEAM_HAS_BUILDINGS(
             HttpStatus.CONFLICT,
             "TEAM.HAS_BUILDINGS",
