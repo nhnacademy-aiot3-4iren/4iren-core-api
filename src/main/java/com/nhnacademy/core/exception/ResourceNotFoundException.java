@@ -10,8 +10,23 @@ public class ResourceNotFoundException extends ApplicationException {
 
     public ResourceNotFoundException(
             ErrorCode errorCode,
+            Throwable cause
+    ) {
+        super(errorCode, cause);
+    }
+
+    public ResourceNotFoundException(
+            ErrorCode errorCode,
             Map<String, Object> context
     ) {
         super(errorCode, context);
+    }
+
+    public ResourceNotFoundException(
+            ErrorCode errorCode,
+            Map<String, Object> context,
+            Throwable cause
+    ) {
+        super(errorCode, context, cause);
     }
 }
