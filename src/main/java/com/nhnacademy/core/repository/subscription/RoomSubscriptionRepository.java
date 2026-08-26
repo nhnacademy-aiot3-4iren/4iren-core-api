@@ -3,6 +3,7 @@ package com.nhnacademy.core.repository.subscription;
 import com.nhnacademy.core.domain.room.RoomSubscription;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -21,13 +22,14 @@ public interface RoomSubscriptionRepository extends JpaRepository<RoomSubscripti
     List<RoomSubscription> findAllByTeamMemberAndRoom_Building_Team(TeamMember teamMember, Team team, Sort sort);
 
     @EntityGraph(attributePaths = "room")
-    List<RoomSubscription> findAllByTeamMember_UserId(Long userId);
+    List<RoomSubscription> findAllByTeamMember_UserIdAndTeamMember_Team_Status(Long userId, TeamStatus status);
 
     @EntityGraph(attributePaths = "room")
-    List<RoomSubscription> findAllByTeamMember_UserIdAndTeamMember_Team_IdAndRoom_Building_Team_Id(
+    List<RoomSubscription> findAllByTeamMember_UserIdAndTeamMember_Team_IdAndRoom_Building_Team_IdAndTeamMember_Team_Status(
             Long userId,
             // 팀 구성원과 공간이 모두 요청한 팀에 속하는 공간 구독만 조회
             Long teamMemberTeamId,
-            Long roomTeamId
+            Long roomTeamId,
+            TeamStatus status
     );
 }

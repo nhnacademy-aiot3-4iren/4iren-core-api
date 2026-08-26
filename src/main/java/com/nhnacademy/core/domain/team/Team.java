@@ -30,6 +30,10 @@ public class Team extends VersionedEntity {
     @Column(name = "description", length = 200)
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "team_status", nullable = false, length = 20)
+    private TeamStatus status = TeamStatus.ACTIVE;
+
     public Team(String teamName, String description) {
         this.teamName = TeamNormalizer.normalizeName(teamName);
         this.description = TeamNormalizer.normalizeDescription(description);
@@ -41,5 +45,17 @@ public class Team extends VersionedEntity {
 
     public void changeDescription(String description) {
         this.description = TeamNormalizer.normalizeDescription(description);
+    }
+
+    public void changeStatus(TeamStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("팀 상태는 null일 수 없습니다.");
+        }
+
+        this.status = status;
+    }
+
+    public boolean isActive() {
+        return status == TeamStatus.ACTIVE;
     }
 }

@@ -86,6 +86,16 @@ public enum ErrorCode {
             "INFRASTRUCTURE.SENSOR_DATA_STORE_UNAVAILABLE",
             "센서 데이터 저장소를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
     ),
+    SENSOR_DATA_STORE_BAD_RESPONSE(
+            HttpStatus.BAD_GATEWAY,
+            "INFRASTRUCTURE.SENSOR_DATA_STORE_BAD_RESPONSE",
+            "센서 데이터 저장소의 응답을 처리할 수 없습니다."
+    ),
+    METRIC_CATALOG_CACHE_UNAVAILABLE(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "INFRASTRUCTURE.METRIC_CATALOG_CACHE_UNAVAILABLE",
+            "센서 메타데이터 캐시를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
+    ),
     PROCESSING_METRIC_SERVICE_UNAVAILABLE(
             HttpStatus.SERVICE_UNAVAILABLE,
             "INFRASTRUCTURE.PROCESSING_METRIC_SERVICE_UNAVAILABLE",
@@ -166,6 +176,11 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "TEAM.NOT_FOUND",
             "존재하지 않는 팀입니다."
+    ),
+    TEAM_INACTIVE(
+            HttpStatus.CONFLICT,
+            "TEAM.INACTIVE",
+            "비활성화된 팀에는 접근할 수 없습니다."
     ),
     TEAM_HAS_BUILDINGS(
             HttpStatus.CONFLICT,

@@ -18,4 +18,6 @@ public interface RoomRepositoryCustom {
     List<Room> findAllUnsubscribedByTeamMemberAndTeam(TeamMember teamMember, Team team);
 
     Optional<RoomRegionNameQueryResult> findRegionNameById(Long roomId);
+
+    boolean existsTeamMemberByRoomIdAndUserId(Long roomId, Long userId);
 }

@@ -49,6 +49,7 @@ public class TeamMemberService {
 
         // 팀 잠금 및 존재 여부 확인
         Team team = lockTeamOrThrow(teamId);
+        teamAuthorizer.requireActiveTeam(team);
         TeamInvitationCode invitation = teamInvitationCodeRepository.findByCodeHashAndTeam(invitationCodeHash, team)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         ErrorCode.INVITATION_CODE_NOT_FOUND,
@@ -119,7 +120,7 @@ public class TeamMemberService {
     public void leaveTeam(Long userId, UserRole userRole, Long teamId) {
         lockTeamOrThrow(teamId);
 
-        TeamMember teamMember = teamAuthorizer.requireTeamMember(userId, teamId);
+        TeamMember teamMember = teamAuthorizer.requireTeamMemberRegardlessOfStatus(userId, teamId);
         if (userRole != UserRole.NORMAL) {
             throw new ForbiddenException(
                     ErrorCode.TEAM_LEAVE_ROLE_FORBIDDEN,

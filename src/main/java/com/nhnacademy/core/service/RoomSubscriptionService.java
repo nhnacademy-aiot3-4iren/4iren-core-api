@@ -5,6 +5,7 @@ import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.room.RoomSubscription;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamStatus;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.RoomSubscriptionResponse;
@@ -101,7 +102,10 @@ public class RoomSubscriptionService {
     public UserRoomSubscriptionsResponse getUserSubscriptions(Long userId) {
         return UserRoomSubscriptionsResponse.from(
                 userId,
-                roomSubscriptionRepository.findAllByTeamMember_UserId(userId)
+                roomSubscriptionRepository.findAllByTeamMember_UserIdAndTeamMember_Team_Status(
+                        userId,
+                        TeamStatus.ACTIVE
+                )
         );
     }
 
@@ -109,10 +113,11 @@ public class RoomSubscriptionService {
     public UserRoomSubscriptionsResponse getUserSubscriptionsInTeam(Long userId, Long teamId) {
         return UserRoomSubscriptionsResponse.from(
                 userId,
-                roomSubscriptionRepository.findAllByTeamMember_UserIdAndTeamMember_Team_IdAndRoom_Building_Team_Id(
+                roomSubscriptionRepository.findAllByTeamMember_UserIdAndTeamMember_Team_IdAndRoom_Building_Team_IdAndTeamMember_Team_Status(
                         userId,
                         teamId,
-                        teamId
+                        teamId,
+                        TeamStatus.ACTIVE
                 )
         );
     }
@@ -170,11 +175,15 @@ public class RoomSubscriptionService {
     }
 
     private TeamMember lockTeamMemberOrThrow(Long userId, Long teamId) {
-        return teamMemberRepository.findLockedByTeam_IdAndUserId(teamId, userId)
+        TeamMember teamMember = teamMemberRepository.findLockedByTeam_IdAndUserId(teamId, userId)
                 .orElseThrow(() -> new ForbiddenException(
                         ErrorCode.TEAM_ACCESS_FORBIDDEN,
                         Map.of("teamId", teamId)
                 ));
+
+        teamAuthorizer.requireActiveTeam(teamMember.getTeam());
+
+        return teamMember;
     }
 
     private Room getRoomOrThrow(Long roomId, Long teamId) {
