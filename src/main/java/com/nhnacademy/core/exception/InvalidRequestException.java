@@ -12,13 +12,6 @@ public class InvalidRequestException extends ApplicationException {
         super(errorCode);
     }
 
-    public InvalidRequestException(
-            ErrorCode errorCode,
-            Throwable cause
-    ) {
-        super(errorCode, cause);
-    }
-
     public InvalidRequestException(Map<String, Object> context) {
         super(ErrorCode.INVALID_REQUEST, context);
     }
@@ -28,13 +21,5 @@ public class InvalidRequestException extends ApplicationException {
             Map<String, Object> context
     ) {
         super(errorCode, context);
-    }
-
-    public InvalidRequestException(
-            ErrorCode errorCode,
-            Map<String, Object> context,
-            Throwable cause
-    ) {
-        super(errorCode, context, cause);
     }
 }
