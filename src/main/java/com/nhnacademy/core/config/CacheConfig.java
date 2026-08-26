@@ -6,8 +6,6 @@ import com.nhnacademy.core.domain.sensor.MetricType;
 import com.nhnacademy.core.property.CacheNamespaceProperties;
 import com.nhnacademy.core.property.SensorMetricCatalogProperties;
 import com.nhnacademy.core.property.SensorMetricSnapshotCacheProperties;
-import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.LatestSnapshot;
-import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.SummarySnapshot;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -55,25 +53,25 @@ public class CacheConfig {
                 .build();
     }
 
-    @Bean("summarySnapshotLocalCache")
-    public Cache<String, SummarySnapshot> summarySnapshotLocalCache(
-            SensorMetricSnapshotCacheProperties properties
-    ) {
-        return Caffeine.newBuilder()
-                .maximumSize(properties.maximumSizePerType())
-                .expireAfterWrite(properties.l1Ttl())
-                .build();
-    }
-
-    @Bean("latestSnapshotLocalCache")
-    public Cache<String, LatestSnapshot> latestSnapshotLocalCache(
-            SensorMetricSnapshotCacheProperties properties
-    ) {
-        return Caffeine.newBuilder()
-                .maximumSize(properties.maximumSizePerType())
-                .expireAfterWrite(properties.l1Ttl())
-                .build();
-    }
+//    @Bean("summarySnapshotLocalCache")
+//    public Cache<String, SummarySnapshot> summarySnapshotLocalCache(
+//            SensorMetricSnapshotCacheProperties properties
+//    ) {
+//        return Caffeine.newBuilder()
+//                .maximumSize(properties.maximumSizePerType())
+//                .expireAfterWrite(properties.l1Ttl())
+//                .build();
+//    }
+//
+//    @Bean("latestSnapshotLocalCache")
+//    public Cache<String, LatestSnapshot> latestSnapshotLocalCache(
+//            SensorMetricSnapshotCacheProperties properties
+//    ) {
+//        return Caffeine.newBuilder()
+//                .maximumSize(properties.maximumSizePerType())
+//                .expireAfterWrite(properties.l1Ttl())
+//                .build();
+//    }
 
     @Bean("redisCacheManager")
     @Primary

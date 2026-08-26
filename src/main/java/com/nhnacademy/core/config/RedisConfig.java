@@ -3,8 +3,6 @@ package com.nhnacademy.core.config;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.core.domain.sensor.MetricType;
-import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.LatestSnapshot;
-import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.SummarySnapshot;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -42,29 +40,29 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    @Bean("summarySnapshotTemplate")
-    public RedisTemplate<String, SummarySnapshot> summarySnapshotTemplate(
-            RedisConnectionFactory connectionFactory,
-            ObjectMapper objectMapper
-    ) {
-        return createJsonRedisTemplate(
-                connectionFactory,
-                objectMapper,
-                SummarySnapshot.class
-        );
-    }
-
-    @Bean("latestSnapshotTemplate")
-    public RedisTemplate<String, LatestSnapshot> latestSnapshotTemplate(
-            RedisConnectionFactory connectionFactory,
-            ObjectMapper objectMapper
-    ) {
-        return createJsonRedisTemplate(
-                connectionFactory,
-                objectMapper,
-                LatestSnapshot.class
-        );
-    }
+//    @Bean("summarySnapshotTemplate")
+//    public RedisTemplate<String, SummarySnapshot> summarySnapshotTemplate(
+//            RedisConnectionFactory connectionFactory,
+//            ObjectMapper objectMapper
+//    ) {
+//        return createJsonRedisTemplate(
+//                connectionFactory,
+//                objectMapper,
+//                SummarySnapshot.class
+//        );
+//    }
+//
+//    @Bean("latestSnapshotTemplate")
+//    public RedisTemplate<String, LatestSnapshot> latestSnapshotTemplate(
+//            RedisConnectionFactory connectionFactory,
+//            ObjectMapper objectMapper
+//    ) {
+//        return createJsonRedisTemplate(
+//                connectionFactory,
+//                objectMapper,
+//                LatestSnapshot.class
+//        );
+//    }
 
     private <T> RedisTemplate<String, T> createJsonRedisTemplate(
             RedisConnectionFactory connectionFactory,
