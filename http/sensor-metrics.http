@@ -1,0 +1,50 @@
+@api = http://localhost:8765/api/core
+@teamId = 1
+@roomId = 1
+@userId = 1
+@userRole = OWNER
+@metricCode = temperature
+@from = 2026-08-26T00:00:00Z
+@to = 2026-08-28T00:00:00Z
+@interval = PT1H
+
+### 공간에서 조회 가능한 메트릭 목록
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}/sensor-metrics/catalog
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### 최근 15분 공간 메트릭 평균
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}/sensor-metrics/summary
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### 공간 내 모든 센서의 메트릭별 최신값
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}/sensor-metrics/latest
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### 특정 메트릭의 공간 평균 시계열
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}/sensor-metrics/series
+    ?metricCode={{metricCode}}
+    &from={{from}}
+    &to={{to}}
+    &interval={{interval}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### 공간 내 센서별 메트릭 시계열
+GET {{api}}/teams/{{teamId}}/rooms/{{roomId}}/sensor-metrics/sensors/series
+    ?from={{from}}
+    &to={{to}}
+    &interval={{interval}}
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### 내부 API - 최근 15분 공간 메트릭 평균
+GET {{api}}/internal/rooms/{{roomId}}/sensor-metrics/summary
+
+### 내부 API - 공간 내 센서별 메트릭 시계열
+GET {{api}}/internal/rooms/{{roomId}}/sensor-metrics/sensors/series
+    ?from={{from}}
+    &to={{to}}
+    &interval={{interval}}
