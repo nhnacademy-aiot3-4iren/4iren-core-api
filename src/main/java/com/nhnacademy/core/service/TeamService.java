@@ -3,6 +3,7 @@ package com.nhnacademy.core.service;
 import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamStatus;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.exception.ErrorCode;
@@ -121,6 +122,13 @@ public class TeamService {
         team.changeStatus(request.status());
 
         return TeamResponse.from(team, userRole);
+    }
+
+    // 팀 비활성화
+    @Transactional
+    public void deactivateTeam(Long teamId) {
+        Team team = lockTeamOrThrow(teamId);
+        team.changeStatus(TeamStatus.INACTIVE);
     }
 
     // 팀 삭제, 팀에 등록된 건물이 있으면 삭제 불가

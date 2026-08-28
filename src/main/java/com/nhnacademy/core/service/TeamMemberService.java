@@ -34,6 +34,26 @@ public class TeamMemberService {
     private final TeamAuthorizer teamAuthorizer;
     private final AccountUserRoleService accountUserRoleService;
     private final InvitationCodeHasher invitationCodeHasher;
+    private final RoomSubscriptionService roomSubscriptionService;
+
+    // ADMIN 팀 구성원 추가
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public TeamMemberResponse addAdminMember(Long teamId, Long userId) {
+        Team team = lockTeamOrThrow(teamId);
+        teamAuthorizer.requireActiveTeam(team);
+
+        if (teamMemberRepository.existsByTeamAndUserId(team, userId)) {
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MEMBER_ALREADY_JOINED,
+                    Map.of("teamId", teamId, "userId", userId)
+            );
+        }
+
+        TeamMember adminMember = teamMemberRepository.save(new TeamMember(team, userId));
+        roomSubscriptionService.subscribeAdminToExistingRooms(adminMember);
+
+        return TeamMemberResponse.from(adminMember);
+    }
 
     // 팀 가입
     @Transactional(isolation = Isolation.READ_COMMITTED)
