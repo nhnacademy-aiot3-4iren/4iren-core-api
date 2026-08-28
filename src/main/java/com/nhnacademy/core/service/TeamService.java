@@ -153,4 +153,24 @@ public class TeamService {
                         Map.of("teamId", teamId)
                 ));
     }
+
+    // 사용자 권한 강등(NORMAL) 시 호출되어, 해당 사용자가 속한 모든 팀을 비활성화(INACTIVE)
+    @Transactional
+    public void deactivateUserTeams(Long userId) {
+        List<TeamMember> teamMembers = teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId);
+        for (TeamMember tm : teamMembers) {
+            Team team = tm.getTeam();
+            team.changeStatus(TeamStatus.INACTIVE);
+        }
+    }
+
+    // 사용자 권한 승격(OWNER) 시 호출되어, 해당 사용자가 속한 모든 팀을 활성화(ACTIVE)
+    @Transactional
+    public void activateUserTeams(Long userId) {
+        List<TeamMember> teamMembers = teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId);
+        for (TeamMember tm : teamMembers) {
+            Team team = tm.getTeam();
+            team.changeStatus(TeamStatus.ACTIVE);
+        }
+    }
 }
