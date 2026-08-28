@@ -3,6 +3,7 @@ package com.nhnacademy.core.service;
 import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
+import com.nhnacademy.core.domain.team.TeamStatus;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.exception.ErrorCode;
@@ -144,5 +145,25 @@ public class TeamService {
                         ErrorCode.TEAM_NOT_FOUND,
                         Map.of("teamId", teamId)
                 ));
+    }
+
+    // 사용자 권한 강등(NORMAL) 시 호출되어, 해당 사용자가 속한 모든 팀을 비활성화(INACTIVE)
+    @Transactional
+    public void deactivateUserTeams(Long userId) {
+        List<TeamMember> teamMembers = teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId);
+        for (TeamMember tm : teamMembers) {
+            Team team = tm.getTeam();
+            team.changeStatus(TeamStatus.INACTIVE);
+        }
+    }
+
+    // 사용자 권한 승격(OWNER) 시 호출되어, 해당 사용자가 속한 모든 팀을 활성화(ACTIVE)
+    @Transactional
+    public void activateUserTeams(Long userId) {
+        List<TeamMember> teamMembers = teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId);
+        for (TeamMember tm : teamMembers) {
+            Team team = tm.getTeam();
+            team.changeStatus(TeamStatus.ACTIVE);
+        }
     }
 }
