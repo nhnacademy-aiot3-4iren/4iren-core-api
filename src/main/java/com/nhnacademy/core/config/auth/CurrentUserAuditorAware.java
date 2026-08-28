@@ -21,7 +21,7 @@ public class CurrentUserAuditorAware implements AuditorAware<Long> {
             return Optional.of(backgroundAuditor);
         }
 
-        // 2. 웹 요청이 없는 경우 System ID(0L) 반환 (단순 스케줄러 등)
+        // 2. 웹 요청이 없는 경우 empty 반환 (단순 스케줄러 등)
         if (RequestContextHolder.getRequestAttributes() == null) {
             return Optional.empty();
         }
