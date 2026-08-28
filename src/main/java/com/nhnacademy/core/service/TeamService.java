@@ -173,4 +173,11 @@ public class TeamService {
             team.changeStatus(TeamStatus.ACTIVE);
         }
     }
+
+    // 사용자 ID로 소속된 팀 엔티티 목록 조회
+    public List<Team> getTeamsByUserId(Long userId) {
+        return teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId).stream()
+                .map(TeamMember::getTeam)
+                .toList();
+    }
 }

@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     private final RabbitAccountRoleChangeProperties accountRoleChangeProperties;
+    private final com.nhnacademy.core.config.properties.RabbitAccountAdminCreateProperties adminCreateProperties;
 
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {
@@ -57,5 +58,44 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(accountRoleChangeDeadLetterQueue)
                 .to(accountRoleChangeDeadLetterExchange)
                 .with(accountRoleChangeProperties.getDeadLetterRoutingKey());
+    }
+
+
+
+    @Bean
+    public DirectExchange adminCreateExchange() {
+        return new DirectExchange(adminCreateProperties.getExchange());
+    }
+
+    @Bean
+    public Queue adminCreateQueue() {
+        return QueueBuilder.durable(adminCreateProperties.getQueue())
+                .withArgument("x-dead-letter-exchange", adminCreateProperties.getDeadLetterExchange())
+                .withArgument("x-dead-letter-routing-key", adminCreateProperties.getDeadLetterRoutingKey())
+                .build();
+    }
+
+    @Bean
+    public Binding adminCreateBinding(Queue adminCreateQueue, DirectExchange adminCreateExchange) {
+        return BindingBuilder.bind(adminCreateQueue)
+                .to(adminCreateExchange)
+                .with(adminCreateProperties.getRoutingKey());
+    }
+
+    @Bean
+    public DirectExchange adminCreateDeadLetterExchange() {
+        return new DirectExchange(adminCreateProperties.getDeadLetterExchange());
+    }
+
+    @Bean
+    public Queue adminCreateDeadLetterQueue() {
+        return QueueBuilder.durable(adminCreateProperties.getDeadLetterQueue()).build();
+    }
+
+    @Bean
+    public Binding adminCreateDeadLetterBinding(Queue adminCreateDeadLetterQueue, DirectExchange adminCreateDeadLetterExchange) {
+        return BindingBuilder.bind(adminCreateDeadLetterQueue)
+                .to(adminCreateDeadLetterExchange)
+                .with(adminCreateProperties.getDeadLetterRoutingKey());
     }
 }
