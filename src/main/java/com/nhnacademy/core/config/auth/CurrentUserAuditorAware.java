@@ -23,7 +23,7 @@ public class CurrentUserAuditorAware implements AuditorAware<Long> {
 
         // 2. 웹 요청이 없는 경우 System ID(0L) 반환 (단순 스케줄러 등)
         if (RequestContextHolder.getRequestAttributes() == null) {
-            return Optional.of(0L);
+            return Optional.empty();
         }
 
         // 3. 웹 요청인 경우 RequestScope 빈에서 추출
