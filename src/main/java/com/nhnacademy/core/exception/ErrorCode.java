@@ -182,6 +182,11 @@ public enum ErrorCode {
             "TEAM.INACTIVE",
             "비활성화된 팀에는 접근할 수 없습니다."
     ),
+    TEAM_MUST_BE_INACTIVE_BEFORE_DELETE(
+            HttpStatus.CONFLICT,
+            "TEAM.MUST_BE_INACTIVE_BEFORE_DELETE",
+            "팀을 삭제하려면 먼저 비활성화해야 합니다."
+    ),
     TEAM_HAS_BUILDINGS(
             HttpStatus.CONFLICT,
             "TEAM.HAS_BUILDINGS",

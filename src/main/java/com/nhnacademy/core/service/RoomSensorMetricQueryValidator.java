@@ -1,5 +1,6 @@
 package com.nhnacademy.core.service;
 
+import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.exception.InvalidRequestException;
 import com.nhnacademy.core.property.SensorMetricQueryProperties;
 import lombok.RequiredArgsConstructor;
@@ -7,8 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +25,37 @@ public class RoomSensorMetricQueryValidator {
                             .formatted(properties.metricCodeMaxLength())
             ));
         }
+    }
+
+    public Set<String> normalizeDevEuiFilters(Collection<String> devEuis) {
+        if (devEuis == null || devEuis.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<String> normalizedDevEuis = new TreeSet<>();
+        for (String devEui : devEuis) {
+            try {
+                normalizedDevEuis.add(SensorLocationNormalizer.normalizeDevEui(devEui));
+            } catch (IllegalArgumentException e) {
+                throw invalidMetricQuery("devEui는 16자리 16진수여야 합니다.");
+            }
+        }
+
+        return Collections.unmodifiableSet(normalizedDevEuis);
+    }
+
+    public Set<String> normalizeMetricCodeFilters(Collection<String> metricCodes) {
+        if (metricCodes == null || metricCodes.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<String> normalizedMetricCodes = new TreeSet<>();
+        for (String metricCode : metricCodes) {
+            validateMetricCode(metricCode);
+            normalizedMetricCodes.add(metricCode);
+        }
+
+        return Collections.unmodifiableSet(normalizedMetricCodes);
     }
 
     public void validateRoomSensorCount(int sensorCount) {

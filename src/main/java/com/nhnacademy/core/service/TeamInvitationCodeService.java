@@ -5,6 +5,7 @@ import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamInvitationCode;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeCreateRequest;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeResponse;
+import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeSummaryResponse;
 import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.exception.ServiceUnavailableException;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -47,11 +50,27 @@ public class TeamInvitationCodeService {
         );
     }
 
+    // 팀 초대 코드 목록 조회
+    public List<TeamInvitationCodeSummaryResponse> getInvitationCodes(
+            Long userId,
+            UserRole userRole,
+            Long teamId
+    ) {
+        Team team = getTeamOrThrow(teamId);
+        teamAuthorizer.requireTeamManagerRegardlessOfStatus(userId, userRole, teamId);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return teamInvitationCodeRepository.findAllByTeamOrderByCreatedAtDesc(team).stream()
+                .map(invitationCode -> TeamInvitationCodeSummaryResponse.from(invitationCode, now))
+                .toList();
+    }
+
     // 팀 초대 코드 비활성화
     @Transactional
     public void deactivateInvitationCode(Long userId, UserRole userRole, Long teamId, Long invitationCodeId) {
         Team team = lockTeamOrThrow(teamId);
-        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
+        teamAuthorizer.requireTeamManagerRegardlessOfStatus(userId, userRole, teamId);
 
         TeamInvitationCode invitationCode = teamInvitationCodeRepository.findByIdAndTeam(invitationCodeId, team)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -74,6 +93,14 @@ public class TeamInvitationCodeService {
         }
 
         throw new ServiceUnavailableException(ErrorCode.INVITATION_CODE_GENERATION_FAILED);
+    }
+
+    private Team getTeamOrThrow(Long teamId) {
+        return teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.TEAM_NOT_FOUND,
+                        Map.of("teamId", teamId)
+                ));
     }
 
     private Team lockTeamOrThrow(Long teamId) {

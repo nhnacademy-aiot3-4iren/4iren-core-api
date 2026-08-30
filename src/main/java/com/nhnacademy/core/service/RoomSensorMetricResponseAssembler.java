@@ -5,6 +5,7 @@ import com.nhnacademy.core.dto.sensor.metric.*;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricSeriesPointQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricLatestQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricSeriesPointQueryResult;
+import com.nhnacademy.core.service.RoomSensorMetricCatalog.SensorSeriesSelection;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.LatestSnapshot;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.SummarySnapshot;
 import org.springframework.stereotype.Component;
@@ -111,19 +112,21 @@ public class RoomSensorMetricResponseAssembler {
             Instant from,
             Instant to,
             Duration interval,
-            RoomSensorMetricCatalog catalog,
+            SensorSeriesSelection selection,
             List<SensorMetricSeriesPointQueryResult> queryResults
     ) {
-        Map<SensorMetricKey, List<RoomSensorMetricSeriesResponse.MetricPoint>> pointsByMetric =
-                indexSeriesPointsBySensorMetric(queryResults);
+        List<Instant> bucketEndTimes = createBucketEndTimes(from, to, interval);
+        Map<SensorMetricKey, Map<Instant, Double>> valuesByMetric =
+                indexSeriesValuesBySensorMetric(queryResults);
 
-        List<RoomSensorMetricSeriesResponse.SensorSeries> sensors = catalog.devEuis().stream()
+        List<RoomSensorMetricSeriesResponse.SensorSeries> sensors = selection.devEuis().stream()
                 .map(devEui -> new RoomSensorMetricSeriesResponse.SensorSeries(
                         devEui,
                         buildSensorMetricSeries(
                                 devEui,
-                                catalog.activeGaugeMetrics(devEui),
-                                pointsByMetric
+                                selection.metrics(devEui),
+                                bucketEndTimes,
+                                valuesByMetric
                         )
                 ))
                 .toList();
@@ -145,13 +148,19 @@ public class RoomSensorMetricResponseAssembler {
             MetricType metric,
             List<RoomMetricSeriesPointQueryResult> queryResults
     ) {
-        List<RoomMetricSeriesResponse.MetricPoint> points = queryResults.stream()
-                .map(result -> new RoomMetricSeriesResponse.MetricPoint(
-                        result.bucketEndAt(),
-                        result.averageValue()
-                ))
-                .sorted(Comparator.comparing(
-                        RoomMetricSeriesResponse.MetricPoint::bucketEndAt
+        Map<Instant, Double> valuesByBucketEnd = new HashMap<>();
+        queryResults.forEach(result ->
+                valuesByBucketEnd.put(result.bucketEndAt(), result.averageValue())
+        );
+
+        List<RoomMetricSeriesResponse.MetricPoint> points = createBucketEndTimes(
+                from,
+                to,
+                interval
+        ).stream()
+                .map(bucketEndAt -> new RoomMetricSeriesResponse.MetricPoint(
+                        bucketEndAt,
+                        valuesByBucketEnd.get(bucketEndAt)
                 ))
                 .toList();
 
@@ -185,32 +194,18 @@ public class RoomSensorMetricResponseAssembler {
         return result;
     }
 
-    private Map<SensorMetricKey, List<RoomSensorMetricSeriesResponse.MetricPoint>>
-    indexSeriesPointsBySensorMetric(List<SensorMetricSeriesPointQueryResult> queryResults) {
-        Map<SensorMetricKey, List<RoomSensorMetricSeriesResponse.MetricPoint>> mutablePointsByMetric =
-                new HashMap<>();
+    private Map<SensorMetricKey, Map<Instant, Double>> indexSeriesValuesBySensorMetric(
+            List<SensorMetricSeriesPointQueryResult> queryResults
+    ) {
+        Map<SensorMetricKey, Map<Instant, Double>> valuesByMetric = new HashMap<>();
 
         for (SensorMetricSeriesPointQueryResult result : queryResults) {
             SensorMetricKey key = new SensorMetricKey(result.devEui(), result.metricCode());
-            mutablePointsByMetric.computeIfAbsent(key, ignored -> new ArrayList<>())
-                    .add(new RoomSensorMetricSeriesResponse.MetricPoint(
-                            result.bucketEndAt(),
-                            result.averageValue()
-                    ));
+            valuesByMetric.computeIfAbsent(key, ignored -> new HashMap<>())
+                    .put(result.bucketEndAt(), result.averageValue());
         }
 
-        Map<SensorMetricKey, List<RoomSensorMetricSeriesResponse.MetricPoint>> pointsByMetric =
-                new HashMap<>();
-        mutablePointsByMetric.forEach((key, points) -> pointsByMetric.put(
-                key,
-                points.stream()
-                        .sorted(Comparator.comparing(
-                                RoomSensorMetricSeriesResponse.MetricPoint::bucketEndAt
-                        ))
-                        .toList()
-        ));
-
-        return pointsByMetric;
+        return valuesByMetric;
     }
 
     private List<RoomSensorMetricLatestResponse.LatestMetricValue> buildLatestMetricValues(
@@ -242,23 +237,51 @@ public class RoomSensorMetricResponseAssembler {
     private List<RoomSensorMetricSeriesResponse.MetricSeries> buildSensorMetricSeries(
             String devEui,
             List<MetricType> activeGaugeMetrics,
-            Map<SensorMetricKey, List<RoomSensorMetricSeriesResponse.MetricPoint>> pointsByMetric
+            List<Instant> bucketEndTimes,
+            Map<SensorMetricKey, Map<Instant, Double>> valuesByMetric
     ) {
         return activeGaugeMetrics.stream()
-                .map(metric -> new RoomSensorMetricSeriesResponse.MetricSeries(
-                        metric.metricCode(),
-                        metric.displayName(),
-                        metric.metricKind(),
-                        metric.description(),
-                        metric.ucumCode(),
-                        metric.unitDisplayName(),
-                        metric.symbol(),
-                        pointsByMetric.getOrDefault(
-                                new SensorMetricKey(devEui, metric.metricCode()),
-                                List.of()
-                        )
-                ))
+                .map(metric -> {
+                    Map<Instant, Double> valuesByBucketEnd = valuesByMetric.getOrDefault(
+                            new SensorMetricKey(devEui, metric.metricCode()),
+                            Map.of()
+                    );
+                    List<RoomSensorMetricSeriesResponse.MetricPoint> points = bucketEndTimes.stream()
+                            .map(bucketEndAt -> new RoomSensorMetricSeriesResponse.MetricPoint(
+                                    bucketEndAt,
+                                    valuesByBucketEnd.get(bucketEndAt)
+                            ))
+                            .toList();
+
+                    return new RoomSensorMetricSeriesResponse.MetricSeries(
+                            metric.metricCode(),
+                            metric.displayName(),
+                            metric.metricKind(),
+                            metric.description(),
+                            metric.ucumCode(),
+                            metric.unitDisplayName(),
+                            metric.symbol(),
+                            points
+                    );
+                })
                 .toList();
+    }
+
+    private List<Instant> createBucketEndTimes(
+            Instant from,
+            Instant to,
+            Duration interval
+    ) {
+        long intervalMillis = interval.toMillis();
+        long bucketCount = Duration.between(from, to).toMillis() / intervalMillis;
+        List<Instant> bucketEndTimes = new ArrayList<>(Math.toIntExact(bucketCount));
+        for (long bucketIndex = 1; bucketIndex <= bucketCount; bucketIndex++) {
+            bucketEndTimes.add(from.plusMillis(
+                    Math.multiplyExact(bucketIndex, intervalMillis)
+            ));
+        }
+
+        return List.copyOf(bucketEndTimes);
     }
 
     private record SensorMetricKey(

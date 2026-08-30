@@ -85,7 +85,7 @@ public class TeamService {
 
     // 팀 상세 조회
     public TeamDetailResponse getTeam(Long userId, UserRole userRole, Long teamId) {
-        teamAuthorizer.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMemberRegardlessOfStatus(userId, teamId);
 
         return TeamDetailResponse.from(
                 userRole,
@@ -131,11 +131,18 @@ public class TeamService {
         team.changeStatus(TeamStatus.INACTIVE);
     }
 
-    // 팀 삭제, 팀에 등록된 건물이 있으면 삭제 불가
+    // 팀 삭제, 비활성화된 팀에 등록된 건물이 없을 때만 삭제 가능
     @Transactional
     public void deleteTeam(Long userId, UserRole userRole, Long teamId) {
         Team team = lockTeamOrThrow(teamId);
-        teamAuthorizer.requireTeamOwner(userId, userRole, teamId);
+        teamAuthorizer.requireTeamOwnerRegardlessOfStatus(userId, userRole, teamId);
+
+        if (team.getStatus() != TeamStatus.INACTIVE) {
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MUST_BE_INACTIVE_BEFORE_DELETE,
+                    Map.of("teamId", teamId)
+            );
+        }
 
         if (buildingRepository.existsByTeam(team)) {
             throw new ResourceConflictException(

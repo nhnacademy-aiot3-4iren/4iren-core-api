@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -87,7 +88,9 @@ public class RoomSensorMetricController {
             @PathVariable("room-id") @Positive Long roomId,
             @RequestParam Instant from,
             @RequestParam Instant to,
-            @RequestParam Duration interval
+            @RequestParam Duration interval,
+            @RequestParam(name = "devEui", required = false) List<String> devEuis,
+            @RequestParam(name = "metricCode", required = false) List<String> metricCodes
     ) {
         return roomSensorMetricService.getRoomSensorMetricSeries(
                 user.id(),
@@ -95,7 +98,9 @@ public class RoomSensorMetricController {
                 roomId,
                 from,
                 to,
-                interval
+                interval,
+                devEuis,
+                metricCodes
         );
     }
 }
