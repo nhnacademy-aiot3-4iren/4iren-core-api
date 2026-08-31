@@ -5,6 +5,7 @@ import com.nhnacademy.core.domain.device.Device;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.device.DeviceCreateRequest;
+import com.nhnacademy.core.dto.device.DevicePowerStateUpdateRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;
 import com.nhnacademy.core.dto.device.DeviceUpdateRequest;
 import com.nhnacademy.core.exception.ErrorCode;
@@ -91,6 +92,23 @@ public class DeviceService {
         if (destinationRoom != null) {
             device.moveTo(destinationRoom);
         }
+
+        return DeviceResponse.from(device);
+    }
+
+    // 기기 전원 상태 변경
+    @Transactional
+    public DeviceResponse updateDevicePowerState(
+            Long userId,
+            UserRole userRole,
+            Long teamId,
+            Long deviceId,
+            DevicePowerStateUpdateRequest request
+    ) {
+        teamAuthorizer.requireTeamManager(userId, userRole, teamId);
+
+        Device device = getDeviceOrThrow(deviceId, teamId);
+        device.changePowerState(request.powerState());
 
         return DeviceResponse.from(device);
     }

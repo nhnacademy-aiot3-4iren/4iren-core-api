@@ -4,6 +4,7 @@ import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.device.DeviceCreateRequest;
+import com.nhnacademy.core.dto.device.DevicePowerStateUpdateRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;
 import com.nhnacademy.core.dto.device.DeviceUpdateRequest;
 import com.nhnacademy.core.service.DeviceService;
@@ -81,6 +82,16 @@ public class DeviceController {
             @Valid @RequestBody DeviceUpdateRequest request
     ) {
         return deviceService.updateDevice(user.id(), user.role(), teamId, deviceId, request);
+    }
+
+    @PatchMapping("/devices/{device-id}/power-state")
+    public DeviceResponse updateDevicePowerState(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("device-id") @Positive Long deviceId,
+            @Valid @RequestBody DevicePowerStateUpdateRequest request
+    ) {
+        return deviceService.updateDevicePowerState(user.id(), user.role(), teamId, deviceId, request);
     }
 
     @DeleteMapping("/devices/{device-id}")
