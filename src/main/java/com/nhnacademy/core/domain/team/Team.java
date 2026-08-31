@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "teams",
@@ -34,6 +36,13 @@ public class Team extends VersionedEntity {
     @Column(name = "team_status", nullable = false, length = 20)
     private TeamStatus status = TeamStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "team_status_cause", nullable = false, length = 40)
+    private TeamStatusCause statusCause = TeamStatusCause.TEAM_CREATED;
+
+    @Column(name = "status_changed_at", nullable = false)
+    private LocalDateTime statusChangedAt = LocalDateTime.now();
+
     public Team(String teamName, String description) {
         this.teamName = TeamNormalizer.normalizeName(teamName);
         this.description = TeamNormalizer.normalizeDescription(description);
@@ -47,12 +56,20 @@ public class Team extends VersionedEntity {
         this.description = TeamNormalizer.normalizeDescription(description);
     }
 
-    public void changeStatus(TeamStatus status) {
+    public void changeStatus(TeamStatus status, TeamStatusCause statusCause) {
         if (status == null) {
             throw new IllegalArgumentException("팀 상태는 null일 수 없습니다.");
         }
+        if (statusCause == null) {
+            throw new IllegalArgumentException("팀 상태 변경 원인은 null일 수 없습니다.");
+        }
+        if (this.status == status) {
+            return;
+        }
 
         this.status = status;
+        this.statusCause = statusCause;
+        this.statusChangedAt = LocalDateTime.now();
     }
 
     public boolean isActive() {

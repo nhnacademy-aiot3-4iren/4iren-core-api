@@ -29,7 +29,13 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     Page<TeamMember> findAllByUserId(Long userId, Pageable pageable);
 
     @EntityGraph(attributePaths = "team")
+    Page<TeamMember> findAllByUserIdAndTeam_StatusNot(Long userId, TeamStatus status, Pageable pageable);
+
+    @EntityGraph(attributePaths = "team")
     List<TeamMember> findAllByUserIdOrderByTeam_Id(Long userId);
+
+    @EntityGraph(attributePaths = "team")
+    List<TeamMember> findAllByUserIdAndTeam_StatusNotOrderByTeam_Id(Long userId, TeamStatus status);
 
     List<TeamIdProjection> findAllByUserIdAndTeam_StatusOrderByTeam_Id(Long userId, TeamStatus status);
 

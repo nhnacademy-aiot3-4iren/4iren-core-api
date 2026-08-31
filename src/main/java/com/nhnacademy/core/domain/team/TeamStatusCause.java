@@ -1,0 +1,12 @@
+package com.nhnacademy.core.domain.team;
+
+public enum TeamStatusCause {
+    TEAM_CREATED,
+    OWNER_REQUESTED_SUSPENSION,
+    OWNER_REQUESTED_ACTIVATION,
+    OWNER_ROLE_DOWNGRADED,
+    OWNER_ROLE_RESTORED,
+    ADMIN_SUSPENDED,
+    OWNER_ARCHIVED,
+    LEGACY_MIGRATION
+}

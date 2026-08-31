@@ -78,7 +78,7 @@ public class TeamAuthorizer {
     public void requireActiveTeam(Team team) {
         if (!team.isActive()) {
             throw new ResourceConflictException(
-                    ErrorCode.TEAM_INACTIVE,
+                    ErrorCode.TEAM_NOT_ACTIVE,
                     Map.of("teamId", team.getId())
             );
         }
