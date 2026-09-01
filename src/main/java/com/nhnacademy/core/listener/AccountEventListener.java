@@ -20,11 +20,11 @@ public class AccountEventListener {
         try {
             if (message != null) {
                 if ("NORMAL".equalsIgnoreCase(message.role())) {
-                    log.info("User {} role changed to NORMAL. Deactivating user teams.", message.userId());
-                    teamService.deactivateUserTeams(message.userId());
+                    log.info("User {} role changed to NORMAL. Suspending active user teams.", message.userId());
+                    teamService.suspendUserTeamsForRoleDowngrade(message.userId());
                 } else if ("OWNER".equalsIgnoreCase(message.role())) {
-                    log.info("User {} role changed to OWNER. Activating user teams.", message.userId());
-                    teamService.activateUserTeams(message.userId());
+                    log.info("User {} role changed to OWNER. Restoring role-suspended user teams.", message.userId());
+                    teamService.restoreUserTeamsForRoleUpgrade(message.userId());
                 }
             }
         } catch (Exception e) {

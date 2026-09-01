@@ -180,6 +180,38 @@ public final class RoomSensorMetricCatalog {
         );
     }
 
+    public Map<String, Set<String>> selectStreamMetricCodes(
+            Set<String> requestedDevEuis,
+            Set<String> requestedMetricCodes
+    ) {
+        Objects.requireNonNull(requestedDevEuis, "requestedDevEuis는 null일 수 없습니다.");
+        Objects.requireNonNull(requestedMetricCodes, "requestedMetricCodes는 null일 수 없습니다.");
+
+        validateRequestedDevEuis(requestedDevEuis);
+        validateRequestedActiveMetricCodes(requestedMetricCodes);
+
+        Map<String, Set<String>> selectedMetricCodes = new LinkedHashMap<>();
+        for (String devEui : devEuis) {
+            if (!requestedDevEuis.isEmpty() && !requestedDevEuis.contains(devEui)) {
+                continue;
+            }
+
+            Set<String> metricCodes = activeMetricCodesByDevEui
+                    .getOrDefault(devEui, Set.of()).stream()
+                    .filter(metricCode -> requestedMetricCodes.isEmpty()
+                            || requestedMetricCodes.contains(metricCode))
+                    .collect(TreeSet::new, Set::add, Set::addAll);
+            if (!metricCodes.isEmpty()) {
+                selectedMetricCodes.put(
+                        devEui,
+                        Collections.unmodifiableSet(metricCodes)
+                );
+            }
+        }
+
+        return Collections.unmodifiableMap(selectedMetricCodes);
+    }
+
     private void validateRequestedDevEuis(Set<String> requestedDevEuis) {
         Set<String> unavailableDevEuis = new TreeSet<>(requestedDevEuis);
         unavailableDevEuis.removeAll(devEuis);
@@ -200,6 +232,21 @@ public final class RoomSensorMetricCatalog {
                     "roomId", roomId,
                     "metricCodes", unavailableMetricCodes,
                     "reason", "공간에서 사용할 수 있는 ACTIVE GAUGE 메트릭이 아닙니다."
+            ));
+        }
+    }
+
+    private void validateRequestedActiveMetricCodes(Set<String> requestedMetricCodes) {
+        Set<String> activeMetricCodes = metricCapabilities.stream()
+                .map(capability -> capability.metric().metricCode())
+                .collect(TreeSet::new, Set::add, Set::addAll);
+        Set<String> unavailableMetricCodes = new TreeSet<>(requestedMetricCodes);
+        unavailableMetricCodes.removeAll(activeMetricCodes);
+        if (!unavailableMetricCodes.isEmpty()) {
+            throw new InvalidRequestException(Map.of(
+                    "roomId", roomId,
+                    "metricCodes", unavailableMetricCodes,
+                    "reason", "공간에서 사용할 수 있는 ACTIVE 메트릭이 아닙니다."
             ));
         }
     }
