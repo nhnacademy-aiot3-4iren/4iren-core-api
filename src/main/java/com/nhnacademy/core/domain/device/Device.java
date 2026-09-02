@@ -40,6 +40,15 @@ public class Device extends VersionedEntity {
     @Column(name = "device_status", nullable = false, length = 20)
     private DeviceStatus status = DeviceStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "action",
+            nullable = false,
+            length = 3,
+            columnDefinition = "varchar(3) default 'OFF'"
+    )
+    private DeviceAction action = DeviceAction.OFF;
+
     public Device(Room room, String deviceName) {
         this.room = requireRoom(room);
         this.deviceName = DeviceNormalizer.normalizeName(deviceName);
@@ -59,6 +68,14 @@ public class Device extends VersionedEntity {
         }
 
         this.status = status;
+    }
+
+    public void changeAction(DeviceAction action) {
+        if (action == null) {
+            throw new IllegalArgumentException("기기 동작은 null일 수 없습니다.");
+        }
+
+        this.action = action;
     }
 
     private Room requireRoom(Room room) {
