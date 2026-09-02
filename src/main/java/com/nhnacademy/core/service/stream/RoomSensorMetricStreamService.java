@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +32,9 @@ public class RoomSensorMetricStreamService {
             Long teamId,
             Long roomId,
             List<String> devEuis,
-            List<String> metricCodes
+            List<String> metricCodes,
+            Instant since,
+            String lastEventId
     ) {
         requireRoomAccess(userId, teamId, roomId);
 
@@ -50,7 +53,13 @@ public class RoomSensorMetricStreamService {
             ));
         }
 
-        return registry.register(userId, roomId, metricCodesByDevEui);
+        return registry.register(
+                userId,
+                roomId,
+                metricCodesByDevEui,
+                since,
+                lastEventId
+        );
     }
 
     private void requireRoomAccess(Long userId, Long teamId, Long roomId) {

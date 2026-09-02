@@ -116,14 +116,18 @@ public class RoomSensorMetricController {
             @PathVariable("team-id") @Positive Long teamId,
             @PathVariable("room-id") @Positive Long roomId,
             @RequestParam(name = "devEui", required = false) List<String> devEuis,
-            @RequestParam(name = "metricCode", required = false) List<String> metricCodes
+            @RequestParam(name = "metricCode", required = false) List<String> metricCodes,
+            @RequestParam(name = "since", required = false) Instant since,
+            @RequestHeader(name = "Last-Event-ID", required = false) String lastEventId
     ) {
         SseEmitter emitter = roomSensorMetricStreamService.subscribe(
                 user.id(),
                 teamId,
                 roomId,
                 devEuis,
-                metricCodes
+                metricCodes,
+                since,
+                lastEventId
         );
 
         return ResponseEntity.ok()

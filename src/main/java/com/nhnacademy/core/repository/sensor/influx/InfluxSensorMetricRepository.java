@@ -42,6 +42,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
     ) {
         Set<String> allowedMetricCodes = collectAllowedMetricCodes(metricCodesByDevEui);
         Optional<Flux> query = queryFactory.buildRoomMetricAverageQuery(
+                roomId,
                 from,
                 to,
                 metricCodesByDevEui
@@ -84,6 +85,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             Map<String, Set<String>> metricCodesByDevEui
     ) {
         Optional<Flux> query = queryFactory.buildSensorMetricLatestQuery(
+                roomId,
                 from,
                 to,
                 metricCodesByDevEui
@@ -145,6 +147,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             Duration interval
     ) {
         Optional<Flux> query = queryFactory.buildRoomMetricSeriesQuery(
+                roomId,
                 metricCode,
                 devEuis,
                 from,
@@ -193,6 +196,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             Map<String, Set<String>> metricCodesByDevEui
     ) {
         Optional<Flux> query = queryFactory.buildSensorMetricSeriesQuery(
+                roomId,
                 from,
                 to,
                 interval,

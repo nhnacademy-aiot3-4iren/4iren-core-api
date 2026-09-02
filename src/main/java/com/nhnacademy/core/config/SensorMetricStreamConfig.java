@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.core.task.VirtualThreadTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @Configuration(proxyBeanMethods = false)
@@ -43,5 +45,10 @@ public class SensorMetricStreamConfig {
         scheduler.setRemoveOnCancelPolicy(true);
         scheduler.setWaitForTasksToCompleteOnShutdown(false);
         return scheduler;
+    }
+
+    @Bean("sensorMetricSseSendExecutor")
+    public AsyncTaskExecutor sensorMetricSseSendExecutor() {
+        return new VirtualThreadTaskExecutor("sensor-metric-sse-send-");
     }
 }

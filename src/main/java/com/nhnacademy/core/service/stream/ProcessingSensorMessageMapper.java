@@ -6,6 +6,9 @@ import com.nhnacademy.core.service.RoomSensorMetricQueryValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.*;
 
@@ -27,6 +30,7 @@ public class ProcessingSensorMessageMapper {
         String devEui = SensorLocationNormalizer.normalizeDevEui(
                 message.device().devEui()
         );
+        Long roomId = requireRoomId(message.device().roomId());
         Instant measuredAt = requireMeasuredAt(message.measuredAt());
         List<ProcessingSensorMessage.SensorData> sensorDataList =
                 requireSensorDataList(message.sensorDataList());
@@ -50,7 +54,8 @@ public class ProcessingSensorMessageMapper {
             }
 
             updates.add(new SensorMetricUpdate(
-                    UUID.randomUUID().toString(),
+                    createEventId(roomId, devEui, metricCode, value, measuredAt),
+                    roomId,
                     devEui,
                     metricCode,
                     value,
@@ -59,6 +64,38 @@ public class ProcessingSensorMessageMapper {
         }
 
         return List.copyOf(updates);
+    }
+
+    private String createEventId(
+            Long roomId,
+            String devEui,
+            String metricCode,
+            Double value,
+            Instant measuredAt
+    ) {
+        String separator = Character.toString(0);
+        String identity = roomId
+                + separator + devEui
+                + separator + metricCode
+                + separator + Double.toHexString(value)
+                + separator + measuredAt;
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(
+                    digest.digest(identity.getBytes(StandardCharsets.UTF_8))
+            );
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 해시 알고리즘을 사용할 수 없습니다.", e);
+        }
+    }
+
+    private Long requireRoomId(Long roomId) {
+        if (roomId == null || roomId <= 0) {
+            throw new IllegalArgumentException("센서 메시지의 roomId는 0보다 커야 합니다.");
+        }
+
+        return roomId;
     }
 
     private Instant requireMeasuredAt(Instant measuredAt) {

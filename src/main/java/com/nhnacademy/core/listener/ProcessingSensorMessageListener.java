@@ -64,7 +64,7 @@ public class ProcessingSensorMessageListener {
         recordEventLag(updates.getFirst());
         updateCounter.increment(updates.size());
 
-        updates.forEach(registry::dispatch);
+        registry.dispatchAll(updates);
     }
 
     private void recordEventLag(SensorMetricUpdate update) {

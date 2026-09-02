@@ -14,7 +14,8 @@ public record ProcessingSensorMessage(
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Device(
-            String devEui
+            String devEui,
+            Long roomId
     ) {
     }
 

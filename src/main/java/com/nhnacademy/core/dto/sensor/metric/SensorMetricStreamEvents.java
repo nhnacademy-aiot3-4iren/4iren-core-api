@@ -22,4 +22,11 @@ public final class SensorMetricStreamEvents {
             Instant measuredAt
     ) {
     }
+
+    public record ResyncRequired(
+            Long roomId,
+            String reason,
+            Instant occurredAt
+    ) {
+    }
 }
