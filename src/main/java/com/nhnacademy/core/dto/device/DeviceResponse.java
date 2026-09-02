@@ -1,20 +1,20 @@
 package com.nhnacademy.core.dto.device;
 
 import com.nhnacademy.core.domain.device.Device;
-import com.nhnacademy.core.domain.device.DevicePowerState;
+import com.nhnacademy.core.domain.device.DeviceAction;
 
 public record DeviceResponse(
         Long deviceId,
         Long roomId,
         String deviceName,
-        DevicePowerState powerState
+        DeviceAction action
 ) {
     public static DeviceResponse from(Device device) {
         return new DeviceResponse(
                 device.getId(),
                 device.getRoom().getId(),
                 device.getDeviceName(),
-                device.getPowerState()
+                device.getAction()
         );
     }
 }

@@ -1,6 +1,7 @@
 package com.nhnacademy.core.dto.room;
 
 import com.nhnacademy.core.domain.device.Device;
+import com.nhnacademy.core.domain.device.DeviceAction;
 
 import java.util.List;
 
@@ -11,12 +12,14 @@ public record RoomDevicesResponse(
 ) {
     public record DeviceSummary(
             Long deviceId,
-            String deviceName
+            String deviceName,
+            DeviceAction action
     ) {
         public static DeviceSummary from(Device device) {
             return new DeviceSummary(
                     device.getId(),
-                    device.getDeviceName()
+                    device.getDeviceName(),
+                    device.getAction()
             );
         }
     }

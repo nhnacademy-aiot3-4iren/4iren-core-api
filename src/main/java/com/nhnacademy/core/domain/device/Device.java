@@ -41,8 +41,13 @@ public class Device extends VersionedEntity {
     private DeviceStatus status = DeviceStatus.ACTIVE;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "power_state", nullable = false, length = 20)
-    private DevicePowerState powerState = DevicePowerState.UNKNOWN;
+    @Column(
+            name = "action",
+            nullable = false,
+            length = 3,
+            columnDefinition = "varchar(3) default 'OFF'"
+    )
+    private DeviceAction action = DeviceAction.OFF;
 
     public Device(Room room, String deviceName) {
         this.room = requireRoom(room);
@@ -65,12 +70,12 @@ public class Device extends VersionedEntity {
         this.status = status;
     }
 
-    public void changePowerState(DevicePowerState powerState) {
-        if (powerState == null) {
-            throw new IllegalArgumentException("기기 전원 상태는 null일 수 없습니다.");
+    public void changeAction(DeviceAction action) {
+        if (action == null) {
+            throw new IllegalArgumentException("기기 동작은 null일 수 없습니다.");
         }
 
-        this.powerState = powerState;
+        this.action = action;
     }
 
     private Room requireRoom(Room room) {

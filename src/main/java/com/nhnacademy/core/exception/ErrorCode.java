@@ -315,6 +315,11 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "DEVICE.NOT_FOUND",
             "존재하지 않는 기기입니다."
+    ),
+    DEVICE_ACTION_HISTORY_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "DEVICE_ACTION_HISTORY.NOT_FOUND",
+            "존재하지 않는 기기 동작 이력입니다."
     );
 
     private final HttpStatus status;
