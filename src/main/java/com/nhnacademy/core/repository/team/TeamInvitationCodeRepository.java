@@ -4,6 +4,7 @@ import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamInvitationCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TeamInvitationCodeRepository extends JpaRepository<TeamInvitationCode, Long>, TeamInvitationCodeRepositoryCustom {
@@ -11,6 +12,8 @@ public interface TeamInvitationCodeRepository extends JpaRepository<TeamInvitati
     Optional<TeamInvitationCode> findByIdAndTeam(Long invitationCodeId, Team team);
 
     Optional<TeamInvitationCode> findByCodeHashAndTeam(String codeHash, Team team);
+
+    List<TeamInvitationCode> findAllByTeamOrderByCreatedAtDesc(Team team);
 
     boolean existsByCodeHash(String codeHash);
 }

@@ -139,6 +139,118 @@ public final class RoomSensorMetricCatalog {
         return selection;
     }
 
+    public SensorSeriesSelection selectSensorSeries(
+            Set<String> requestedDevEuis,
+            Set<String> requestedMetricCodes
+    ) {
+        Objects.requireNonNull(requestedDevEuis, "requestedDevEuis는 null일 수 없습니다.");
+        Objects.requireNonNull(requestedMetricCodes, "requestedMetricCodes는 null일 수 없습니다.");
+
+        validateRequestedDevEuis(requestedDevEuis);
+        validateRequestedMetricCodes(requestedMetricCodes);
+
+        List<String> selectedDevEuis = devEuis.stream()
+                .filter(devEui -> requestedDevEuis.isEmpty()
+                        || requestedDevEuis.contains(devEui))
+                .toList();
+
+        Map<String, List<MetricType>> selectedMetricsByDevEui = new LinkedHashMap<>();
+        List<String> responseDevEuis = new ArrayList<>();
+        for (String devEui : selectedDevEuis) {
+            List<MetricType> selectedMetrics = activeGaugeMetrics(devEui).stream()
+                    .filter(metric -> requestedMetricCodes.isEmpty()
+                            || requestedMetricCodes.contains(metric.metricCode()))
+                    .toList();
+
+            // metricCode만 지정한 경우 해당 메트릭을 지원하지 않는 센서는 응답에서 제외한다.
+            if (requestedDevEuis.isEmpty()
+                    && !requestedMetricCodes.isEmpty()
+                    && selectedMetrics.isEmpty()) {
+                continue;
+            }
+
+            responseDevEuis.add(devEui);
+            selectedMetricsByDevEui.put(devEui, selectedMetrics);
+        }
+
+        return new SensorSeriesSelection(
+                responseDevEuis,
+                selectedMetricsByDevEui,
+                createMetricCodesByDevEui(responseDevEuis, selectedMetricsByDevEui)
+        );
+    }
+
+    public Map<String, Set<String>> selectStreamMetricCodes(
+            Set<String> requestedDevEuis,
+            Set<String> requestedMetricCodes
+    ) {
+        Objects.requireNonNull(requestedDevEuis, "requestedDevEuis는 null일 수 없습니다.");
+        Objects.requireNonNull(requestedMetricCodes, "requestedMetricCodes는 null일 수 없습니다.");
+
+        validateRequestedDevEuis(requestedDevEuis);
+        validateRequestedActiveMetricCodes(requestedMetricCodes);
+
+        Map<String, Set<String>> selectedMetricCodes = new LinkedHashMap<>();
+        for (String devEui : devEuis) {
+            if (!requestedDevEuis.isEmpty() && !requestedDevEuis.contains(devEui)) {
+                continue;
+            }
+
+            Set<String> metricCodes = activeMetricCodesByDevEui
+                    .getOrDefault(devEui, Set.of()).stream()
+                    .filter(metricCode -> requestedMetricCodes.isEmpty()
+                            || requestedMetricCodes.contains(metricCode))
+                    .collect(TreeSet::new, Set::add, Set::addAll);
+            if (!metricCodes.isEmpty()) {
+                selectedMetricCodes.put(
+                        devEui,
+                        Collections.unmodifiableSet(metricCodes)
+                );
+            }
+        }
+
+        return Collections.unmodifiableMap(selectedMetricCodes);
+    }
+
+    private void validateRequestedDevEuis(Set<String> requestedDevEuis) {
+        Set<String> unavailableDevEuis = new TreeSet<>(requestedDevEuis);
+        unavailableDevEuis.removeAll(devEuis);
+        if (!unavailableDevEuis.isEmpty()) {
+            throw new InvalidRequestException(Map.of(
+                    "roomId", roomId,
+                    "devEuis", unavailableDevEuis,
+                    "reason", "공간에 배치된 센서가 아닙니다."
+            ));
+        }
+    }
+
+    private void validateRequestedMetricCodes(Set<String> requestedMetricCodes) {
+        Set<String> unavailableMetricCodes = new TreeSet<>(requestedMetricCodes);
+        unavailableMetricCodes.removeAll(aggregatableGaugesByMetricCode.keySet());
+        if (!unavailableMetricCodes.isEmpty()) {
+            throw new InvalidRequestException(Map.of(
+                    "roomId", roomId,
+                    "metricCodes", unavailableMetricCodes,
+                    "reason", "공간에서 사용할 수 있는 ACTIVE GAUGE 메트릭이 아닙니다."
+            ));
+        }
+    }
+
+    private void validateRequestedActiveMetricCodes(Set<String> requestedMetricCodes) {
+        Set<String> activeMetricCodes = metricCapabilities.stream()
+                .map(capability -> capability.metric().metricCode())
+                .collect(TreeSet::new, Set::add, Set::addAll);
+        Set<String> unavailableMetricCodes = new TreeSet<>(requestedMetricCodes);
+        unavailableMetricCodes.removeAll(activeMetricCodes);
+        if (!unavailableMetricCodes.isEmpty()) {
+            throw new InvalidRequestException(Map.of(
+                    "roomId", roomId,
+                    "metricCodes", unavailableMetricCodes,
+                    "reason", "공간에서 사용할 수 있는 ACTIVE 메트릭이 아닙니다."
+            ));
+        }
+    }
+
     private static void validateCatalogCompleteness(
             List<String> devEuis,
             Map<String, List<MetricType>> metricsByDevEui
@@ -323,6 +435,36 @@ public final class RoomSensorMetricCatalog {
             Objects.requireNonNull(metric, "metric은 null일 수 없습니다.");
             Objects.requireNonNull(devEuis, "devEuis는 null일 수 없습니다.");
             devEuis = Collections.unmodifiableSet(new TreeSet<>(devEuis));
+        }
+    }
+
+    public record SensorSeriesSelection(
+            List<String> devEuis,
+            Map<String, List<MetricType>> metricsByDevEui,
+            Map<String, Set<String>> metricCodesByDevEui
+    ) {
+
+        public SensorSeriesSelection {
+            devEuis = List.copyOf(devEuis);
+
+            Map<String, List<MetricType>> immutableMetricsByDevEui = new LinkedHashMap<>();
+            metricsByDevEui.forEach((devEui, metrics) ->
+                    immutableMetricsByDevEui.put(devEui, List.copyOf(metrics))
+            );
+            metricsByDevEui = Collections.unmodifiableMap(immutableMetricsByDevEui);
+
+            Map<String, Set<String>> immutableMetricCodesByDevEui = new LinkedHashMap<>();
+            metricCodesByDevEui.forEach((devEui, metricCodes) ->
+                    immutableMetricCodesByDevEui.put(
+                            devEui,
+                            Collections.unmodifiableSet(new TreeSet<>(metricCodes))
+                    )
+            );
+            metricCodesByDevEui = Collections.unmodifiableMap(immutableMetricCodesByDevEui);
+        }
+
+        public List<MetricType> metrics(String devEui) {
+            return metricsByDevEui.getOrDefault(devEui, List.of());
         }
     }
 }

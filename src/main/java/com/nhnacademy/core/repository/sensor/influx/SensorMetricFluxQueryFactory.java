@@ -19,6 +19,7 @@ public class SensorMetricFluxQueryFactory {
 
     static final String DEV_EUI_TAG = "dev_eui";
     static final String METRIC_TAG = "metric";
+    static final String ROOM_ID_TAG = "room_id";
 
     private static final String SENSOR_TELEMETRY_MEASUREMENT = "sensor_telemetry";
     private static final String VALUE_FIELD = "value";
@@ -28,16 +29,19 @@ public class SensorMetricFluxQueryFactory {
     private final InfluxDbProperties properties;
 
     Optional<Flux> buildRoomMetricAverageQuery(
+            Long roomId,
             Instant from,
             Instant to,
             Map<String, Set<String>> metricCodesByDevEui
     ) {
+        Restrictions roomFilter = buildRoomFilter(roomId);
         return buildAllowedSensorMetricFilter(metricCodesByDevEui)
                 .map(allowedSensorMetricFilter -> Flux.from(properties.bucket())
                         .range(from, to)
                         .filter(and(
                                 measurement().equal(SENSOR_TELEMETRY_MEASUREMENT),
                                 field().equal(VALUE_FIELD),
+                                roomFilter,
                                 allowedSensorMetricFilter
                         ))
                         .groupBy(List.of(DEV_EUI_TAG, METRIC_TAG))
@@ -48,16 +52,19 @@ public class SensorMetricFluxQueryFactory {
     }
 
     Optional<Flux> buildSensorMetricLatestQuery(
+            Long roomId,
             Instant from,
             Instant to,
             Map<String, Set<String>> metricCodesByDevEui
     ) {
+        Restrictions roomFilter = buildRoomFilter(roomId);
         return buildAllowedSensorMetricFilter(metricCodesByDevEui)
                 .map(allowedSensorMetricFilter -> Flux.from(properties.bucket())
                         .range(from, to)
                         .filter(and(
                                 measurement().equal(SENSOR_TELEMETRY_MEASUREMENT),
                                 field().equal(VALUE_FIELD),
+                                roomFilter,
                                 allowedSensorMetricFilter
                         ))
                         .groupBy(List.of(DEV_EUI_TAG, METRIC_TAG))
@@ -72,6 +79,7 @@ public class SensorMetricFluxQueryFactory {
     }
 
     Optional<Flux> buildRoomMetricSeriesQuery(
+            Long roomId,
             String metricCode,
             Set<String> devEuis,
             Instant from,
@@ -84,11 +92,13 @@ public class SensorMetricFluxQueryFactory {
 
         long intervalMillis = requireIntervalMillis(interval);
         long offsetMillis = calculateWindowOffsetMillis(from, intervalMillis);
+        Restrictions roomFilter = buildRoomFilter(roomId);
 
         Flux query = Flux.from(properties.bucket())
                 .range(from, to)
                 .filter(and(
                         measurement().equal(SENSOR_TELEMETRY_MEASUREMENT),
+                        roomFilter,
                         tag(DEV_EUI_TAG).contains(devEuis.stream()
                                 .sorted()
                                 .toArray(String[]::new)),
@@ -112,6 +122,7 @@ public class SensorMetricFluxQueryFactory {
     }
 
     Optional<Flux> buildSensorMetricSeriesQuery(
+            Long roomId,
             Instant from,
             Instant to,
             Duration interval,
@@ -126,12 +137,14 @@ public class SensorMetricFluxQueryFactory {
 
         long intervalMillis = requireIntervalMillis(interval);
         long offsetMillis = calculateWindowOffsetMillis(from, intervalMillis);
+        Restrictions roomFilter = buildRoomFilter(roomId);
 
         Flux query = Flux.from(properties.bucket())
                 .range(from, to)
                 .filter(and(
                         measurement().equal(SENSOR_TELEMETRY_MEASUREMENT),
                         field().equal(VALUE_FIELD),
+                        roomFilter,
                         allowedSensorMetricFilter.get()
                 ))
                 .groupBy(List.of(DEV_EUI_TAG, METRIC_TAG))
@@ -181,6 +194,15 @@ public class SensorMetricFluxQueryFactory {
             return Optional.empty();
         }
         return Optional.of(or(metricFilters));
+    }
+
+    private Restrictions buildRoomFilter(Long roomId) {
+        Objects.requireNonNull(roomId, "roomId는 null일 수 없습니다.");
+        if (roomId <= 0) {
+            throw new IllegalArgumentException("roomId는 0보다 커야 합니다.");
+        }
+
+        return tag(ROOM_ID_TAG).equal(roomId.toString());
     }
 
     private long requireIntervalMillis(Duration interval) {

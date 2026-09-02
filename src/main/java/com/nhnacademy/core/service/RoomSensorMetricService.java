@@ -8,6 +8,7 @@ import com.nhnacademy.core.repository.sensor.SensorMetricRepository;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricSeriesPointQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricSeriesPointQueryResult;
 import com.nhnacademy.core.service.RoomSensorMetricCatalog.AggregatableGaugeSelection;
+import com.nhnacademy.core.service.RoomSensorMetricCatalog.SensorSeriesSelection;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshotProvider;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.SummarySnapshot;
 import lombok.RequiredArgsConstructor;
@@ -122,24 +123,42 @@ public class RoomSensorMetricService {
             Long roomId,
             Instant from,
             Instant to,
-            Duration interval
+            Duration interval,
+            List<String> devEuis,
+            List<String> metricCodes
     ) {
         requireRoomAccess(userId, teamId, roomId);
         queryValidator.validateSeriesRange(from, to, interval);
 
-        return calculateRoomSensorMetricSeries(roomId, from, to, interval);
+        return calculateRoomSensorMetricSeries(
+                roomId,
+                from,
+                to,
+                interval,
+                queryValidator.normalizeDevEuiFilters(devEuis),
+                queryValidator.normalizeMetricCodeFilters(metricCodes)
+        );
     }
 
     public RoomSensorMetricSeriesResponse getInternalRoomSensorMetricSeries(
             Long roomId,
             Instant from,
             Instant to,
-            Duration interval
+            Duration interval,
+            List<String> devEuis,
+            List<String> metricCodes
     ) {
         requireRoom(roomId);
         queryValidator.validateSeriesRange(from, to, interval);
 
-        return calculateRoomSensorMetricSeries(roomId, from, to, interval);
+        return calculateRoomSensorMetricSeries(
+                roomId,
+                from,
+                to,
+                interval,
+                queryValidator.normalizeDevEuiFilters(devEuis),
+                queryValidator.normalizeMetricCodeFilters(metricCodes)
+        );
     }
 
     private RoomMetricSummaryResponse calculateRoomMetricSummary(Long roomId) {
@@ -159,11 +178,16 @@ public class RoomSensorMetricService {
             Long roomId,
             Instant from,
             Instant to,
-            Duration interval
+            Duration interval,
+            Set<String> requestedDevEuis,
+            Set<String> requestedMetricCodes
     ) {
         RoomSensorMetricCatalog catalog = resolveCatalog(roomId);
-        Map<String, Set<String>> metricCodesByDevEui =
-                catalog.aggregatableGaugeMetricCodesByDevEui();
+        SensorSeriesSelection selection = catalog.selectSensorSeries(
+                requestedDevEuis,
+                requestedMetricCodes
+        );
+        Map<String, Set<String>> metricCodesByDevEui = selection.metricCodesByDevEui();
         queryValidator.validateSensorSeriesPointCount(
                 metricCodesByDevEui,
                 from,
@@ -185,7 +209,7 @@ public class RoomSensorMetricService {
                 from,
                 to,
                 interval,
-                catalog,
+                selection,
                 queryResults
         );
     }

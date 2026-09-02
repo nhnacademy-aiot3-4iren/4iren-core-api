@@ -4,14 +4,20 @@ import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
 import com.nhnacademy.core.dto.sensor.metric.*;
 import com.nhnacademy.core.service.RoomSensorMetricService;
+import com.nhnacademy.core.service.stream.RoomSensorMetricStreamService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +25,7 @@ import java.time.Instant;
 public class RoomSensorMetricController {
 
     private final RoomSensorMetricService roomSensorMetricService;
+    private final RoomSensorMetricStreamService roomSensorMetricStreamService;
 
     @GetMapping("/catalog")
     public RoomMetricCatalogResponse getRoomMetricCatalog(
@@ -87,7 +94,9 @@ public class RoomSensorMetricController {
             @PathVariable("room-id") @Positive Long roomId,
             @RequestParam Instant from,
             @RequestParam Instant to,
-            @RequestParam Duration interval
+            @RequestParam Duration interval,
+            @RequestParam(name = "devEui", required = false) List<String> devEuis,
+            @RequestParam(name = "metricCode", required = false) List<String> metricCodes
     ) {
         return roomSensorMetricService.getRoomSensorMetricSeries(
                 user.id(),
@@ -95,7 +104,36 @@ public class RoomSensorMetricController {
                 roomId,
                 from,
                 to,
-                interval
+                interval,
+                devEuis,
+                metricCodes
         );
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> streamRoomSensorMetrics(
+            @CurrentUser AuthenticatedUser user,
+            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("room-id") @Positive Long roomId,
+            @RequestParam(name = "devEui", required = false) List<String> devEuis,
+            @RequestParam(name = "metricCode", required = false) List<String> metricCodes,
+            @RequestParam(name = "since", required = false) Instant since,
+            @RequestHeader(name = "Last-Event-ID", required = false) String lastEventId
+    ) {
+        SseEmitter emitter = roomSensorMetricStreamService.subscribe(
+                user.id(),
+                teamId,
+                roomId,
+                devEuis,
+                metricCodes,
+                since,
+                lastEventId
+        );
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_EVENT_STREAM)
+                .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-transform")
+                .header("X-Accel-Buffering", "no")
+                .body(emitter);
     }
 }

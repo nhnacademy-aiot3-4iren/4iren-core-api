@@ -4,6 +4,7 @@ import com.nhnacademy.core.config.auth.UserRole;
 import com.nhnacademy.core.domain.team.Team;
 import com.nhnacademy.core.domain.team.TeamMember;
 import com.nhnacademy.core.domain.team.TeamStatus;
+import com.nhnacademy.core.domain.team.TeamStatusCause;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.exception.ErrorCode;
@@ -65,7 +66,7 @@ public class TeamService {
     // 팀 목록 조회
     public PageResponse<TeamResponse> getTeams(Long userId, UserRole userRole, Pageable pageable) {
         return PageResponse.from(
-                teamMemberRepository.findAllByUserId(userId, pageable)
+                teamMemberRepository.findAllByUserIdAndTeam_StatusNot(userId, TeamStatus.ARCHIVED, pageable)
                         .map(teamMember -> TeamResponse.from(
                                 teamMember.getTeam(),
                                 userRole
@@ -75,7 +76,9 @@ public class TeamService {
 
     // 팀 목록 조회, List
     public List<TeamResponse> getTeams(Long userId, UserRole userRole) {
-        return teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId).stream()
+        return teamMemberRepository
+                .findAllByUserIdAndTeam_StatusNotOrderByTeam_Id(userId, TeamStatus.ARCHIVED)
+                .stream()
                 .map(teamMember -> TeamResponse.from(
                         teamMember.getTeam(),
                         userRole
@@ -85,7 +88,7 @@ public class TeamService {
 
     // 팀 상세 조회
     public TeamDetailResponse getTeam(Long userId, UserRole userRole, Long teamId) {
-        teamAuthorizer.requireTeamMember(userId, teamId);
+        teamAuthorizer.requireTeamMemberRegardlessOfStatus(userId, teamId);
 
         return TeamDetailResponse.from(
                 userRole,
@@ -119,23 +122,34 @@ public class TeamService {
         Team team = lockTeamOrThrow(teamId);
         teamAuthorizer.requireTeamOwnerRegardlessOfStatus(userId, userRole, teamId);
 
-        team.changeStatus(request.status());
+        changeTeamStatus(
+                team,
+                request.status(),
+                resolveOwnerStatusCause(request.status())
+        );
 
         return TeamResponse.from(team, userRole);
     }
 
-    // 팀 비활성화
+    // 관리자에 의한 팀 일시 정지
     @Transactional
-    public void deactivateTeam(Long teamId) {
+    public void suspendTeam(Long teamId) {
         Team team = lockTeamOrThrow(teamId);
-        team.changeStatus(TeamStatus.INACTIVE);
+        changeTeamStatus(team, TeamStatus.SUSPENDED, TeamStatusCause.ADMIN_SUSPENDED);
     }
 
-    // 팀 삭제, 팀에 등록된 건물이 있으면 삭제 불가
+    // 팀 삭제, 보관된 팀에 등록된 건물이 없을 때만 삭제 가능
     @Transactional
     public void deleteTeam(Long userId, UserRole userRole, Long teamId) {
         Team team = lockTeamOrThrow(teamId);
-        teamAuthorizer.requireTeamOwner(userId, userRole, teamId);
+        teamAuthorizer.requireTeamOwnerRegardlessOfStatus(userId, userRole, teamId);
+
+        if (team.getStatus() != TeamStatus.ARCHIVED) {
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_MUST_BE_ARCHIVED_BEFORE_DELETE,
+                    Map.of("teamId", teamId)
+            );
+        }
 
         if (buildingRepository.existsByTeam(team)) {
             throw new ResourceConflictException(
@@ -154,24 +168,52 @@ public class TeamService {
                 ));
     }
 
-    // 사용자 권한 강등(NORMAL) 시 호출되어, 해당 사용자가 속한 모든 팀을 비활성화(INACTIVE)
+    // 사용자 권한 강등(NORMAL) 시 호출되어 활성 팀을 일시 정지
     @Transactional
-    public void deactivateUserTeams(Long userId) {
+    public void suspendUserTeamsForRoleDowngrade(Long userId) {
         List<TeamMember> teamMembers = teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId);
-        for (TeamMember tm : teamMembers) {
-            Team team = tm.getTeam();
-            team.changeStatus(TeamStatus.INACTIVE);
+        for (TeamMember teamMember : teamMembers) {
+            Team team = teamMember.getTeam();
+            if (team.getStatus() == TeamStatus.ACTIVE) {
+                team.changeStatus(TeamStatus.SUSPENDED, TeamStatusCause.OWNER_ROLE_DOWNGRADED);
+            }
         }
     }
 
-    // 사용자 권한 승격(OWNER) 시 호출되어, 해당 사용자가 속한 모든 팀을 활성화(ACTIVE)
+    // 사용자 권한 승격(OWNER) 시 호출되어 권한 강등으로 일시 정지된 팀만 활성화
     @Transactional
-    public void activateUserTeams(Long userId) {
+    public void restoreUserTeamsForRoleUpgrade(Long userId) {
         List<TeamMember> teamMembers = teamMemberRepository.findAllByUserIdOrderByTeam_Id(userId);
         for (TeamMember tm : teamMembers) {
             Team team = tm.getTeam();
-            team.changeStatus(TeamStatus.ACTIVE);
+            if (team.getStatus() == TeamStatus.SUSPENDED
+                    && team.getStatusCause() == TeamStatusCause.OWNER_ROLE_DOWNGRADED) {
+                team.changeStatus(TeamStatus.ACTIVE, TeamStatusCause.OWNER_ROLE_RESTORED);
+            }
         }
+    }
+
+    private void changeTeamStatus(Team team, TeamStatus targetStatus, TeamStatusCause statusCause) {
+        if (!team.getStatus().allowsTransitionTo(targetStatus)) {
+            throw new ResourceConflictException(
+                    ErrorCode.TEAM_STATUS_TRANSITION_NOT_ALLOWED,
+                    Map.of(
+                            "teamId", team.getId(),
+                            "currentStatus", team.getStatus(),
+                            "requestedStatus", targetStatus
+                    )
+            );
+        }
+
+        team.changeStatus(targetStatus, statusCause);
+    }
+
+    private TeamStatusCause resolveOwnerStatusCause(TeamStatus targetStatus) {
+        return switch (targetStatus) {
+            case ACTIVE -> TeamStatusCause.OWNER_REQUESTED_ACTIVATION;
+            case SUSPENDED -> TeamStatusCause.OWNER_REQUESTED_SUSPENSION;
+            case ARCHIVED -> TeamStatusCause.OWNER_ARCHIVED;
+        };
     }
 
     // 사용자 ID로 소속된 팀 엔티티 목록 조회

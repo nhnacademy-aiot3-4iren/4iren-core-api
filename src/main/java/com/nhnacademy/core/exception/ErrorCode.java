@@ -106,6 +106,11 @@ public enum ErrorCode {
             "INFRASTRUCTURE.PROCESSING_METRIC_SERVICE_BAD_RESPONSE",
             "센서 메타데이터 서비스의 응답을 처리할 수 없습니다."
     ),
+    SENSOR_METRIC_STREAM_CONNECTION_LIMIT_EXCEEDED(
+            HttpStatus.TOO_MANY_REQUESTS,
+            "SENSOR_METRIC_STREAM.CONNECTION_LIMIT_EXCEEDED",
+            "센서 데이터 스트림 연결 수가 허용 범위를 초과했습니다."
+    ),
     ACCOUNT_USER_ROLE_SERVICE_UNAVAILABLE(
             HttpStatus.SERVICE_UNAVAILABLE,
             "INFRASTRUCTURE.ACCOUNT_USER_ROLE_SERVICE_UNAVAILABLE",
@@ -177,10 +182,20 @@ public enum ErrorCode {
             "TEAM.NOT_FOUND",
             "존재하지 않는 팀입니다."
     ),
-    TEAM_INACTIVE(
+    TEAM_NOT_ACTIVE(
             HttpStatus.CONFLICT,
-            "TEAM.INACTIVE",
-            "비활성화된 팀에는 접근할 수 없습니다."
+            "TEAM.NOT_ACTIVE",
+            "활성 상태가 아닌 팀에는 접근할 수 없습니다."
+    ),
+    TEAM_STATUS_TRANSITION_NOT_ALLOWED(
+            HttpStatus.CONFLICT,
+            "TEAM.STATUS_TRANSITION_NOT_ALLOWED",
+            "현재 상태에서는 요청한 상태로 변경할 수 없습니다."
+    ),
+    TEAM_MUST_BE_ARCHIVED_BEFORE_DELETE(
+            HttpStatus.CONFLICT,
+            "TEAM.MUST_BE_ARCHIVED_BEFORE_DELETE",
+            "팀을 삭제하려면 먼저 ARCHIVED 상태로 변경해야 합니다."
     ),
     TEAM_HAS_BUILDINGS(
             HttpStatus.CONFLICT,

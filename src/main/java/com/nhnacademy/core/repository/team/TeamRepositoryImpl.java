@@ -37,6 +37,8 @@ public class TeamRepositoryImpl implements TeamRepositoryCustom {
                         team.teamName,
                         team.description,
                         team.status,
+                        team.statusCause,
+                        team.statusChangedAt,
                         JPAExpressions
                                 .select(member.count())
                                 .from(member)
