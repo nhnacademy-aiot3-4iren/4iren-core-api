@@ -1,1 +1,1 @@
-# nhnacademy-aiot3-4iren-environment
+# 4iren Core API
