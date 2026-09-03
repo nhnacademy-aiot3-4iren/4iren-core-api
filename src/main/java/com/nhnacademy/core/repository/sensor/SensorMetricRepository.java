@@ -1,6 +1,8 @@
 package com.nhnacademy.core.repository.sensor;
 
+import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageByRoomQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageQueryResult;
+import com.nhnacademy.core.repository.sensor.projection.RoomMetricSeriesByRoomQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricSeriesPointQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricLatestQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricSeriesPointQueryResult;
@@ -20,6 +22,12 @@ public interface SensorMetricRepository {
             Map<String, Set<String>> metricCodesByDevEui
     );
 
+    List<RoomMetricAverageByRoomQueryResult> findRoomMetricAveragesByRooms(
+            Instant from,
+            Instant to,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    );
+
     List<SensorMetricLatestQueryResult> findSensorMetricLatestValues(
             Long roomId,
             Instant from,
@@ -34,6 +42,13 @@ public interface SensorMetricRepository {
             Instant from,
             Instant to,
             Duration interval
+    );
+
+    List<RoomMetricSeriesByRoomQueryResult> findRoomMetricSeriesByRooms(
+            Instant from,
+            Instant to,
+            Duration interval,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
     );
 
     List<SensorMetricSeriesPointQueryResult> findSensorMetricSeries(

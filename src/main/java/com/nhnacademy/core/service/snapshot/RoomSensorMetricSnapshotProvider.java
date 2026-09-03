@@ -1,6 +1,7 @@
 package com.nhnacademy.core.service.snapshot;
 
 import com.nhnacademy.core.repository.sensor.SensorMetricRepository;
+import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageByRoomQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricLatestQueryResult;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots.LatestSnapshot;
@@ -11,6 +12,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Predicate;
 
 // 공간의 Summary와 Latest 스냅샷을 L1, L2 캐시 또는 Repository에서 조회한다.
 @Component
@@ -74,6 +76,78 @@ public class RoomSensorMetricSnapshotProvider {
         );
     }
 
+    public Map<Long, SummarySnapshot> getSummarySnapshots(
+            Map<Long, Map<String, Set<String>>> allowedMetricCodesByRoomAndDevEui
+    ) {
+        Objects.requireNonNull(
+                allowedMetricCodesByRoomAndDevEui,
+                "allowedMetricCodesByRoomAndDevEui는 null일 수 없습니다."
+        );
+        if (allowedMetricCodesByRoomAndDevEui.isEmpty()) {
+            return Map.of();
+        }
+
+        Instant snapshotAt = keyFactory.calculateSnapshotAt(clock.instant());
+        Map<Long, SummarySnapshot> snapshotsByRoomId = new LinkedHashMap<>();
+        Map<String, Long> roomIdByCacheKey = new LinkedHashMap<>();
+        Map<String, Predicate<SummarySnapshot>> validatorsByCacheKey = new LinkedHashMap<>();
+
+        allowedMetricCodesByRoomAndDevEui.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> {
+                    Long roomId = Objects.requireNonNull(
+                            entry.getKey(),
+                            "roomId는 null일 수 없습니다."
+                    );
+                    Map<String, Set<String>> allowedMetrics = Objects.requireNonNull(
+                            entry.getValue(),
+                            "공간별 허용 메트릭은 null일 수 없습니다."
+                    );
+                    if (allowedMetrics.isEmpty()) {
+                        snapshotsByRoomId.put(
+                                roomId,
+                                new SummarySnapshot(snapshotAt, SUMMARY_WINDOW, List.of())
+                        );
+                        return;
+                    }
+
+                    String cacheKey = keyFactory.createSummaryKey(
+                            roomId,
+                            snapshotAt,
+                            SUMMARY_WINDOW,
+                            allowedMetrics
+                    );
+                    roomIdByCacheKey.put(cacheKey, roomId);
+                    validatorsByCacheKey.put(
+                            cacheKey,
+                            snapshot -> isValidSummarySnapshot(
+                                    snapshot,
+                                    snapshotAt,
+                                    allowedMetrics
+                            )
+                    );
+                });
+
+        Map<String, SummarySnapshot> cachedSnapshots = snapshotCache.getOrLoadSummaries(
+                validatorsByCacheKey,
+                missingCacheKeys -> loadSummariesFromRepository(
+                        missingCacheKeys,
+                        roomIdByCacheKey,
+                        snapshotAt,
+                        allowedMetricCodesByRoomAndDevEui
+                )
+        );
+        cachedSnapshots.forEach((cacheKey, snapshot) ->
+                snapshotsByRoomId.put(roomIdByCacheKey.get(cacheKey), snapshot)
+        );
+
+        Map<Long, SummarySnapshot> orderedSnapshots = new LinkedHashMap<>();
+        allowedMetricCodesByRoomAndDevEui.keySet().stream()
+                .sorted()
+                .forEach(roomId -> orderedSnapshots.put(roomId, snapshotsByRoomId.get(roomId)));
+        return Collections.unmodifiableMap(orderedSnapshots);
+    }
+
     // 최근 24시간 범위의 센서별 최신값 스냅샷을 캐시 또는 Repository에서 조회한다.
     public LatestSnapshot getLatestSnapshot(
             Long roomId,
@@ -126,6 +200,50 @@ public class RoomSensorMetricSnapshotProvider {
                 );
 
         return new SummarySnapshot(snapshotAt, SUMMARY_WINDOW, metrics);
+    }
+
+    private Map<String, SummarySnapshot> loadSummariesFromRepository(
+            Set<String> cacheKeys,
+            Map<String, Long> roomIdByCacheKey,
+            Instant snapshotAt,
+            Map<Long, Map<String, Set<String>>> allowedMetricCodesByRoomAndDevEui
+    ) {
+        Map<Long, Map<String, Set<String>>> missingConditions = new LinkedHashMap<>();
+        cacheKeys.forEach(cacheKey -> {
+            Long roomId = roomIdByCacheKey.get(cacheKey);
+            missingConditions.put(roomId, allowedMetricCodesByRoomAndDevEui.get(roomId));
+        });
+
+        List<RoomMetricAverageByRoomQueryResult> queryResults = sensorMetricRepository
+                .findRoomMetricAveragesByRooms(
+                        snapshotAt.minus(SUMMARY_WINDOW),
+                        snapshotAt,
+                        missingConditions
+                );
+        Map<Long, List<RoomMetricAverageQueryResult>> metricsByRoomId = new LinkedHashMap<>();
+        missingConditions.keySet().forEach(roomId ->
+                metricsByRoomId.put(roomId, new ArrayList<>())
+        );
+        queryResults.forEach(result -> metricsByRoomId.get(result.roomId()).add(
+                new RoomMetricAverageQueryResult(
+                        result.metricCode(),
+                        result.averageValue()
+                )
+        ));
+
+        Map<String, SummarySnapshot> snapshotsByCacheKey = new LinkedHashMap<>();
+        cacheKeys.forEach(cacheKey -> {
+            Long roomId = roomIdByCacheKey.get(cacheKey);
+            snapshotsByCacheKey.put(
+                    cacheKey,
+                    new SummarySnapshot(
+                            snapshotAt,
+                            SUMMARY_WINDOW,
+                            metricsByRoomId.get(roomId)
+                    )
+            );
+        });
+        return snapshotsByCacheKey;
     }
 
     // Repository에서 최근 24시간 범위의 최신값을 조회해 Latest 스냅샷을 생성한다.
