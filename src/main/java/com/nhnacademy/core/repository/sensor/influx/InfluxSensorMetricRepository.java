@@ -10,7 +10,9 @@ import com.nhnacademy.core.exception.BadGatewayException;
 import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ServiceUnavailableException;
 import com.nhnacademy.core.repository.sensor.SensorMetricRepository;
+import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageByRoomQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageQueryResult;
+import com.nhnacademy.core.repository.sensor.projection.RoomMetricSeriesByRoomQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricSeriesPointQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricLatestQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.SensorMetricSeriesPointQueryResult;
@@ -74,6 +76,60 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
                     );
                 },
                 RoomMetricAverageQueryResult::metricCode
+        );
+    }
+
+    @Override
+    public List<RoomMetricAverageByRoomQueryResult> findRoomMetricAveragesByRooms(
+            Instant from,
+            Instant to,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    ) {
+        Set<Long> requestedRoomIds = Set.copyOf(metricCodesByRoomAndDevEui.keySet());
+        Optional<Flux> query = queryFactory.buildRoomMetricAverageBatchQuery(
+                from,
+                to,
+                metricCodesByRoomAndDevEui
+        );
+        Map<String, Object> queryContext = Map.of(
+                "queryType", QueryType.ROOM_METRIC_AVERAGE_BATCH.tagValue,
+                "roomCount", requestedRoomIds.size()
+        );
+
+        return execute(
+                query,
+                QueryType.ROOM_METRIC_AVERAGE_BATCH,
+                queryContext,
+                record -> {
+                    Long roomId = requireRoomId(
+                            record,
+                            QueryType.ROOM_METRIC_AVERAGE_BATCH,
+                            requestedRoomIds
+                    );
+                    String metricCode = requireMetricCode(
+                            record,
+                            QueryType.ROOM_METRIC_AVERAGE_BATCH,
+                            roomId
+                    );
+                    requireAllowedMetricCode(
+                            metricCode,
+                            collectAllowedMetricCodes(
+                                    metricCodesByRoomAndDevEui.get(roomId)
+                            ),
+                            QueryType.ROOM_METRIC_AVERAGE_BATCH,
+                            roomId
+                    );
+                    return new RoomMetricAverageByRoomQueryResult(
+                            roomId,
+                            metricCode,
+                            requireFiniteValue(
+                                    record,
+                                    QueryType.ROOM_METRIC_AVERAGE_BATCH,
+                                    roomId
+                            )
+                    );
+                },
+                result -> new RoomMetricKey(result.roomId(), result.metricCode())
         );
     }
 
@@ -188,6 +244,74 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
     }
 
     @Override
+    public List<RoomMetricSeriesByRoomQueryResult> findRoomMetricSeriesByRooms(
+            Instant from,
+            Instant to,
+            Duration interval,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    ) {
+        Set<Long> requestedRoomIds = Set.copyOf(metricCodesByRoomAndDevEui.keySet());
+        Optional<Flux> query = queryFactory.buildRoomMetricSeriesBatchQuery(
+                from,
+                to,
+                interval,
+                metricCodesByRoomAndDevEui
+        );
+        Map<String, Object> queryContext = Map.of(
+                "queryType", QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH.tagValue,
+                "roomCount", requestedRoomIds.size()
+        );
+
+        return execute(
+                query,
+                QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH,
+                queryContext,
+                record -> {
+                    Long roomId = requireRoomId(
+                            record,
+                            QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH,
+                            requestedRoomIds
+                    );
+                    String metricCode = requireMetricCode(
+                            record,
+                            QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH,
+                            roomId
+                    );
+                    requireAllowedMetricCode(
+                            metricCode,
+                            collectAllowedMetricCodes(
+                                    metricCodesByRoomAndDevEui.get(roomId)
+                            ),
+                            QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH,
+                            roomId
+                    );
+                    return new RoomMetricSeriesByRoomQueryResult(
+                            roomId,
+                            metricCode,
+                            requireBucketEndAt(
+                                    record,
+                                    from,
+                                    to,
+                                    interval,
+                                    QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH,
+                                    roomId
+                            ),
+                            requireFiniteValue(
+                                    record,
+                                    QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH,
+                                    roomId
+                            )
+                    );
+                },
+                result -> new RoomMetricBucketKey(
+                        result.roomId(),
+                        result.metricCode(),
+                        result.bucketEndAt()
+                )
+        );
+    }
+
+    @Override
     public List<SensorMetricSeriesPointQueryResult> findSensorMetricSeries(
             Long roomId,
             Instant from,
@@ -259,6 +383,22 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             Function<FluxRecord, T> recordMapper,
             Function<T, ?> uniquenessKey
     ) {
+        return execute(
+                query,
+                queryType,
+                context(queryType, roomId),
+                recordMapper,
+                uniquenessKey
+        );
+    }
+
+    private <T> List<T> execute(
+            Optional<Flux> query,
+            QueryType queryType,
+            Map<String, Object> queryContext,
+            Function<FluxRecord, T> recordMapper,
+            Function<T, ?> uniquenessKey
+    ) {
         // 1. 쿼리 실행 시간 측정을 시작하고 기본 결과 상태를 설정한다.
         Timer.Sample sample = Timer.start(meterRegistry);
         String outcome = "success";
@@ -278,7 +418,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
                     .toList();
 
             // 4. 조회 종류별 고유 key를 기준으로 중복 결과를 검사한다.
-            requireUniqueResults(results, uniquenessKey, queryType, roomId);
+            requireUniqueResults(results, uniquenessKey, queryType, queryContext);
 
             // 5. 반환할 결과 개수를 기록하고 정상 결과를 반환한다.
             recordResultCount(queryType, results.size());
@@ -293,7 +433,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             outcome = "bad_response";
             throw new BadGatewayException(
                     ErrorCode.SENSOR_DATA_STORE_BAD_RESPONSE,
-                    context(queryType, roomId),
+                    queryContext,
                     e
             );
         } catch (InfluxException e) {
@@ -301,7 +441,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             outcome = "unavailable";
             throw new ServiceUnavailableException(
                     ErrorCode.SENSOR_DATA_STORE_UNAVAILABLE,
-                    context(queryType, roomId),
+                    queryContext,
                     e
             );
         } catch (RuntimeException e) {
@@ -332,13 +472,42 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             List<T> results,
             Function<T, ?> uniquenessKey,
             QueryType queryType,
-            Long roomId
+            Map<String, Object> queryContext
     ) {
         Set<Object> keys = new HashSet<>();
         for (T result : results) {
             if (!keys.add(uniquenessKey.apply(result))) {
-                throw badResponse(queryType, roomId, "duplicate_result");
+                throw badResponse(queryType, queryContext, "duplicate_result");
             }
+        }
+    }
+
+    private Long requireRoomId(
+            FluxRecord record,
+            QueryType queryType,
+            Set<Long> requestedRoomIds
+    ) {
+        Object rawRoomId = record.getValueByKey(SensorMetricFluxQueryFactory.ROOM_ID_TAG);
+        if (!(rawRoomId instanceof String value)) {
+            throw badResponse(
+                    queryType,
+                    Map.of("roomCount", requestedRoomIds.size()),
+                    SensorMetricFluxQueryFactory.ROOM_ID_TAG
+            );
+        }
+
+        try {
+            Long roomId = Long.valueOf(value);
+            if (!requestedRoomIds.contains(roomId)) {
+                throw badResponse(queryType, roomId, SensorMetricFluxQueryFactory.ROOM_ID_TAG);
+            }
+            return roomId;
+        } catch (NumberFormatException exception) {
+            throw badResponse(
+                    queryType,
+                    Map.of("roomCount", requestedRoomIds.size()),
+                    SensorMetricFluxQueryFactory.ROOM_ID_TAG
+            );
         }
     }
 
@@ -487,11 +656,17 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             Long roomId,
             String reason
     ) {
-        Map<String, Object> context = Map.of(
-                "queryType", queryType.tagValue,
-                "roomId", roomId,
-                "reason", reason
-        );
+        return badResponse(queryType, context(queryType, roomId), reason);
+    }
+
+    private BadGatewayException badResponse(
+            QueryType queryType,
+            Map<String, Object> queryContext,
+            String reason
+    ) {
+        Map<String, Object> context = new LinkedHashMap<>(queryContext);
+        context.put("queryType", queryType.tagValue);
+        context.put("reason", reason);
         return new BadGatewayException(
                 ErrorCode.SENSOR_DATA_STORE_BAD_RESPONSE,
                 context
@@ -513,6 +688,19 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
     ) {
     }
 
+    private record RoomMetricKey(
+            Long roomId,
+            String metricCode
+    ) {
+    }
+
+    private record RoomMetricBucketKey(
+            Long roomId,
+            String metricCode,
+            Instant bucketEndAt
+    ) {
+    }
+
     // 센서별 시계열 point의 중복 검사용 key다.
     private record SensorMetricBucketKey(
             String devEui,
@@ -524,8 +712,10 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
     // 오류 context와 모니터링 tag에서 사용하는 InfluxDB 쿼리 종류다.
     private enum QueryType {
         ROOM_METRIC_AVERAGE("room_metric_average"),
+        ROOM_METRIC_AVERAGE_BATCH("room_metric_average_batch"),
         SENSOR_METRIC_LATEST("sensor_metric_latest"),
         ROOM_GAUGE_METRIC_SERIES("room_gauge_metric_series"),
+        ROOM_GAUGE_METRIC_SERIES_BATCH("room_gauge_metric_series_batch"),
         SENSOR_GAUGE_METRIC_SERIES("sensor_gauge_metric_series");
 
         private final String tagValue;

@@ -1,6 +1,7 @@
 package com.nhnacademy.core.listener;
 
 import com.nhnacademy.core.dto.message.ProcessingSensorMessage;
+import com.nhnacademy.core.service.stream.DashboardMetricSseRegistry;
 import com.nhnacademy.core.service.stream.ProcessingSensorMessageMapper;
 import com.nhnacademy.core.service.stream.SensorMetricSseRegistry;
 import com.nhnacademy.core.service.stream.SensorMetricUpdate;
@@ -21,6 +22,7 @@ public class ProcessingSensorMessageListener {
 
     private final ProcessingSensorMessageMapper messageMapper;
     private final SensorMetricSseRegistry registry;
+    private final DashboardMetricSseRegistry dashboardRegistry;
 
     private final Clock clock;
     private final Counter receivedCounter;
@@ -31,11 +33,13 @@ public class ProcessingSensorMessageListener {
     public ProcessingSensorMessageListener(
             ProcessingSensorMessageMapper messageMapper,
             SensorMetricSseRegistry registry,
+            DashboardMetricSseRegistry dashboardRegistry,
             Clock clock,
             MeterRegistry meterRegistry
     ) {
         this.messageMapper = messageMapper;
         this.registry = registry;
+        this.dashboardRegistry = dashboardRegistry;
         this.clock = clock;
         this.receivedCounter = meterRegistry.counter("core.sensor.metric.stream.source.messages.received");
         this.invalidCounter = meterRegistry.counter("core.sensor.metric.stream.source.messages.invalid");
@@ -65,6 +69,7 @@ public class ProcessingSensorMessageListener {
         updateCounter.increment(updates.size());
 
         registry.dispatchAll(updates);
+        dashboardRegistry.dispatchAll(updates);
     }
 
     private void recordEventLag(SensorMetricUpdate update) {

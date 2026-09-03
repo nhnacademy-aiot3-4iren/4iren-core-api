@@ -51,6 +51,45 @@ public class SensorMetricFluxQueryFactory {
                         .keep(List.of(METRIC_TAG, VALUE_COLUMN)));
     }
 
+    Optional<Flux> buildRoomMetricAverageBatchQuery(
+            Instant from,
+            Instant to,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    ) {
+        if (metricCodesByRoomAndDevEui == null || metricCodesByRoomAndDevEui.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<Restrictions> roomMetricFilters = new ArrayList<>();
+        metricCodesByRoomAndDevEui.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> {
+                    Long roomId = entry.getKey();
+                    validateRoomId(roomId);
+                    buildAllowedSensorMetricFilter(entry.getValue())
+                            .ifPresent(metricFilter -> roomMetricFilters.add(and(
+                                    buildRoomFilter(roomId),
+                                    metricFilter
+                            )));
+                });
+        if (roomMetricFilters.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(Flux.from(properties.bucket())
+                .range(from, to)
+                .filter(and(
+                        measurement().equal(SENSOR_TELEMETRY_MEASUREMENT),
+                        field().equal(VALUE_FIELD),
+                        or(roomMetricFilters.toArray(Restrictions[]::new))
+                ))
+                .groupBy(List.of(ROOM_ID_TAG, DEV_EUI_TAG, METRIC_TAG))
+                .mean(VALUE_COLUMN)
+                .groupBy(List.of(ROOM_ID_TAG, METRIC_TAG))
+                .mean(VALUE_COLUMN)
+                .keep(List.of(ROOM_ID_TAG, METRIC_TAG, VALUE_COLUMN)));
+    }
+
     Optional<Flux> buildSensorMetricLatestQuery(
             Long roomId,
             Instant from,
@@ -117,6 +156,48 @@ public class SensorMetricFluxQueryFactory {
                 .groupBy(METRIC_TAG)
                 .sort(List.of(TIME_COLUMN))
                 .keep(List.of(METRIC_TAG, TIME_COLUMN, VALUE_COLUMN));
+
+        return Optional.of(query);
+    }
+
+    Optional<Flux> buildRoomMetricSeriesBatchQuery(
+            Instant from,
+            Instant to,
+            Duration interval,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    ) {
+        if (metricCodesByRoomAndDevEui == null || metricCodesByRoomAndDevEui.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<Restrictions> roomMetricFilters = buildRoomMetricFilters(
+                metricCodesByRoomAndDevEui
+        );
+        if (roomMetricFilters.isEmpty()) {
+            return Optional.empty();
+        }
+
+        long intervalMillis = requireIntervalMillis(interval);
+        long offsetMillis = calculateWindowOffsetMillis(from, intervalMillis);
+        Flux query = Flux.from(properties.bucket())
+                .range(from, to)
+                .filter(and(
+                        measurement().equal(SENSOR_TELEMETRY_MEASUREMENT),
+                        field().equal(VALUE_FIELD),
+                        or(roomMetricFilters.toArray(Restrictions[]::new))
+                ))
+                .groupBy(List.of(ROOM_ID_TAG, DEV_EUI_TAG, METRIC_TAG))
+                .aggregateWindow()
+                .withEvery(intervalMillis, ChronoUnit.MILLIS)
+                .withOffset(offsetMillis, ChronoUnit.MILLIS)
+                .withAggregateFunction("mean")
+                .withColumn(VALUE_COLUMN)
+                .withCreateEmpty(false)
+                .groupBy(List.of(ROOM_ID_TAG, METRIC_TAG, TIME_COLUMN))
+                .mean(VALUE_COLUMN)
+                .groupBy(List.of(ROOM_ID_TAG, METRIC_TAG))
+                .sort(List.of(TIME_COLUMN))
+                .keep(List.of(ROOM_ID_TAG, METRIC_TAG, TIME_COLUMN, VALUE_COLUMN));
 
         return Optional.of(query);
     }
@@ -196,13 +277,35 @@ public class SensorMetricFluxQueryFactory {
         return Optional.of(or(metricFilters));
     }
 
+    private List<Restrictions> buildRoomMetricFilters(
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    ) {
+        List<Restrictions> roomMetricFilters = new ArrayList<>();
+        metricCodesByRoomAndDevEui.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> {
+                    Long roomId = entry.getKey();
+                    validateRoomId(roomId);
+                    buildAllowedSensorMetricFilter(entry.getValue())
+                            .ifPresent(metricFilter -> roomMetricFilters.add(and(
+                                    buildRoomFilter(roomId),
+                                    metricFilter
+                            )));
+                });
+        return roomMetricFilters;
+    }
+
     private Restrictions buildRoomFilter(Long roomId) {
+        validateRoomId(roomId);
+
+        return tag(ROOM_ID_TAG).equal(roomId.toString());
+    }
+
+    private void validateRoomId(Long roomId) {
         Objects.requireNonNull(roomId, "roomId는 null일 수 없습니다.");
         if (roomId <= 0) {
             throw new IllegalArgumentException("roomId는 0보다 커야 합니다.");
         }
-
-        return tag(ROOM_ID_TAG).equal(roomId.toString());
     }
 
     private long requireIntervalMillis(Duration interval) {

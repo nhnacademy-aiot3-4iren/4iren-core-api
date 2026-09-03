@@ -14,6 +14,14 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -61,6 +69,87 @@ public class TieredSensorMetricSnapshotCache {
                 validator,
                 sourceLoader
         );
+    }
+
+    public Map<String, SummarySnapshot> getOrLoadSummaries(
+            Map<String, Predicate<SummarySnapshot>> validatorsByCacheKey,
+            Function<Set<String>, Map<String, SummarySnapshot>> sourceLoader
+    ) {
+        Objects.requireNonNull(
+                validatorsByCacheKey,
+                "validatorsByCacheKey는 null일 수 없습니다."
+        );
+        Objects.requireNonNull(sourceLoader, "sourceLoader는 null일 수 없습니다.");
+        if (validatorsByCacheKey.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, SummarySnapshot> snapshots = new LinkedHashMap<>();
+        Set<String> localMissKeys = new LinkedHashSet<>();
+        validatorsByCacheKey.forEach((cacheKey, validator) -> {
+            SummarySnapshot localSnapshot = summaryLocalCache.getIfPresent(cacheKey);
+            if (localSnapshot != null && validator.test(localSnapshot)) {
+                recordCacheEvent("summary", "l1", "hit");
+                snapshots.put(cacheKey, localSnapshot);
+                return;
+            }
+
+            if (localSnapshot == null) {
+                recordCacheEvent("summary", "l1", "miss");
+            } else {
+                recordCacheEvent("summary", "l1", "invalid");
+                log.warn("유효하지 않은 센서 스냅샷 L1 캐시를 제거합니다. key={}", cacheKey);
+                summaryLocalCache.invalidate(cacheKey);
+            }
+            localMissKeys.add(cacheKey);
+        });
+
+        if (localMissKeys.isEmpty()) {
+            return Collections.unmodifiableMap(snapshots);
+        }
+
+        RedisBatchLookupResult<SummarySnapshot> redisLookup = lookupRedisBatch(
+                "summary",
+                localMissKeys,
+                summaryRedisTemplate,
+                validatorsByCacheKey
+        );
+        snapshots.putAll(redisLookup.values());
+        summaryLocalCache.putAll(redisLookup.values());
+        Set<String> sourceMissKeys = new LinkedHashSet<>(redisLookup.missingKeys());
+
+        if (sourceMissKeys.isEmpty()) {
+            return Collections.unmodifiableMap(snapshots);
+        }
+
+        sourceMissKeys.forEach(ignored -> recordCacheEvent("summary", "source", "load"));
+        Map<String, SummarySnapshot> loadedSnapshots = sourceLoader.apply(
+                Collections.unmodifiableSet(sourceMissKeys)
+        );
+        Objects.requireNonNull(loadedSnapshots, "sourceLoader 결과는 null일 수 없습니다.");
+
+        for (String cacheKey : sourceMissKeys) {
+            SummarySnapshot loadedSnapshot = loadedSnapshots.get(cacheKey);
+            Predicate<SummarySnapshot> validator = validatorsByCacheKey.get(cacheKey);
+            if (loadedSnapshot == null || !validator.test(loadedSnapshot)) {
+                recordCacheEvent("summary", "source", "invalid");
+                throw new BadGatewayException(ErrorCode.SENSOR_DATA_STORE_BAD_RESPONSE);
+            }
+
+            SummarySnapshot resolvedSnapshot = redisLookup.unavailable()
+                    ? loadedSnapshot
+                    : putIfAbsentOrGetExisting(
+                            "summary",
+                            cacheKey,
+                            loadedSnapshot,
+                            summaryRedisTemplate,
+                            validator
+                    );
+            summaryLocalCache.put(cacheKey, resolvedSnapshot);
+            snapshots.put(cacheKey, resolvedSnapshot);
+        }
+
+        return Collections.unmodifiableMap(snapshots);
     }
 
     public LatestSnapshot getOrLoadLatest(
@@ -185,6 +274,57 @@ public class TieredSensorMetricSnapshotCache {
         }
     }
 
+    private <T> RedisBatchLookupResult<T> lookupRedisBatch(
+            String snapshotType,
+            Set<String> cacheKeys,
+            RedisTemplate<String, T> redisTemplate,
+            Map<String, Predicate<T>> validatorsByCacheKey
+    ) {
+        List<String> orderedKeys = List.copyOf(cacheKeys);
+        try {
+            List<T> values = redisTemplate.opsForValue().multiGet(orderedKeys);
+            if (values == null || values.size() != orderedKeys.size()) {
+                cacheKeys.forEach(ignored ->
+                        recordCacheEvent(snapshotType, "l2", "unavailable")
+                );
+                return RedisBatchLookupResult.unavailable(cacheKeys);
+            }
+
+            Map<String, T> validValues = new LinkedHashMap<>();
+            Set<String> missingKeys = new LinkedHashSet<>();
+            Set<String> invalidKeys = new LinkedHashSet<>();
+            for (int index = 0; index < orderedKeys.size(); index++) {
+                String cacheKey = orderedKeys.get(index);
+                T snapshot = values.get(index);
+                if (snapshot == null) {
+                    recordCacheEvent(snapshotType, "l2", "miss");
+                    missingKeys.add(cacheKey);
+                } else if (validatorsByCacheKey.get(cacheKey).test(snapshot)) {
+                    recordCacheEvent(snapshotType, "l2", "hit");
+                    validValues.put(cacheKey, snapshot);
+                } else {
+                    recordCacheEvent(snapshotType, "l2", "invalid");
+                    log.warn("유효하지 않은 센서 스냅샷 캐시를 제거합니다. key={}", cacheKey);
+                    invalidKeys.add(cacheKey);
+                    missingKeys.add(cacheKey);
+                }
+            }
+
+            deleteFromRedis(invalidKeys, redisTemplate);
+            return new RedisBatchLookupResult<>(validValues, missingKeys, false);
+        } catch (DataAccessException | SerializationException e) {
+            cacheKeys.forEach(ignored ->
+                    recordCacheEvent(snapshotType, "l2", "unavailable")
+            );
+            log.warn(
+                    "센서 스냅샷 L2 캐시 배치 조회에 실패해 원본 저장소로 우회합니다. keyCount={}, reason={}",
+                    cacheKeys.size(),
+                    e.getMessage()
+            );
+            return RedisBatchLookupResult.unavailable(cacheKeys);
+        }
+    }
+
     private <T> T putIfAbsentOrGetExisting(
             String snapshotType,
             String cacheKey,
@@ -238,6 +378,24 @@ public class TieredSensorMetricSnapshotCache {
         }
     }
 
+    private <T> void deleteFromRedis(
+            Set<String> cacheKeys,
+            RedisTemplate<String, T> redisTemplate
+    ) {
+        if (cacheKeys.isEmpty()) {
+            return;
+        }
+        try {
+            redisTemplate.delete(cacheKeys);
+        } catch (DataAccessException | SerializationException e) {
+            log.warn(
+                    "센서 스냅샷 L2 캐시 배치 삭제에 실패했습니다. keyCount={}, reason={}",
+                    cacheKeys.size(),
+                    e.getMessage()
+            );
+        }
+    }
+
     private void recordCacheEvent(
             String snapshotType,
             String layer,
@@ -272,6 +430,22 @@ public class TieredSensorMetricSnapshotCache {
 
         private static <T> RedisLookupResult<T> unavailable() {
             return new RedisLookupResult<>(RedisLookupStatus.UNAVAILABLE, null);
+        }
+    }
+
+    private record RedisBatchLookupResult<T>(
+            Map<String, T> values,
+            Set<String> missingKeys,
+            boolean unavailable
+    ) {
+
+        private RedisBatchLookupResult {
+            values = Collections.unmodifiableMap(new LinkedHashMap<>(values));
+            missingKeys = Collections.unmodifiableSet(new LinkedHashSet<>(missingKeys));
+        }
+
+        private static <T> RedisBatchLookupResult<T> unavailable(Set<String> cacheKeys) {
+            return new RedisBatchLookupResult<>(Map.of(), cacheKeys, true);
         }
     }
 }
