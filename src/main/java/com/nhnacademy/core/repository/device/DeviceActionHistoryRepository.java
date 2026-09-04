@@ -29,16 +29,18 @@ public interface DeviceActionHistoryRepository extends JpaRepository<DeviceActio
             join h.device d
             join d.room r
             join r.building b
-            where d.id = :deviceId
+            where r.id = :roomId
               and b.team.id = :teamId
+              and (:deviceId is null or d.id = :deviceId)
               and (:dayOfWeek is null or h.dayOfWeek = :dayOfWeek)
               and h.recordedAt >= :startAt
               and h.recordedAt <= :endAt
             order by h.recordedAt asc, h.id asc
             """)
     List<DeviceActionHistoryQueryResult> findAllProjected(
-            @Param("deviceId") Long deviceId,
+            @Param("roomId") Long roomId,
             @Param("teamId") Long teamId,
+            @Param("deviceId") Long deviceId,
             @Param("dayOfWeek") Weekday dayOfWeek,
             @Param("startAt") LocalDateTime startAt,
             @Param("endAt") LocalDateTime endAt

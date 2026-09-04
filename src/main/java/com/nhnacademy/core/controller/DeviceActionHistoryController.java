@@ -39,17 +39,18 @@ public class DeviceActionHistoryController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/devices/{device-id}/action-histories")
+    @GetMapping("/rooms/{room-id}/device-action-histories")
     public List<DeviceActionHistoryResponse> getAll(
             @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("device-id") @Positive Long deviceId,
+            @PathVariable("room-id") @Positive Long roomId,
+            @RequestParam(required = false) @Positive Long deviceId,
             @RequestParam(required = false) Weekday dayOfWeek,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt
     ) {
-        return historyService.getAll(teamId, deviceId, dayOfWeek, startAt, endAt);
+        return historyService.getAll(teamId, roomId, deviceId, dayOfWeek, startAt, endAt);
     }
 
     @GetMapping("/action-histories/{history-id}")

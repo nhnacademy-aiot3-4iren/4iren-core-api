@@ -3,6 +3,7 @@ package com.nhnacademy.core.service;
 import com.nhnacademy.core.domain.device.Device;
 import com.nhnacademy.core.domain.device.DeviceActionHistory;
 import com.nhnacademy.core.domain.device.Weekday;
+import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.dto.device.DeviceActionHistoryRequest;
 import com.nhnacademy.core.dto.device.DeviceActionHistoryResponse;
 import com.nhnacademy.core.exception.ErrorCode;
@@ -10,6 +11,7 @@ import com.nhnacademy.core.exception.InvalidRequestException;
 import com.nhnacademy.core.exception.ResourceNotFoundException;
 import com.nhnacademy.core.repository.device.DeviceActionHistoryRepository;
 import com.nhnacademy.core.repository.device.DeviceRepository;
+import com.nhnacademy.core.repository.room.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class DeviceActionHistoryService {
 
     private final DeviceRepository deviceRepository;
     private final DeviceActionHistoryRepository historyRepository;
+    private final RoomRepository roomRepository;
     private final TeamAuthorizer teamAuthorizer;
 
     @Transactional
@@ -51,17 +54,18 @@ public class DeviceActionHistoryService {
 
     public List<DeviceActionHistoryResponse> getAll(
             Long teamId,
+            Long roomId,
             Long deviceId,
             Weekday dayOfWeek,
             LocalDateTime requestedStartAt,
             LocalDateTime requestedEndAt
     ) {
-        getDeviceOrThrow(deviceId, teamId);
+        getRoomOrThrow(roomId, teamId);
         LocalDateTime endAt = requestedEndAt == null ? LocalDateTime.now() : requestedEndAt;
         LocalDateTime startAt = requestedStartAt == null ? endAt.minusYears(1) : requestedStartAt;
         validatePeriod(startAt, endAt);
 
-        return historyRepository.findAllProjected(deviceId, teamId, dayOfWeek, startAt, endAt).stream()
+        return historyRepository.findAllProjected(roomId, teamId, deviceId, dayOfWeek, startAt, endAt).stream()
                 .map(DeviceActionHistoryResponse::from)
                 .toList();
     }
@@ -71,6 +75,14 @@ public class DeviceActionHistoryService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         ErrorCode.DEVICE_NOT_FOUND,
                         Map.of("deviceId", deviceId, "teamId", teamId)
+                ));
+    }
+
+    private Room getRoomOrThrow(Long roomId, Long teamId) {
+        return roomRepository.findByIdAndBuilding_Team_Id(roomId, teamId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.ROOM_NOT_FOUND,
+                        Map.of("roomId", roomId, "teamId", teamId)
                 ));
     }
 
