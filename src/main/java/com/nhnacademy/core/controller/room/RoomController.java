@@ -1,4 +1,4 @@
-package com.nhnacademy.core.controller;
+package com.nhnacademy.core.controller.room;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;

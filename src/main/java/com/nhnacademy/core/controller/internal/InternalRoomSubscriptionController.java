@@ -1,4 +1,4 @@
-package com.nhnacademy.core.controller;
+package com.nhnacademy.core.controller.internal;
 
 import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.UserRoomSubscriptionsResponse;

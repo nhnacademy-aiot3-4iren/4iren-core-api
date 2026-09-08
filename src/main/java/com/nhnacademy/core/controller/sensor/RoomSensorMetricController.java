@@ -1,4 +1,4 @@
-package com.nhnacademy.core.controller;
+package com.nhnacademy.core.controller.sensor;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
@@ -110,7 +110,10 @@ public class RoomSensorMetricController {
         );
     }
 
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(
+            value = "/stream",
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE
+    )
     public ResponseEntity<SseEmitter> streamRoomSensorMetrics(
             @CurrentUser AuthenticatedUser user,
             @PathVariable("team-id") @Positive Long teamId,

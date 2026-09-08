@@ -1,4 +1,4 @@
-package com.nhnacademy.core.controller;
+package com.nhnacademy.core.controller.internal;
 
 import com.nhnacademy.core.dto.sensor.metric.RoomMetricSummaryResponse;
 import com.nhnacademy.core.dto.sensor.metric.RoomSensorMetricSeriesResponse;

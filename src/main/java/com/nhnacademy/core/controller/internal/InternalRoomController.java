@@ -1,4 +1,4 @@
-package com.nhnacademy.core.controller;
+package com.nhnacademy.core.controller.internal;
 
 import com.nhnacademy.core.dto.room.RoomDetailResponse;
 import com.nhnacademy.core.dto.room.RoomDevicesResponse;

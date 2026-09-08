@@ -1,4 +1,4 @@
-package com.nhnacademy.core.controller;
+package com.nhnacademy.core.controller.weather;
 
 import com.nhnacademy.core.dto.kma.llm.KmaCurrentWeatherResponseDto;
 import com.nhnacademy.core.dto.kma.llm.KmaForecastWeatherResponseDto;
@@ -23,6 +23,7 @@ public class KmaController {
 
     /**
      * 현재 날씨 조회하는 llm용 api
+     *
      * @param regionName 조회할 지역명
      * @return 현재 날씨
      */
@@ -34,7 +35,7 @@ public class KmaController {
     }
 
     @GetMapping("/forecast-weather")
-    public ResponseEntity<KmaForecastWeatherResponseDto> getFcst(@RequestParam String regionName){
+    public ResponseEntity<KmaForecastWeatherResponseDto> getFcst(@RequestParam String regionName) {
         KmaForecastWeatherResponseDto response = kmaService.getUltraSrtFcstForLLM(regionName);
         log.info("초단기예보조회(날씨 예보) 호출결과: {}", response);
         return ResponseEntity.ok(response);
