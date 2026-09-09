@@ -18,20 +18,15 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.Clock;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+// 현재 Core 인스턴스의 대시보드 SSE 연결과 비동기 이벤트 전송을 관리한다.
+// 실제 측정값과 replay는 저장하지 않고 공간·메트릭 변경 알림만 전달한다.
 @Component
 public class DashboardMetricSseRegistry {
 
@@ -43,12 +38,13 @@ public class DashboardMetricSseRegistry {
     private final Clock clock;
     private final AsyncTaskExecutor sendExecutor;
 
+    // 연결은 인스턴스 메모리에 보관하고 DevEUI로 역색인해 관련 구독만 찾는다.
+    // 실제 수신 여부는 구독에 저장한 roomId·DevEUI·metricCode 조건을 모두 확인한다.
     private final ConcurrentMap<String, Subscription> subscriptions = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, Set<String>> subscriptionIdsByDevEui =
-            new ConcurrentHashMap<>();
-    private final ConcurrentMap<Long, AtomicInteger> connectionCountsByUser =
-            new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Set<String>> subscriptionIdsByDevEui = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, AtomicInteger> connectionCountsByUser = new ConcurrentHashMap<>();
 
+    // 대시보드 SSE 연결과 이벤트 전송 상태를 관찰하는 Micrometer.
     private final Counter openedCounter;
     private final Counter closedCounter;
     private final Counter sentCounter;
@@ -74,9 +70,7 @@ public class DashboardMetricSseRegistry {
         this.sentCounter = meterRegistry.counter("core.dashboard.metric.stream.events.sent");
         this.sendFailureCounter = meterRegistry.counter("core.dashboard.metric.stream.events.send.failures");
         this.limitExceededCounter = meterRegistry.counter("core.dashboard.metric.stream.connections.limit.exceeded");
-        this.dispatchQueueOverflowCounter = meterRegistry.counter(
-                "core.dashboard.metric.stream.dispatch.queue.overflows"
-        );
+        this.dispatchQueueOverflowCounter = meterRegistry.counter("core.dashboard.metric.stream.dispatch.queue.overflows");
         Gauge.builder(
                         "core.dashboard.metric.stream.connections.active",
                         subscriptions,
@@ -86,66 +80,40 @@ public class DashboardMetricSseRegistry {
                 .register(meterRegistry);
     }
 
-    @PostConstruct
-    void startHeartbeat() {
-        heartbeatTask = taskScheduler.scheduleAtFixedRate(
-                this::sendHeartbeats,
-                properties.heartbeatInterval()
-        );
-    }
-
     public SseEmitter register(
             Long userId,
-            Map<String, Set<String>> metricCodesByDevEui
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
     ) {
         Objects.requireNonNull(userId, "userId는 null일 수 없습니다.");
         Objects.requireNonNull(
-                metricCodesByDevEui,
-                "metricCodesByDevEui는 null일 수 없습니다."
+                metricCodesByRoomAndDevEui,
+                "metricCodesByRoomAndDevEui는 null일 수 없습니다."
         );
 
+        // 1. 사용자별 연결 수를 선점한 뒤 고유 ID와 제한된 전송 큐를 갖는 구독을 만든다.
         reserveUserConnection(userId);
         String connectionId = UUID.randomUUID().toString();
         SseEmitter emitter = new SseEmitter(properties.connectionTimeout().toMillis());
         Subscription subscription = new Subscription(
                 connectionId,
                 userId,
-                metricCodesByDevEui,
+                metricCodesByRoomAndDevEui,
                 emitter,
                 properties.dispatch().maxPendingEventsPerConnection()
         );
 
-        subscriptions.put(connectionId, subscription);
-        subscription.metricCodesByDevEui().keySet().forEach(devEui ->
-                subscriptionIdsByDevEui.computeIfAbsent(
-                        devEui,
-                        ignored -> ConcurrentHashMap.newKeySet()
-                ).add(connectionId)
-        );
-
-        emitter.onCompletion(() -> remove(connectionId));
-        emitter.onTimeout(() -> close(connectionId));
-        emitter.onError(ignored -> remove(connectionId));
+        // 2. 연결과 DevEUI 역색인을 등록하고 모든 종료 경로에 정리 콜백을 연결한다.
+        addSubscription(subscription);
+        registerCompletionCallbacks(subscription);
 
         try {
-            synchronized (emitter) {
-                emitter.send(
-                        SseEmitter.event()
-                                .name(CONNECTED_EVENT)
-                                .reconnectTime(properties.retryInterval().toMillis())
-                                .data(
-                                        new DashboardMetricStreamEvents.Connected(
-                                                connectionId,
-                                                clock.instant()
-                                        ),
-                                        MediaType.APPLICATION_JSON
-                                )
-                );
-            }
+            // 3. 재연결 간격을 포함한 연결 이벤트를 먼저 보낸 후 일반 이벤트 전송을 허용한다.
+            sendConnectedEvent(subscription);
             if (subscription.markReady()) {
-                scheduleDrain(subscription);
+                scheduleDelivery(subscription);
             }
             openedCounter.increment();
+
             return emitter;
         } catch (IOException | IllegalStateException exception) {
             remove(connectionId);
@@ -159,13 +127,67 @@ public class DashboardMetricSseRegistry {
             return;
         }
 
-        updates.forEach(this::dispatch);
+        updates.forEach(this::dispatchUpdate);
     }
 
-    private void dispatch(SensorMetricUpdate update) {
+    @PostConstruct
+    void startHeartbeat() {
+        heartbeatTask = taskScheduler.scheduleAtFixedRate(
+                this::sendHeartbeats,
+                properties.heartbeatInterval()
+        );
+    }
+
+    @PreDestroy
+    void closeAll() {
+        if (heartbeatTask != null) {
+            heartbeatTask.cancel(false);
+        }
+        for (String connectionId : Set.copyOf(subscriptions.keySet())) {
+            close(connectionId);
+        }
+    }
+
+    private void addSubscription(Subscription subscription) {
+        subscriptions.put(subscription.connectionId(), subscription);
+        subscription.devEuis().forEach(devEui ->
+                subscriptionIdsByDevEui.computeIfAbsent(
+                        devEui,
+                        ignored -> ConcurrentHashMap.newKeySet()
+                ).add(subscription.connectionId())
+        );
+    }
+
+    private void registerCompletionCallbacks(Subscription subscription) {
+        String connectionId = subscription.connectionId();
+        subscription.emitter().onCompletion(() -> remove(connectionId));
+        subscription.emitter().onTimeout(() -> close(connectionId));
+        subscription.emitter().onError(ignored -> remove(connectionId));
+    }
+
+    private void sendConnectedEvent(Subscription subscription) throws IOException {
+        synchronized (subscription.emitter()) {
+            subscription.emitter().send(
+                    SseEmitter.event()
+                            .name(CONNECTED_EVENT)
+                            .reconnectTime(properties.retryInterval().toMillis())
+                            .data(
+                                    new DashboardMetricStreamEvents.Connected(
+                                            subscription.connectionId(),
+                                            clock.instant()
+                                    ),
+                                    MediaType.APPLICATION_JSON
+                            )
+            );
+        }
+    }
+
+    private void dispatchUpdate(SensorMetricUpdate update) {
         if (update == null) {
             return;
         }
+
+        // DevEUI 역색인으로 후보를 좁힌 뒤 메트릭 코드까지 일치하는 구독만 선택한다.
         Set<String> subscriptionIds = subscriptionIdsByDevEui.get(update.devEui());
         if (subscriptionIds == null || subscriptionIds.isEmpty()) {
             return;
@@ -177,14 +199,15 @@ public class DashboardMetricSseRegistry {
                 continue;
             }
 
-            EnqueueResult result = subscription.enqueue(new MetricChange(
+            EnqueueResult result = subscription.enqueueChange(new RoomMetricChange(
                     update.roomId(),
                     update.metricCode(),
                     update.measuredAt()
             ));
             if (result == EnqueueResult.SCHEDULE) {
-                scheduleDrain(subscription);
+                scheduleDelivery(subscription);
             } else if (result == EnqueueResult.OVERFLOW) {
+                // 느린 연결이 제한된 대기 큐를 모두 사용하면 해당 연결을 종료한다.
                 dispatchQueueOverflowCounter.increment();
                 close(subscriptionId);
             }
@@ -195,21 +218,21 @@ public class DashboardMetricSseRegistry {
         for (Subscription subscription : subscriptions.values()) {
             EnqueueResult result = subscription.enqueueHeartbeat();
             if (result == EnqueueResult.SCHEDULE) {
-                scheduleDrain(subscription);
+                scheduleDelivery(subscription);
             }
         }
     }
 
-    private void scheduleDrain(Subscription subscription) {
+    private void scheduleDelivery(Subscription subscription) {
         try {
-            sendExecutor.execute(() -> drain(subscription));
+            sendExecutor.execute(() -> sendPendingEvents(subscription));
         } catch (RuntimeException exception) {
             sendFailureCounter.increment();
             closeWithError(subscription.connectionId(), exception);
         }
     }
 
-    private void drain(Subscription subscription) {
+    private void sendPendingEvents(Subscription subscription) {
         while (true) {
             OutboundDelivery delivery = subscription.nextDelivery();
             if (delivery == null) {
@@ -217,31 +240,39 @@ public class DashboardMetricSseRegistry {
             }
 
             try {
-                synchronized (subscription.emitter()) {
-                    if (delivery.heartbeat()) {
-                        subscription.emitter().send(SseEmitter.event().comment("heartbeat"));
-                    } else {
-                        MetricChange change = delivery.change();
-                        subscription.emitter().send(
-                                SseEmitter.event()
-                                        .name(METRIC_CHANGED_EVENT)
-                                        .data(
-                                                new DashboardMetricStreamEvents.RoomMetricChanged(
-                                                        change.roomId(),
-                                                        change.metricCode(),
-                                                        change.measuredAt()
-                                                ),
-                                                MediaType.APPLICATION_JSON
-                                        )
-                        );
-                        sentCounter.increment();
-                    }
-                }
+                sendEvent(subscription, delivery);
             } catch (IOException | IllegalStateException exception) {
                 sendFailureCounter.increment();
                 closeWithError(subscription.connectionId(), exception);
                 return;
             }
+        }
+    }
+
+    private void sendEvent(
+            Subscription subscription,
+            OutboundDelivery delivery
+    ) throws IOException {
+        synchronized (subscription.emitter()) {
+            if (delivery.heartbeat()) {
+                subscription.emitter().send(SseEmitter.event().comment("heartbeat"));
+                return;
+            }
+
+            RoomMetricChange change = delivery.change();
+            subscription.emitter().send(
+                    SseEmitter.event()
+                            .name(METRIC_CHANGED_EVENT)
+                            .data(
+                                    new DashboardMetricStreamEvents.RoomMetricChanged(
+                                            change.roomId(),
+                                            change.metricCode(),
+                                            change.measuredAt()
+                                    ),
+                                    MediaType.APPLICATION_JSON
+                            )
+            );
+            sentCounter.increment();
         }
     }
 
@@ -290,7 +321,7 @@ public class DashboardMetricSseRegistry {
         }
 
         subscription.markClosed();
-        subscription.metricCodesByDevEui().keySet().forEach(devEui ->
+        subscription.devEuis().forEach(devEui ->
                 subscriptionIdsByDevEui.computeIfPresent(devEui, (key, connectionIds) -> {
                     connectionIds.remove(connectionId);
                     return connectionIds.isEmpty() ? null : connectionIds;
@@ -307,26 +338,17 @@ public class DashboardMetricSseRegistry {
         );
     }
 
-    @PreDestroy
-    void closeAll() {
-        if (heartbeatTask != null) {
-            heartbeatTask.cancel(false);
-        }
-        for (String connectionId : Set.copyOf(subscriptions.keySet())) {
-            close(connectionId);
-        }
-    }
-
     private static final class Subscription {
 
         private final String connectionId;
         private final Long userId;
-        private final Map<String, Set<String>> metricCodesByDevEui;
+        private final Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui;
+        private final Set<String> devEuis;
         private final SseEmitter emitter;
         private final int maxPendingChanges;
         private final Object stateLock = new Object();
-        private final Map<MetricKey, MetricChange> pendingChanges = new LinkedHashMap<>();
-        private final Deque<MetricChange> outboundChanges = new ArrayDeque<>();
+        private final Map<MetricKey, RoomMetricChange> pendingChanges = new LinkedHashMap<>();
+        private final Deque<RoomMetricChange> outboundChanges = new ArrayDeque<>();
 
         private boolean ready;
         private boolean heartbeatPending;
@@ -336,36 +358,52 @@ public class DashboardMetricSseRegistry {
         private Subscription(
                 String connectionId,
                 Long userId,
-                Map<String, Set<String>> metricCodesByDevEui,
+                Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui,
                 SseEmitter emitter,
                 int maxPendingChanges
         ) {
-            Map<String, Set<String>> immutableMetricCodes = new LinkedHashMap<>();
-            metricCodesByDevEui.forEach((devEui, metricCodes) ->
+            Map<Long, Map<String, Set<String>>> immutableConditions = new LinkedHashMap<>();
+            Set<String> indexedDevEuis = new LinkedHashSet<>();
+            metricCodesByRoomAndDevEui.forEach((roomId, metricCodesByDevEui) -> {
+                Map<String, Set<String>> immutableMetricCodes = new LinkedHashMap<>();
+                metricCodesByDevEui.forEach((devEui, metricCodes) -> {
                     immutableMetricCodes.put(
                             devEui,
                             Collections.unmodifiableSet(new TreeSet<>(metricCodes))
-                    )
-            );
+                    );
+                    indexedDevEuis.add(devEui);
+                });
+                immutableConditions.put(
+                        roomId,
+                        Collections.unmodifiableMap(immutableMetricCodes)
+                );
+            });
             this.connectionId = connectionId;
             this.userId = userId;
-            this.metricCodesByDevEui = Collections.unmodifiableMap(immutableMetricCodes);
+            this.metricCodesByRoomAndDevEui = Collections.unmodifiableMap(immutableConditions);
+            this.devEuis = Collections.unmodifiableSet(indexedDevEuis);
             this.emitter = emitter;
             this.maxPendingChanges = maxPendingChanges;
         }
 
         private boolean accepts(SensorMetricUpdate update) {
-            return metricCodesByDevEui
+            return metricCodesByRoomAndDevEui
+                    .getOrDefault(update.roomId(), Map.of())
                     .getOrDefault(update.devEui(), Set.of())
                     .contains(update.metricCode());
         }
 
-        private EnqueueResult enqueue(MetricChange change) {
+        private Set<String> devEuis() {
+            return devEuis;
+        }
+
+        private EnqueueResult enqueueChange(RoomMetricChange change) {
             synchronized (stateLock) {
                 if (closed) {
                     return EnqueueResult.IGNORED;
                 }
 
+                // 전송 전의 같은 공간·메트릭 변경은 가장 최근 측정 시각 하나로 합친다.
                 MetricKey key = new MetricKey(change.roomId(), change.metricCode());
                 if (!pendingChanges.containsKey(key)
                         && pendingChanges.size() + outboundChanges.size() >= maxPendingChanges) {
@@ -420,7 +458,7 @@ public class DashboardMetricSseRegistry {
                     pendingChanges.clear();
                 }
 
-                MetricChange change = outboundChanges.pollFirst();
+                RoomMetricChange change = outboundChanges.pollFirst();
                 if (change != null) {
                     return OutboundDelivery.metric(change);
                 }
@@ -452,10 +490,6 @@ public class DashboardMetricSseRegistry {
             return userId;
         }
 
-        private Map<String, Set<String>> metricCodesByDevEui() {
-            return metricCodesByDevEui;
-        }
-
         private SseEmitter emitter() {
             return emitter;
         }
@@ -474,19 +508,19 @@ public class DashboardMetricSseRegistry {
     ) {
     }
 
-    private record MetricChange(
+    private record RoomMetricChange(
             Long roomId,
             String metricCode,
-            java.time.Instant measuredAt
+            Instant measuredAt
     ) {
     }
 
     private record OutboundDelivery(
-            MetricChange change,
+            RoomMetricChange change,
             boolean heartbeat
     ) {
 
-        private static OutboundDelivery metric(MetricChange change) {
+        private static OutboundDelivery metric(RoomMetricChange change) {
             return new OutboundDelivery(change, false);
         }
 

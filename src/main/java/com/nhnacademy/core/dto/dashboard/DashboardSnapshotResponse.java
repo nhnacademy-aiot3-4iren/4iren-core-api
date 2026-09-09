@@ -17,10 +17,16 @@ public record DashboardSnapshotResponse(
         boolean first,
         boolean last
 ) {
-
     public DashboardSnapshotResponse {
         availableMetrics = List.copyOf(availableMetrics);
         rooms = List.copyOf(rooms);
+    }
+
+    public record MetricDefinition(
+            String metricCode,
+            String displayName,
+            String symbol
+    ) {
     }
 
     public record RoomSnapshot(
@@ -34,7 +40,6 @@ public record DashboardSnapshotResponse(
             boolean notificationEnabled,
             List<MetricValue> metrics
     ) {
-
         public RoomSnapshot {
             metrics = List.copyOf(metrics);
         }
@@ -44,13 +49,6 @@ public record DashboardSnapshotResponse(
             String metricCode,
             String displayName,
             Double value,
-            String symbol
-    ) {
-    }
-
-    public record MetricDefinition(
-            String metricCode,
-            String displayName,
             String symbol
     ) {
     }

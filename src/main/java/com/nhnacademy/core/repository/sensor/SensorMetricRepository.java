@@ -1,5 +1,6 @@
 package com.nhnacademy.core.repository.sensor;
 
+import com.nhnacademy.core.domain.sensor.MetricSeriesWindow;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageByRoomQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricAverageQueryResult;
 import com.nhnacademy.core.repository.sensor.projection.RoomMetricSeriesByRoomQueryResult;
@@ -48,6 +49,12 @@ public interface SensorMetricRepository {
             Instant from,
             Instant to,
             Duration interval,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    );
+
+    // 대시보드처럼 정렬 기준과 partial 구간이 있는 배치 조회에 사용한다.
+    List<RoomMetricSeriesByRoomQueryResult> findRoomMetricSeriesByRooms(
+            MetricSeriesWindow window,
             Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
     );
 

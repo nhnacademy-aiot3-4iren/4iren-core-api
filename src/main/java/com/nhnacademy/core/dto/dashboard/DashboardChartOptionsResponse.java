@@ -2,11 +2,10 @@ package com.nhnacademy.core.dto.dashboard;
 
 import java.util.List;
 
-public record DashboardWidgetOptionsResponse(
+public record DashboardChartOptionsResponse(
         List<RoomOption> rooms
 ) {
-
-    public DashboardWidgetOptionsResponse {
+    public DashboardChartOptionsResponse {
         rooms = List.copyOf(rooms);
     }
 
@@ -17,7 +16,6 @@ public record DashboardWidgetOptionsResponse(
             String roomName,
             List<MetricOption> metrics
     ) {
-
         public RoomOption {
             metrics = List.copyOf(metrics);
         }

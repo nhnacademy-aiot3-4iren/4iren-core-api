@@ -1,6 +1,6 @@
 package com.nhnacademy.core.dto.dashboard;
 
-public record DashboardWidgetRoomOptionQueryResult(
+public record DashboardChartRoomOptionQueryResult(
         Long roomId,
         Long buildingId,
         String buildingName,

@@ -6,6 +6,7 @@ import com.influxdb.query.FluxRecord;
 import com.influxdb.query.dsl.Flux;
 import com.influxdb.query.exceptions.FluxCsvParserException;
 import com.influxdb.query.exceptions.FluxQueryException;
+import com.nhnacademy.core.domain.sensor.MetricSeriesWindow;
 import com.nhnacademy.core.exception.BadGatewayException;
 import com.nhnacademy.core.exception.ErrorCode;
 import com.nhnacademy.core.exception.ServiceUnavailableException;
@@ -250,11 +251,19 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
             Duration interval,
             Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
     ) {
+        return findRoomMetricSeriesByRooms(
+                MetricSeriesWindow.fromStart(from, to, interval), metricCodesByRoomAndDevEui
+        );
+    }
+
+    @Override
+    public List<RoomMetricSeriesByRoomQueryResult> findRoomMetricSeriesByRooms(
+            MetricSeriesWindow window,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    ) {
         Set<Long> requestedRoomIds = Set.copyOf(metricCodesByRoomAndDevEui.keySet());
         Optional<Flux> query = queryFactory.buildRoomMetricSeriesBatchQuery(
-                from,
-                to,
-                interval,
+                window,
                 metricCodesByRoomAndDevEui
         );
         Map<String, Object> queryContext = Map.of(
@@ -290,9 +299,7 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
                             metricCode,
                             requireBucketEndAt(
                                     record,
-                                    from,
-                                    to,
-                                    interval,
+                                    window,
                                     QueryType.ROOM_GAUGE_METRIC_SERIES_BATCH,
                                     roomId
                             ),
@@ -629,6 +636,20 @@ public class InfluxSensorMetricRepository implements SensorMetricRepository {
         long elapsedMillis = Duration.between(from, bucketEndAt).toMillis();
         if (elapsedMillis % interval.toMillis() != 0) {
             throw badResponse(queryType, roomId, "_time_not_aligned");
+        }
+        return bucketEndAt;
+    }
+
+    // 명시된 정렬 기준과 마지막 partial의 종료 시각을 함께 검증한다.
+    private Instant requireBucketEndAt(
+            FluxRecord record,
+            MetricSeriesWindow window,
+            QueryType queryType,
+            Long roomId
+    ) {
+        Instant bucketEndAt = requireTime(record, queryType, roomId);
+        if (!window.containsBucketEnd(bucketEndAt)) {
+            throw badResponse(queryType, roomId, "_time_not_aligned_or_out_of_range");
         }
         return bucketEndAt;
     }

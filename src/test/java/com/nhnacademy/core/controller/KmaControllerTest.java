@@ -1,5 +1,6 @@
 package com.nhnacademy.core.controller;
 
+import com.nhnacademy.core.controller.weather.KmaController;
 import com.nhnacademy.core.dto.kma.weather.KmaWeatherHistoryResponseDto;
 import com.nhnacademy.core.service.KmaService;
 import org.junit.jupiter.api.Test;

@@ -24,7 +24,7 @@ public class DashboardMetricStreamController {
 
     private final DashboardMetricStreamService dashboardMetricStreamService;
 
-    // 구독 중인 공간의 센서 지표 변경 알림을 SSE로 구독한다.
+    // 실제 측정값 대신 구독 중인 공간의 메트릭 변경 알림을 SSE로 전송한다.
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> streamDashboardMetrics(
             @CurrentUser AuthenticatedUser user,

@@ -7,7 +7,6 @@ public record DashboardRoomMetricsResponse(
         Instant generatedAt,
         List<RoomMetrics> rooms
 ) {
-
     public DashboardRoomMetricsResponse {
         rooms = List.copyOf(rooms);
     }
@@ -16,7 +15,6 @@ public record DashboardRoomMetricsResponse(
             Long roomId,
             List<MetricValue> metrics
     ) {
-
         public RoomMetrics {
             metrics = List.copyOf(metrics);
         }
