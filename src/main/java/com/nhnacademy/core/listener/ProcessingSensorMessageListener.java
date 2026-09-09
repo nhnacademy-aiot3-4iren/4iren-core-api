@@ -16,13 +16,14 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 
+// Processing의 센서 메시지를 검증한 뒤 공간 상세와 대시보드 SSE로 분배한다.
 @Slf4j
 @Component
 public class ProcessingSensorMessageListener {
 
     private final ProcessingSensorMessageMapper messageMapper;
-    private final SensorMetricSseRegistry registry;
-    private final DashboardMetricSseRegistry dashboardRegistry;
+    private final SensorMetricSseRegistry roomMetricSseRegistry;
+    private final DashboardMetricSseRegistry dashboardMetricSseRegistry;
 
     private final Clock clock;
     private final Counter receivedCounter;
@@ -32,14 +33,14 @@ public class ProcessingSensorMessageListener {
 
     public ProcessingSensorMessageListener(
             ProcessingSensorMessageMapper messageMapper,
-            SensorMetricSseRegistry registry,
-            DashboardMetricSseRegistry dashboardRegistry,
+            SensorMetricSseRegistry roomMetricSseRegistry,
+            DashboardMetricSseRegistry dashboardMetricSseRegistry,
             Clock clock,
             MeterRegistry meterRegistry
     ) {
         this.messageMapper = messageMapper;
-        this.registry = registry;
-        this.dashboardRegistry = dashboardRegistry;
+        this.roomMetricSseRegistry = roomMetricSseRegistry;
+        this.dashboardMetricSseRegistry = dashboardMetricSseRegistry;
         this.clock = clock;
         this.receivedCounter = meterRegistry.counter("core.sensor.metric.stream.source.messages.received");
         this.invalidCounter = meterRegistry.counter("core.sensor.metric.stream.source.messages.invalid");
@@ -56,8 +57,8 @@ public class ProcessingSensorMessageListener {
             updates = messageMapper.toMetricUpdates(message);
         } catch (RuntimeException e) {
             invalidCounter.increment();
-            log.info(
-                    "Processing 센서 메시지를 폐기합니다. devEui={}, reason={}",
+            log.debug(
+                    "Processing 센서 메시지의 SSE 이벤트 변환에 실패했습니다. devEui={}, reason={}",
                     extractDevEui(message),
                     e.getMessage()
             );
@@ -68,8 +69,9 @@ public class ProcessingSensorMessageListener {
         recordEventLag(updates.getFirst());
         updateCounter.increment(updates.size());
 
-        registry.dispatchAll(updates);
-        dashboardRegistry.dispatchAll(updates);
+        // 공간 상세는 측정값 이벤트를, 대시보드는 변경 알림을 각 로컬 연결에 전달한다.
+        roomMetricSseRegistry.dispatchAll(updates);
+        dashboardMetricSseRegistry.dispatchAll(updates);
     }
 
     private void recordEventLag(SensorMetricUpdate update) {

@@ -2,6 +2,7 @@ package com.nhnacademy.core.repository.sensor.influx;
 
 import com.influxdb.query.dsl.Flux;
 import com.influxdb.query.dsl.functions.restriction.Restrictions;
+import com.nhnacademy.core.domain.sensor.MetricSeriesWindow;
 import com.nhnacademy.core.property.InfluxDbProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -166,6 +167,15 @@ public class SensorMetricFluxQueryFactory {
             Duration interval,
             Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
     ) {
+        return buildRoomMetricSeriesBatchQuery(
+                MetricSeriesWindow.fromStart(from, to, interval), metricCodesByRoomAndDevEui
+        );
+    }
+
+    Optional<Flux> buildRoomMetricSeriesBatchQuery(
+            MetricSeriesWindow window,
+            Map<Long, Map<String, Set<String>>> metricCodesByRoomAndDevEui
+    ) {
         if (metricCodesByRoomAndDevEui == null || metricCodesByRoomAndDevEui.isEmpty()) {
             return Optional.empty();
         }
@@ -177,10 +187,8 @@ public class SensorMetricFluxQueryFactory {
             return Optional.empty();
         }
 
-        long intervalMillis = requireIntervalMillis(interval);
-        long offsetMillis = calculateWindowOffsetMillis(from, intervalMillis);
         Flux query = Flux.from(properties.bucket())
-                .range(from, to)
+                .range(window.from(), window.to())
                 .filter(and(
                         measurement().equal(SENSOR_TELEMETRY_MEASUREMENT),
                         field().equal(VALUE_FIELD),
@@ -188,14 +196,17 @@ public class SensorMetricFluxQueryFactory {
                 ))
                 .groupBy(List.of(ROOM_ID_TAG, DEV_EUI_TAG, METRIC_TAG))
                 .aggregateWindow()
-                .withEvery(intervalMillis, ChronoUnit.MILLIS)
-                .withOffset(offsetMillis, ChronoUnit.MILLIS)
+                .withEvery(window.interval().toMillis(), ChronoUnit.MILLIS)
+                .withOffset(window.offset().toMillis(), ChronoUnit.MILLIS)
                 .withAggregateFunction("mean")
                 .withColumn(VALUE_COLUMN)
                 .withCreateEmpty(false)
                 .groupBy(List.of(ROOM_ID_TAG, METRIC_TAG, TIME_COLUMN))
                 .mean(VALUE_COLUMN)
                 .groupBy(List.of(ROOM_ID_TAG, METRIC_TAG))
+                // 마지막 partial point의 종료 시각은 자연 경계 대신 실제 조회 종료 시각이다.
+                .map("(r) => ({r with _time: if r._time > time(v: \"" + window.to()
+                        + "\") then time(v: \"" + window.to() + "\") else r._time})")
                 .sort(List.of(TIME_COLUMN))
                 .keep(List.of(ROOM_ID_TAG, METRIC_TAG, TIME_COLUMN, VALUE_COLUMN));
 

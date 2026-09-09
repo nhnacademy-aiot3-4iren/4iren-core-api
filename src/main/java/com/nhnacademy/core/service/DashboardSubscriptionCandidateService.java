@@ -6,6 +6,7 @@ import com.nhnacademy.core.dto.dashboard.DashboardSubscriptionCandidatesResponse
 import com.nhnacademy.core.dto.dashboard.DashboardSubscriptionCandidatesResponse.RoomCandidate;
 import com.nhnacademy.core.repository.dashboard.DashboardSnapshotQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,44 +23,74 @@ public class DashboardSubscriptionCandidateService {
     public DashboardSubscriptionCandidatesResponse getCandidates(
             Long userId,
             Long teamId,
-            int page,
-            int size,
-            String query
+            String query,
+            Pageable pageable
     ) {
+        // 구독 여부는 사용자 ID가 아닌 팀별 구성원 ID를 기준으로 확인한다.
         TeamMember teamMember = teamAuthorizer.requireTeamMember(userId, teamId);
-        String normalizedQuery = query == null ? "" : query.trim();
+        String normalizedQuery = normalize(query);
 
         long totalElements = snapshotQueryRepository.countSubscriptionCandidates(
                 teamMember.getId(),
                 teamId,
                 normalizedQuery
         );
-        int totalPages = totalElements == 0
-                ? 0
-                : Math.toIntExact(Math.ceilDiv(totalElements, size));
-        int safePage = totalPages == 0 ? 0 : Math.min(page, totalPages - 1);
+        int totalPages = calculateTotalPages(totalElements, pageable.getPageSize());
+        Pageable resolvedPageable = resolvePageable(pageable, totalPages);
+        List<RoomCandidate> rooms = findCandidates(
+                teamMember.getId(),
+                teamId,
+                normalizedQuery,
+                totalElements,
+                resolvedPageable
+        );
 
-        List<RoomCandidate> rooms = totalElements == 0
-                ? List.of()
-                : snapshotQueryRepository.findSubscriptionCandidates(
-                                teamMember.getId(),
-                                teamId,
-                                normalizedQuery,
-                                (long) safePage * size,
-                                size
-                        ).stream()
-                        .map(this::toCandidate)
-                        .toList();
+        int currentPage = resolvedPageable.getPageNumber();
 
         return new DashboardSubscriptionCandidatesResponse(
                 rooms,
-                safePage,
-                size,
+                currentPage,
+                resolvedPageable.getPageSize(),
                 totalElements,
                 totalPages,
-                safePage == 0,
-                totalPages == 0 || safePage == totalPages - 1
+                currentPage == 0,
+                totalPages == 0 || currentPage == totalPages - 1
         );
+    }
+
+    private int calculateTotalPages(long totalElements, int pageSize) {
+        return totalElements == 0
+                ? 0
+                : Math.toIntExact(Math.ceilDiv(totalElements, pageSize));
+    }
+
+    private Pageable resolvePageable(Pageable pageable, int totalPages) {
+        int resolvedPage = totalPages == 0
+                ? 0
+                : Math.min(pageable.getPageNumber(), totalPages - 1);
+
+        return pageable.withPage(resolvedPage);
+    }
+
+    private List<RoomCandidate> findCandidates(
+            Long teamMemberId,
+            Long teamId,
+            String normalizedQuery,
+            long totalElements,
+            Pageable pageable
+    ) {
+        if (totalElements == 0) {
+            return List.of();
+        }
+
+        return snapshotQueryRepository.findSubscriptionCandidates(
+                        teamMemberId,
+                        teamId,
+                        normalizedQuery,
+                        pageable
+                ).stream()
+                .map(this::toCandidate)
+                .toList();
     }
 
     private RoomCandidate toCandidate(DashboardSubscriptionCandidateQueryResult room) {
@@ -69,5 +100,9 @@ public class DashboardSubscriptionCandidateService {
                 room.buildingName(),
                 room.roomName()
         );
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim();
     }
 }

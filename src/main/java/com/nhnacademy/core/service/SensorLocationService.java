@@ -1,11 +1,9 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.config.auth.UserRole;
-import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
 import com.nhnacademy.core.domain.room.Room;
 import com.nhnacademy.core.domain.sensor.SensorLocation;
 import com.nhnacademy.core.dto.PageResponse;
-import com.nhnacademy.core.dto.sensor.SensorTelemetryContextResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationCreateRequest;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationUpdateRequest;
@@ -39,7 +37,10 @@ public class SensorLocationService {
         Room room = getRoomOrThrow(roomId, teamId);
         SensorLocation sensorLocation = new SensorLocation(room, request.devEui(), request.locationDetail());
 
-        if (sensorLocationRepository.existsByDevEui(sensorLocation.getDevEui())) {
+        if (sensorLocationRepository.existsByBuilding_IdAndDevEui(
+                room.getBuilding().getId(),
+                sensorLocation.getDevEui()
+        )) {
             throw new ResourceConflictException(ErrorCode.SENSOR_LOCATION_DEV_EUI_DUPLICATED);
         }
 
@@ -79,16 +80,6 @@ public class SensorLocationService {
         SensorLocation sensorLocation = getSensorLocationOrThrow(sensorLocationId, teamId);
 
         return SensorLocationResponse.from(sensorLocation);
-    }
-
-    // 센서 위치 DevEUI로 조회
-    public SensorTelemetryContextResponse getSensorTelemetryContext(String devEui) {
-        String normalizedDevEui = SensorLocationNormalizer.normalizeDevEui(devEui);
-
-        return SensorTelemetryContextResponse.from(
-                sensorLocationRepository.findByDevEui(normalizedDevEui)
-                        .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SENSOR_LOCATION_NOT_FOUND))
-        );
     }
 
     // 센서 위치 수정

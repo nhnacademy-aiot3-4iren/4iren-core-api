@@ -400,7 +400,6 @@ public final class RoomSensorMetricCatalog {
             List<MetricCapability> capabilities,
             Map<String, AggregatableGaugeSelection> aggregatableGaugesByMetricCode
     ) {
-
         private MetricIndex {
             capabilities = List.copyOf(capabilities);
             aggregatableGaugesByMetricCode = Collections.unmodifiableMap(
@@ -417,7 +416,6 @@ public final class RoomSensorMetricCatalog {
             boolean roomSeriesSupported,
             boolean sensorSeriesSupported
     ) {
-
         public MetricCapability {
             Objects.requireNonNull(metric, "metric은 null일 수 없습니다.");
             if (supportedSensorCount <= 0) {
@@ -430,7 +428,6 @@ public final class RoomSensorMetricCatalog {
             MetricType metric,
             Set<String> devEuis
     ) {
-
         public AggregatableGaugeSelection {
             Objects.requireNonNull(metric, "metric은 null일 수 없습니다.");
             Objects.requireNonNull(devEuis, "devEuis는 null일 수 없습니다.");
@@ -443,7 +440,6 @@ public final class RoomSensorMetricCatalog {
             Map<String, List<MetricType>> metricsByDevEui,
             Map<String, Set<String>> metricCodesByDevEui
     ) {
-
         public SensorSeriesSelection {
             devEuis = List.copyOf(devEuis);
 

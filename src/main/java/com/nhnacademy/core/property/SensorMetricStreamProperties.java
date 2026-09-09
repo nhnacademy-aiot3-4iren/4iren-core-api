@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.time.Duration;
 import java.util.Objects;
 
+// 공간 상세와 대시보드 SSE가 함께 사용하는 연결·전송 설정이다.
 @ConfigurationProperties(prefix = "sensor-metric.stream")
 public record SensorMetricStreamProperties(
         // Processing의 기존 센서 메시지를 수신할 RabbitMQ 정보
@@ -15,7 +16,7 @@ public record SensorMetricStreamProperties(
         Duration heartbeatInterval,
         // 연결 종료 후 브라우저가 재연결을 시도할 때 사용할 대기 시간
         Duration retryInterval,
-        // 최초 연결과 재연결 사이의 누락 이벤트를 복구하는 Redis replay 설정
+        // 공간 상세 SSE에서 누락 이벤트를 복구하는 Redis replay 설정
         Replay replay,
         // 연결별 비동기 SSE 전송 큐 설정
         Dispatch dispatch,

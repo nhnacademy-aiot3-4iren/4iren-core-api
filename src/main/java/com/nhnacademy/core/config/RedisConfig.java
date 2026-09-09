@@ -3,6 +3,7 @@ package com.nhnacademy.core.config;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.core.domain.sensor.MetricType;
+import com.nhnacademy.core.service.dashboard.DashboardSeriesSnapshot;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -63,6 +64,14 @@ public class RedisConfig {
                 objectMapper,
                 RoomSensorMetricSnapshots.LatestSnapshot.class
         );
+    }
+
+    @Bean("dashboardSeriesTemplate")
+    public RedisTemplate<String, DashboardSeriesSnapshot> dashboardSeriesTemplate(
+            RedisConnectionFactory connectionFactory,
+            ObjectMapper objectMapper
+    ) {
+        return createJsonRedisTemplate(connectionFactory, objectMapper, DashboardSeriesSnapshot.class);
     }
 
     private <T> RedisTemplate<String, T> createJsonRedisTemplate(

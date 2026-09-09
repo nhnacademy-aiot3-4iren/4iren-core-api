@@ -1,10 +1,6 @@
 package com.nhnacademy.core.dto.dashboard;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.util.List;
 
@@ -17,7 +13,6 @@ public record DashboardRoomMetricsRequest(
         @Size(max = 4)
         List<@NotBlank @Size(max = 50) String> metricCodes
 ) {
-
     public DashboardRoomMetricsRequest {
         roomIds = roomIds == null ? null : List.copyOf(roomIds);
         metricCodes = metricCodes == null ? null : List.copyOf(metricCodes);

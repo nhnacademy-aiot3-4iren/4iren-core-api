@@ -4,8 +4,10 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.nhnacademy.core.domain.sensor.MetricType;
 import com.nhnacademy.core.property.CacheNamespaceProperties;
+import com.nhnacademy.core.property.DashboardSeriesCacheProperties;
 import com.nhnacademy.core.property.SensorMetricCatalogProperties;
 import com.nhnacademy.core.property.SensorMetricSnapshotCacheProperties;
+import com.nhnacademy.core.service.dashboard.DashboardSeriesSnapshot;
 import com.nhnacademy.core.service.snapshot.RoomSensorMetricSnapshots;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -26,7 +28,8 @@ import java.util.List;
 @EnableCaching
 @EnableConfigurationProperties({
         SensorMetricCatalogProperties.class,
-        SensorMetricSnapshotCacheProperties.class
+        SensorMetricSnapshotCacheProperties.class,
+        DashboardSeriesCacheProperties.class
 })
 public class CacheConfig {
 
@@ -70,6 +73,16 @@ public class CacheConfig {
     ) {
         return Caffeine.newBuilder()
                 .maximumSize(properties.maximumSizePerType())
+                .expireAfterWrite(properties.l1Ttl())
+                .build();
+    }
+
+    @Bean("dashboardSeriesLocalCache")
+    public Cache<String, DashboardSeriesSnapshot> dashboardSeriesLocalCache(
+            DashboardSeriesCacheProperties properties
+    ) {
+        return Caffeine.newBuilder()
+                .maximumSize(properties.maximumSize())
                 .expireAfterWrite(properties.l1Ttl())
                 .build();
     }

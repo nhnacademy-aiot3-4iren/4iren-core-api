@@ -1,6 +1,7 @@
 package com.nhnacademy.core.service;
 
 import com.nhnacademy.core.domain.normalizer.SensorLocationNormalizer;
+import com.nhnacademy.core.domain.sensor.MetricSeriesWindow;
 import com.nhnacademy.core.exception.InvalidRequestException;
 import com.nhnacademy.core.property.SensorMetricQueryProperties;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +85,21 @@ public class RoomSensorMetricQueryValidator {
             Instant to,
             Duration interval
     ) {
+        validateSeriesInputs(from, to, interval);
+        Duration range = Duration.between(from, to);
+        if (range.toMillis() % interval.toMillis() != 0) {
+            throw invalidMetricQuery("조회 기간은 interval로 나누어떨어져야 합니다.");
+        }
+        validateBucketCount(countBuckets(range, interval));
+    }
+
+    // 정렬된 시계열은 양 끝 partial까지 포함해 결과 개수를 제한한다.
+    public void validateSeriesWindow(MetricSeriesWindow window) {
+        validateSeriesInputs(window.from(), window.to(), window.interval());
+        validateBucketCount(window.bucketCount());
+    }
+
+    private void validateSeriesInputs(Instant from, Instant to, Duration interval) {
         if (from == null || to == null || interval == null) {
             throw new InvalidRequestException();
         }
@@ -114,11 +130,10 @@ public class RoomSensorMetricQueryValidator {
         if (interval.compareTo(range) > 0) {
             throw invalidMetricQuery("interval은 조회 기간보다 클 수 없습니다.");
         }
-        if (range.toMillis() % interval.toMillis() != 0) {
-            throw invalidMetricQuery("조회 기간은 interval로 나누어떨어져야 합니다.");
-        }
+    }
 
-        if (countBuckets(range, interval) > properties.maxBucketCount()) {
+    private void validateBucketCount(long bucketCount) {
+        if (bucketCount > properties.maxBucketCount()) {
             throw invalidMetricQuery(
                     "조회 결과 구간은 최대 %,d개입니다."
                             .formatted(properties.maxBucketCount())

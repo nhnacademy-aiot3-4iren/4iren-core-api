@@ -307,7 +307,7 @@ public enum ErrorCode {
     SENSOR_LOCATION_DEV_EUI_DUPLICATED(
             HttpStatus.CONFLICT,
             "SENSOR_LOCATION.DEV_EUI_DUPLICATED",
-            "이미 등록된 DevEUI입니다."
+            "해당 건물에 이미 등록된 DevEUI입니다."
     ),
 
     // 기기 오류

@@ -11,7 +11,6 @@ public record DashboardSubscriptionCandidatesResponse(
         boolean first,
         boolean last
 ) {
-
     public DashboardSubscriptionCandidatesResponse {
         rooms = List.copyOf(rooms);
     }
