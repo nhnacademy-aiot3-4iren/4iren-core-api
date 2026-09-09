@@ -19,9 +19,7 @@ public interface SensorLocationRepository extends JpaRepository<SensorLocation, 
 
     List<SensorDevEuiProjection> findByRoom_IdOrderByDevEuiAsc(Long roomId);
 
-    Optional<SensorLocation> findByDevEui(String devEui);
-
-    boolean existsByDevEui(String devEui);
+    boolean existsByBuilding_IdAndDevEui(Long buildingId, String devEui);
 
     boolean existsByRoom(Room room);
 
