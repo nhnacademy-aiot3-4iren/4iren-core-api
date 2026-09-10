@@ -205,7 +205,8 @@ public class SensorMetricFluxQueryFactory {
                 .mean(VALUE_COLUMN)
                 .groupBy(List.of(ROOM_ID_TAG, METRIC_TAG))
                 // 마지막 partial point의 종료 시각은 자연 경계 대신 실제 조회 종료 시각이다.
-                .map("(r) => ({r with _time: if r._time > time(v: \"" + window.to()
+                // Flux DSL이 `(r) =>`를 추가하므로 레코드 변환 표현식만 전달한다.
+                .map("({r with _time: if r._time > time(v: \"" + window.to()
                         + "\") then time(v: \"" + window.to() + "\") else r._time})")
                 .sort(List.of(TIME_COLUMN))
                 .keep(List.of(ROOM_ID_TAG, METRIC_TAG, TIME_COLUMN, VALUE_COLUMN));
