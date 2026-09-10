@@ -15,7 +15,8 @@ public interface DashboardChartRepository extends JpaRepository<DashboardChart, 
     @EntityGraph(attributePaths = {"room", "room.building"})
     List<DashboardChart> findAllByTeamMemberOrderByDisplayOrderAscIdAsc(TeamMember teamMember);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    // 신규 차트가 참조하는 Room 프록시를 응답 변환까지 관리해야 하므로 영속성 컨텍스트를 비우지 않는다.
+    @Modifying(flushAutomatically = true)
     @Query("delete from DashboardChart chart where chart.teamMember.id = :teamMemberId")
     int deleteAllByTeamMemberId(@Param("teamMemberId") Long teamMemberId);
 }
