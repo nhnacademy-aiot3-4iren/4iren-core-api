@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.sensor;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.sensor.docs.RoomSensorMetricApiDocs;
 import com.nhnacademy.core.dto.sensor.metric.*;
 import com.nhnacademy.core.service.RoomSensorMetricService;
 import com.nhnacademy.core.service.stream.RoomSensorMetricStreamService;
@@ -22,11 +23,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}/rooms/{room-id}/sensor-metrics")
-public class RoomSensorMetricController {
+public class RoomSensorMetricController implements RoomSensorMetricApiDocs {
 
     private final RoomSensorMetricService roomSensorMetricService;
     private final RoomSensorMetricStreamService roomSensorMetricStreamService;
 
+    @Override
     @GetMapping("/catalog")
     public RoomMetricCatalogResponse getRoomMetricCatalog(
             @CurrentUser AuthenticatedUser user,
@@ -40,6 +42,7 @@ public class RoomSensorMetricController {
         );
     }
 
+    @Override
     @GetMapping("/summary")
     public RoomMetricSummaryResponse getRoomMetricSummary(
             @CurrentUser AuthenticatedUser user,
@@ -53,6 +56,7 @@ public class RoomSensorMetricController {
         );
     }
 
+    @Override
     @GetMapping("/latest")
     public RoomSensorMetricLatestResponse getLatestRoomSensorMetrics(
             @CurrentUser AuthenticatedUser user,
@@ -66,6 +70,7 @@ public class RoomSensorMetricController {
         );
     }
 
+    @Override
     @GetMapping("/series")
     public RoomMetricSeriesResponse getRoomMetricSeries(
             @CurrentUser AuthenticatedUser user,
@@ -87,6 +92,7 @@ public class RoomSensorMetricController {
         );
     }
 
+    @Override
     @GetMapping("/sensors/series")
     public RoomSensorMetricSeriesResponse getRoomSensorMetricSeries(
             @CurrentUser AuthenticatedUser user,
@@ -110,6 +116,7 @@ public class RoomSensorMetricController {
         );
     }
 
+    @Override
     @GetMapping(
             value = "/stream",
             produces = MediaType.TEXT_EVENT_STREAM_VALUE

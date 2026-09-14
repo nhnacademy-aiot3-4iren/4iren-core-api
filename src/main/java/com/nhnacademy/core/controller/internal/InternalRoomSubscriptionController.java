@@ -3,6 +3,7 @@ package com.nhnacademy.core.controller.internal;
 import com.nhnacademy.core.dto.subscription.RoomSubscribersResponse;
 import com.nhnacademy.core.dto.subscription.UserRoomSubscriptionsResponse;
 import com.nhnacademy.core.service.RoomSubscriptionService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Hidden
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal")

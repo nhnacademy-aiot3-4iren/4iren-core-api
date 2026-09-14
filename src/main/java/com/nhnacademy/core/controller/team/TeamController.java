@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.team;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.team.docs.TeamApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.service.TeamService;
@@ -20,10 +21,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams")
-public class TeamController {
+public class TeamController implements TeamApiDocs {
 
     private final TeamService teamService;
 
+    @Override
     @PostMapping
     public ResponseEntity<TeamResponse> createTeam(
             @CurrentUser AuthenticatedUser user,
@@ -41,6 +43,7 @@ public class TeamController {
                 .body(response);
     }
 
+    @Override
     @GetMapping
     public PageResponse<TeamResponse> getTeams(
             @CurrentUser AuthenticatedUser user,
@@ -49,6 +52,7 @@ public class TeamController {
         return teamService.getTeams(user.id(), user.role(), pageable);
     }
 
+    @Override
     @GetMapping("/all")
     public List<TeamResponse> getTeams(
             @CurrentUser AuthenticatedUser user
@@ -56,6 +60,7 @@ public class TeamController {
         return teamService.getTeams(user.id(), user.role());
     }
 
+    @Override
     @GetMapping("/{team-id}")
     public TeamDetailResponse getTeam(
             @CurrentUser AuthenticatedUser user,
@@ -64,6 +69,7 @@ public class TeamController {
         return teamService.getTeam(user.id(), user.role(), teamId);
     }
 
+    @Override
     @PatchMapping("/{team-id}")
     public TeamResponse updateTeam(
             @CurrentUser AuthenticatedUser user,
@@ -73,6 +79,7 @@ public class TeamController {
         return teamService.updateTeam(user.id(), user.role(), teamId, request);
     }
 
+    @Override
     @PatchMapping("/{team-id}/status")
     public TeamResponse updateTeamStatus(
             @CurrentUser AuthenticatedUser user,
@@ -82,6 +89,7 @@ public class TeamController {
         return teamService.updateTeamStatus(user.id(), user.role(), teamId, request);
     }
 
+    @Override
     @DeleteMapping("/{team-id}")
     public ResponseEntity<Void> deleteTeam(
             @CurrentUser AuthenticatedUser user,

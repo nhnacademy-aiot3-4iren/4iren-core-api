@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.dashboard;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.dashboard.docs.DashboardApiDocs;
 import com.nhnacademy.core.dto.dashboard.DashboardRoomMetricsRequest;
 import com.nhnacademy.core.dto.dashboard.DashboardRoomMetricsResponse;
 import com.nhnacademy.core.dto.dashboard.DashboardSnapshotResponse;
@@ -25,13 +26,14 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}/dashboard")
-public class DashboardController {
+public class DashboardController implements DashboardApiDocs {
 
     private final DashboardSnapshotService dashboardSnapshotService;
     private final DashboardSubscriptionCandidateService subscriptionCandidateService;
     private final DashboardRoomMetricsService dashboardRoomMetricsService;
 
     // 구독 공간과 최근 측정값을 포함한 대시보드 초기 화면 데이터를 조회한다.
+    @Override
     @GetMapping("/snapshot")
     public DashboardSnapshotResponse getSnapshot(
             @CurrentUser AuthenticatedUser user,
@@ -52,6 +54,7 @@ public class DashboardController {
     }
 
     // 대시보드에 추가할 수 있는 팀 내 미구독 공간을 검색한다.
+    @Override
     @GetMapping("/subscription-candidates")
     public DashboardSubscriptionCandidatesResponse getSubscriptionCandidates(
             @CurrentUser AuthenticatedUser user,
@@ -63,6 +66,7 @@ public class DashboardController {
     }
 
     // 지정한 구독 공간들의 최근 15분 평균 측정값을 일괄 조회한다.
+    @Override
     @PostMapping("/room-metrics")
     public DashboardRoomMetricsResponse getRoomMetrics(
             @CurrentUser AuthenticatedUser user,

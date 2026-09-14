@@ -1,11 +1,13 @@
 package com.nhnacademy.core.controller.weather;
 
+import com.nhnacademy.core.controller.weather.docs.KmaApiDocs;
 import com.nhnacademy.core.dto.kma.llm.KmaCurrentWeatherResponseDto;
 import com.nhnacademy.core.dto.kma.llm.KmaForecastWeatherResponseDto;
 import com.nhnacademy.core.dto.kma.weather.KmaCurrentWeatherDto;
 import com.nhnacademy.core.dto.kma.weather.KmaForecastWeatherDto;
 import com.nhnacademy.core.dto.kma.weather.KmaWeatherHistoryResponseDto;
 import com.nhnacademy.core.service.KmaService;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +20,7 @@ import java.time.LocalDateTime;
 @RequestMapping("/kma")
 @RequiredArgsConstructor
 @Slf4j
-public class KmaController {
+public class KmaController implements KmaApiDocs {
     private final KmaService kmaService;
 
     /**
@@ -27,6 +29,7 @@ public class KmaController {
      * @param regionName 조회할 지역명
      * @return 현재 날씨
      */
+    @Override
     @GetMapping("/current-weather")
     public ResponseEntity<KmaCurrentWeatherResponseDto> getNcst(@RequestParam String regionName) {
         KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstForLLM(regionName);
@@ -34,6 +37,7 @@ public class KmaController {
         return ResponseEntity.ok(response);
     }
 
+    @Override
     @GetMapping("/forecast-weather")
     public ResponseEntity<KmaForecastWeatherResponseDto> getFcst(@RequestParam String regionName) {
         KmaForecastWeatherResponseDto response = kmaService.getUltraSrtFcstForLLM(regionName);
@@ -41,18 +45,21 @@ public class KmaController {
         return ResponseEntity.ok(response);
     }
 
+    @Hidden
     @GetMapping("/internal/current-weather")
     public ResponseEntity<KmaCurrentWeatherDto> getInternalNcst(@RequestParam String regionName) {
         KmaCurrentWeatherDto response = kmaService.getCurrentUltraSrtNcst(regionName);
         return ResponseEntity.ok(response);
     }
 
+    @Hidden
     @GetMapping("/internal/forecast-weather")
     public ResponseEntity<KmaForecastWeatherDto> getInternalFcst(@RequestParam String regionName) {
         KmaForecastWeatherDto response = kmaService.getUltraSrtFcst(regionName);
         return ResponseEntity.ok(response);
     }
 
+    @Override
     @GetMapping("/rooms/{roomId}/weather")
     public ResponseEntity<KmaCurrentWeatherResponseDto> getNcstToRoomId(@PathVariable Long roomId, @RequestParam LocalDateTime dateTime) {
         KmaCurrentWeatherResponseDto response = kmaService.getCurrentSimpleUltraSrtNcstToRoomIdForLLM(roomId, dateTime);
@@ -60,6 +67,7 @@ public class KmaController {
         return ResponseEntity.ok(response);
     }
 
+    @Override
     @GetMapping("/weather-history")
     public ResponseEntity<KmaWeatherHistoryResponseDto> getWeatherHistory(
             @RequestParam String regionName,

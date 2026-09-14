@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.device;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.device.docs.DeviceActionHistoryApiDocs;
 import com.nhnacademy.core.domain.device.Weekday;
 import com.nhnacademy.core.dto.device.DeviceActionHistoryRequest;
 import com.nhnacademy.core.dto.device.DeviceActionHistoryResponse;
@@ -19,10 +20,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}")
-public class DeviceActionHistoryController {
+public class DeviceActionHistoryController implements DeviceActionHistoryApiDocs {
 
     private final DeviceActionHistoryService historyService;
 
+    @Override
     @PostMapping("/devices/{device-id}/action-histories")
     public ResponseEntity<Void> create(
             @CurrentUser AuthenticatedUser user,
@@ -34,6 +36,7 @@ public class DeviceActionHistoryController {
         return ResponseEntity.noContent().build();
     }
 
+    @Override
     @GetMapping("/rooms/{room-id}/device-action-histories")
     public List<DeviceActionHistoryResponse> getAll(
             @PathVariable("team-id") @Positive Long teamId,
@@ -48,6 +51,7 @@ public class DeviceActionHistoryController {
         return historyService.getAll(teamId, roomId, deviceId, dayOfWeek, startAt, endAt);
     }
 
+    @Override
     @GetMapping("/action-histories/{history-id}")
     public DeviceActionHistoryResponse get(
             @PathVariable("team-id") @Positive Long teamId,

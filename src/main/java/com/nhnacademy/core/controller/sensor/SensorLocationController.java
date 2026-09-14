@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.sensor;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.sensor.docs.SensorLocationApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationCreateRequest;
 import com.nhnacademy.core.dto.sensor.location.SensorLocationResponse;
@@ -22,10 +23,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}")
-public class SensorLocationController {
+public class SensorLocationController implements SensorLocationApiDocs {
 
     private final SensorLocationService sensorLocationService;
 
+    @Override
     @PostMapping("/rooms/{room-id}/sensor-locations")
     public ResponseEntity<SensorLocationResponse> createSensorLocation(
             @CurrentUser AuthenticatedUser user,
@@ -46,6 +48,7 @@ public class SensorLocationController {
                 .body(response);
     }
 
+    @Override
     @GetMapping("/rooms/{room-id}/sensor-locations")
     public PageResponse<SensorLocationResponse> getSensorLocations(
             @CurrentUser AuthenticatedUser user,
@@ -56,6 +59,7 @@ public class SensorLocationController {
         return sensorLocationService.getSensorLocations(user.id(), teamId, roomId, pageable);
     }
 
+    @Override
     @GetMapping("/rooms/{room-id}/sensor-locations/all")
     public List<SensorLocationResponse> getSensorLocations(
             @CurrentUser AuthenticatedUser user,
@@ -65,6 +69,7 @@ public class SensorLocationController {
         return sensorLocationService.getSensorLocations(user.id(), teamId, roomId);
     }
 
+    @Override
     @GetMapping("/sensor-locations/{sensor-location-id}")
     public SensorLocationResponse getSensorLocation(
             @CurrentUser AuthenticatedUser user,
@@ -74,6 +79,7 @@ public class SensorLocationController {
         return sensorLocationService.getSensorLocation(user.id(), teamId, sensorLocationId);
     }
 
+    @Override
     @PatchMapping("/sensor-locations/{sensor-location-id}")
     public SensorLocationResponse updateSensorLocation(
             @CurrentUser AuthenticatedUser user,
@@ -84,6 +90,7 @@ public class SensorLocationController {
         return sensorLocationService.updateSensorLocation(user.id(), user.role(), teamId, sensorLocationId, request);
     }
 
+    @Override
     @DeleteMapping("/sensor-locations/{sensor-location-id}")
     public ResponseEntity<Void> deleteSensorLocation(
             @CurrentUser AuthenticatedUser user,

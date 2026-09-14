@@ -1,5 +1,7 @@
 package com.nhnacademy.core.dto.sensor.metric;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.Instant;
 
 public final class SensorMetricStreamEvents {
@@ -7,6 +9,7 @@ public final class SensorMetricStreamEvents {
     private SensorMetricStreamEvents() {
     }
 
+    @Schema(name = "SensorMetricStreamConnected")
     public record Connected(
             String connectionId,
             Long roomId,

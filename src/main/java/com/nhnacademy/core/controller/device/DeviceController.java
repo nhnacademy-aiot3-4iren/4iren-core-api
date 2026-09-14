@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.device;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.device.docs.DeviceApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.device.DeviceCreateRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;
@@ -22,10 +23,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}")
-public class DeviceController {
+public class DeviceController implements DeviceApiDocs {
 
     private final DeviceService deviceService;
 
+    @Override
     @PostMapping("/rooms/{room-id}/devices")
     public ResponseEntity<DeviceResponse> createDevice(
             @CurrentUser AuthenticatedUser user,
@@ -45,6 +47,7 @@ public class DeviceController {
                 .body(response);
     }
 
+    @Override
     @GetMapping("/rooms/{room-id}/devices")
     public PageResponse<DeviceResponse> getDevices(
             @CurrentUser AuthenticatedUser user,
@@ -55,6 +58,7 @@ public class DeviceController {
         return deviceService.getDevices(user.id(), teamId, roomId, pageable);
     }
 
+    @Override
     @GetMapping("/rooms/{room-id}/devices/all")
     public List<DeviceResponse> getDevices(
             @CurrentUser AuthenticatedUser user,
@@ -64,6 +68,7 @@ public class DeviceController {
         return deviceService.getDevices(user.id(), teamId, roomId);
     }
 
+    @Override
     @GetMapping("/devices/{device-id}")
     public DeviceResponse getDevice(
             @CurrentUser AuthenticatedUser user,
@@ -73,6 +78,7 @@ public class DeviceController {
         return deviceService.getDevice(user.id(), teamId, deviceId);
     }
 
+    @Override
     @PatchMapping("/devices/{device-id}")
     public DeviceResponse updateDevice(
             @CurrentUser AuthenticatedUser user,
@@ -83,6 +89,7 @@ public class DeviceController {
         return deviceService.updateDevice(user.id(), user.role(), teamId, deviceId, request);
     }
 
+    @Override
     @DeleteMapping("/devices/{device-id}")
     public ResponseEntity<Void> deleteDevice(
             @CurrentUser AuthenticatedUser user,

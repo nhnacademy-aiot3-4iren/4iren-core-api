@@ -1,5 +1,7 @@
 package com.nhnacademy.core.dto.dashboard;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -45,6 +47,7 @@ public record DashboardSnapshotResponse(
         }
     }
 
+    @Schema(name = "DashboardSnapshotMetricValue")
     public record MetricValue(
             String metricCode,
             String displayName,

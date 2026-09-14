@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.dashboard;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.dashboard.docs.DashboardMetricStreamApiDocs;
 import com.nhnacademy.core.service.stream.DashboardMetricStreamService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -20,11 +21,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}/dashboard/stream")
-public class DashboardMetricStreamController {
+public class DashboardMetricStreamController implements DashboardMetricStreamApiDocs {
 
     private final DashboardMetricStreamService dashboardMetricStreamService;
 
     // 실제 측정값 대신 구독 중인 공간의 메트릭 변경 알림을 SSE로 전송한다.
+    @Override
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> streamDashboardMetrics(
             @CurrentUser AuthenticatedUser user,

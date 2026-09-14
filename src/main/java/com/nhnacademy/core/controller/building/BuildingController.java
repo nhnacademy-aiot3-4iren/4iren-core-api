@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.building;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.building.docs.BuildingApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.building.BuildingCreateRequest;
 import com.nhnacademy.core.dto.building.BuildingDetailResponse;
@@ -23,10 +24,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}/buildings")
-public class BuildingController {
+public class BuildingController implements BuildingApiDocs {
 
     private final BuildingService buildingService;
 
+    @Override
     @PostMapping
     public ResponseEntity<BuildingResponse> createBuilding(
             @CurrentUser AuthenticatedUser user,
@@ -45,6 +47,7 @@ public class BuildingController {
                 .body(response);
     }
 
+    @Override
     @GetMapping
     public PageResponse<BuildingResponse> getBuildings(
             @CurrentUser AuthenticatedUser user,
@@ -54,6 +57,7 @@ public class BuildingController {
         return buildingService.getBuildings(user.id(), teamId, pageable);
     }
 
+    @Override
     @GetMapping("/all")
     public List<BuildingResponse> getBuildings(
             @CurrentUser AuthenticatedUser user,
@@ -62,6 +66,7 @@ public class BuildingController {
         return buildingService.getBuildings(user.id(), teamId);
     }
 
+    @Override
     @GetMapping("/{building-id}")
     public BuildingDetailResponse getBuilding(
             @CurrentUser AuthenticatedUser user,
@@ -71,6 +76,7 @@ public class BuildingController {
         return buildingService.getBuilding(user.id(), teamId, buildingId);
     }
 
+    @Override
     @PatchMapping("/{building-id}")
     public BuildingResponse updateBuilding(
             @CurrentUser AuthenticatedUser user,
@@ -81,6 +87,7 @@ public class BuildingController {
         return buildingService.updateBuilding(user.id(), user.role(), teamId, buildingId, request);
     }
 
+    @Override
     @DeleteMapping("/{building-id}")
     public ResponseEntity<Void> deleteBuilding(
             @CurrentUser AuthenticatedUser user,
