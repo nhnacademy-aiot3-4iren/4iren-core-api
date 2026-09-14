@@ -1,5 +1,7 @@
 package com.nhnacademy.core.dto.dashboard;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.Instant;
 
 // 대시보드 SSE가 브라우저에 전달하는 이벤트 본문을 정의한다.
@@ -9,6 +11,7 @@ public final class DashboardMetricStreamEvents {
     }
 
     // 연결 성립과 브라우저 재연결 시 현재 데이터를 다시 조회할 시점을 알린다.
+    @Schema(name = "DashboardMetricStreamConnected")
     public record Connected(
             String connectionId,
             Instant connectedAt

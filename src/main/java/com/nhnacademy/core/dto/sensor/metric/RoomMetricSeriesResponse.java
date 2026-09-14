@@ -2,6 +2,7 @@ package com.nhnacademy.core.dto.sensor.metric;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.nhnacademy.core.domain.sensor.MetricKind;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -26,6 +27,7 @@ public record RoomMetricSeriesResponse(
         points = List.copyOf(points);
     }
 
+    @Schema(name = "RoomMetricSeriesPoint")
     public record MetricPoint(
             Instant bucketEndAt,
             Double averageValue

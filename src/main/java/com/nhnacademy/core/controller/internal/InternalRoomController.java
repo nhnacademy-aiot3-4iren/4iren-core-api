@@ -6,6 +6,7 @@ import com.nhnacademy.core.dto.room.RoomManagementAccessResponse;
 import com.nhnacademy.core.dto.room.RoomRegionResponse;
 import com.nhnacademy.core.service.RoomManagementAccessService;
 import com.nhnacademy.core.service.RoomService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Hidden
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/rooms")

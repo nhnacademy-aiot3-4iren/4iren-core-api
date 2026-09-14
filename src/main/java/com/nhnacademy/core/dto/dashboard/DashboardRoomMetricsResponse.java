@@ -1,5 +1,7 @@
 package com.nhnacademy.core.dto.dashboard;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -20,6 +22,7 @@ public record DashboardRoomMetricsResponse(
         }
     }
 
+    @Schema(name = "DashboardRoomMetricValue")
     public record MetricValue(
             String metricCode,
             String displayName,

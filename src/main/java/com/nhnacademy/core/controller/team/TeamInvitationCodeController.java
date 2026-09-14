@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.team;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.team.docs.TeamInvitationCodeApiDocs;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeCreateRequest;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeResponse;
 import com.nhnacademy.core.dto.team.invitation.TeamInvitationCodeSummaryResponse;
@@ -19,10 +20,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}/invitation-codes")
-public class TeamInvitationCodeController {
+public class TeamInvitationCodeController implements TeamInvitationCodeApiDocs {
 
     private final TeamInvitationCodeService teamInvitationCodeService;
 
+    @Override
     @PostMapping
     public ResponseEntity<TeamInvitationCodeResponse> createInvitationCode(
             @CurrentUser AuthenticatedUser user,
@@ -37,6 +39,7 @@ public class TeamInvitationCodeController {
                 .body(response);
     }
 
+    @Override
     @GetMapping
     public ResponseEntity<List<TeamInvitationCodeSummaryResponse>> getInvitationCodes(
             @CurrentUser AuthenticatedUser user,
@@ -50,6 +53,7 @@ public class TeamInvitationCodeController {
                 .body(response);
     }
 
+    @Override
     @DeleteMapping("/{invitation-code-id}")
     public ResponseEntity<Void> deactivateInvitationCode(
             @CurrentUser AuthenticatedUser user,

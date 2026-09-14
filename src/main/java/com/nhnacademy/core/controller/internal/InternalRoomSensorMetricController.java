@@ -3,6 +3,7 @@ package com.nhnacademy.core.controller.internal;
 import com.nhnacademy.core.dto.sensor.metric.RoomMetricSummaryResponse;
 import com.nhnacademy.core.dto.sensor.metric.RoomSensorMetricSeriesResponse;
 import com.nhnacademy.core.service.RoomSensorMetricService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+@Hidden
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/rooms/{room-id}/sensor-metrics")

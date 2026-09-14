@@ -1,5 +1,7 @@
 package com.nhnacademy.core.dto.kma.llm;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
 public record KmaForecastWeatherResponseDto(
@@ -10,6 +12,7 @@ public record KmaForecastWeatherResponseDto(
         String baseDateTime,
         List<Forecast> forecasts
 ) {
+    @Schema(name = "KmaLlmForecast")
     public record Forecast(
             String forecastDateTime,
             String sky,

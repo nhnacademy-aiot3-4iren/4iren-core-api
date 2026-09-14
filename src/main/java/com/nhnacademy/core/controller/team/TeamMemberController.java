@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.team;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.team.docs.TeamMemberApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.member.TeamJoinRequest;
 import com.nhnacademy.core.dto.team.member.TeamMemberResponse;
@@ -17,10 +18,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-public class TeamMemberController {
+public class TeamMemberController implements TeamMemberApiDocs {
 
     private final TeamMemberService teamMemberService;
 
+    @Override
     @PostMapping("/team-memberships")
     public ResponseEntity<TeamMemberResponse> joinTeam(
             @CurrentUser AuthenticatedUser user,
@@ -32,6 +34,7 @@ public class TeamMemberController {
                 .body(response);
     }
 
+    @Override
     @GetMapping("/teams/{team-id}/members")
     public PageResponse<TeamMemberResponse> getTeamMembers(
             @CurrentUser AuthenticatedUser user,
@@ -41,6 +44,7 @@ public class TeamMemberController {
         return teamMemberService.getTeamMembers(user.id(), teamId, pageable);
     }
 
+    @Override
     @DeleteMapping("/teams/{team-id}/members/{team-member-id}")
     public ResponseEntity<Void> removeTeamMember(
             @CurrentUser AuthenticatedUser user,
@@ -53,6 +57,7 @@ public class TeamMemberController {
                 .build();
     }
 
+    @Override
     @DeleteMapping("/teams/{team-id}/members/me")
     public ResponseEntity<Void> leaveTeam(
             @CurrentUser AuthenticatedUser user,

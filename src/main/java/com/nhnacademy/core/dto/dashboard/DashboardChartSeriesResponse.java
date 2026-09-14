@@ -1,6 +1,7 @@
 package com.nhnacademy.core.dto.dashboard;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -35,6 +36,7 @@ public record DashboardChartSeriesResponse(
         }
     }
 
+    @Schema(name = "DashboardChartMetricPoint")
     public record MetricPoint(
             Instant bucketEndAt,
             Double averageValue,

@@ -2,6 +2,7 @@ package com.nhnacademy.core.controller.room;
 
 import com.nhnacademy.core.config.auth.AuthenticatedUser;
 import com.nhnacademy.core.config.auth.CurrentUser;
+import com.nhnacademy.core.controller.room.docs.RoomApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.room.*;
 import com.nhnacademy.core.service.RoomService;
@@ -22,10 +23,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}")
-public class RoomController {
+public class RoomController implements RoomApiDocs {
 
     private final RoomService roomService;
 
+    @Override
     @PostMapping("/buildings/{building-id}/rooms")
     public ResponseEntity<RoomResponse> createRoom(
             @CurrentUser AuthenticatedUser user,
@@ -45,6 +47,7 @@ public class RoomController {
                 .body(response);
     }
 
+    @Override
     @GetMapping("/buildings/{building-id}/rooms")
     public PageResponse<RoomResponse> getRooms(
             @CurrentUser AuthenticatedUser user,
@@ -55,6 +58,7 @@ public class RoomController {
         return roomService.getRooms(user.id(), teamId, buildingId, pageable);
     }
 
+    @Override
     @GetMapping("/buildings/{building-id}/rooms/all")
     public List<RoomResponse> getRooms(
             @CurrentUser AuthenticatedUser user,
@@ -64,6 +68,7 @@ public class RoomController {
         return roomService.getRooms(user.id(), teamId, buildingId);
     }
 
+    @Override
     @GetMapping("/rooms/{room-id}")
     public RoomDetailResponse getRoom(
             @CurrentUser AuthenticatedUser user,
@@ -73,6 +78,7 @@ public class RoomController {
         return roomService.getRoom(user.id(), teamId, roomId);
     }
 
+    @Override
     @GetMapping("/rooms/by-name")
     public List<RoomMatchResponse> searchRoomsInTeam(
             @CurrentUser AuthenticatedUser user,
@@ -82,6 +88,7 @@ public class RoomController {
         return roomService.searchRoomsInTeam(user.id(), teamId, roomName);
     }
 
+    @Override
     @GetMapping("/buildings/{building-id}/rooms/by-name")
     public RoomMatchResponse searchRoomInBuilding(
             @CurrentUser AuthenticatedUser user,
@@ -92,6 +99,7 @@ public class RoomController {
         return roomService.searchRoomInBuilding(user.id(), teamId, buildingId, roomName);
     }
 
+    @Override
     @PatchMapping("/rooms/{room-id}")
     public RoomResponse updateRoom(
             @CurrentUser AuthenticatedUser user,
@@ -102,6 +110,7 @@ public class RoomController {
         return roomService.updateRoom(user.id(), user.role(), teamId, roomId, request);
     }
 
+    @Override
     @DeleteMapping("/rooms/{room-id}")
     public ResponseEntity<Void> deleteRoom(
             @CurrentUser AuthenticatedUser user,
