@@ -7,8 +7,6 @@ import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.member.TeamJoinRequest;
 import com.nhnacademy.core.dto.team.member.TeamMemberResponse;
 import com.nhnacademy.core.service.TeamMemberService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -26,7 +24,7 @@ public class TeamMemberController implements TeamMemberApiDocs {
     @PostMapping("/team-memberships")
     public ResponseEntity<TeamMemberResponse> joinTeam(
             @CurrentUser AuthenticatedUser user,
-            @Valid @RequestBody TeamJoinRequest request
+            @RequestBody TeamJoinRequest request
     ) {
         TeamMemberResponse response = teamMemberService.joinTeam(user.id(), user.role(), request);
 
@@ -38,7 +36,7 @@ public class TeamMemberController implements TeamMemberApiDocs {
     @GetMapping("/teams/{team-id}/members")
     public PageResponse<TeamMemberResponse> getTeamMembers(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("team-id") Long teamId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return teamMemberService.getTeamMembers(user.id(), teamId, pageable);
@@ -48,8 +46,8 @@ public class TeamMemberController implements TeamMemberApiDocs {
     @DeleteMapping("/teams/{team-id}/members/{team-member-id}")
     public ResponseEntity<Void> removeTeamMember(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("team-member-id") @Positive Long teamMemberId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("team-member-id") Long teamMemberId
     ) {
         teamMemberService.removeTeamMember(user.id(), user.role(), teamId, teamMemberId);
 
@@ -61,7 +59,7 @@ public class TeamMemberController implements TeamMemberApiDocs {
     @DeleteMapping("/teams/{team-id}/members/me")
     public ResponseEntity<Void> leaveTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId
+            @PathVariable("team-id") Long teamId
     ) {
         teamMemberService.leaveTeam(user.id(), user.role(), teamId);
 

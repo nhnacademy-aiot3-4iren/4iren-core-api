@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -22,17 +24,17 @@ public interface SensorLocationApiDocs {
     @ApiResponse(responseCode = "201", description = "센서 위치 등록 성공")
     ResponseEntity<SensorLocationResponse> createSensorLocation(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
-            SensorLocationCreateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
+            @Valid SensorLocationCreateRequest request
     );
 
     @Operation(operationId = "sensorLocationList", summary = "센서 위치 목록 페이지 조회")
     @ApiResponse(responseCode = "200", description = "센서 위치 목록 조회 성공")
     PageResponse<SensorLocationResponse> getSensorLocations(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
             @ParameterObject Pageable pageable
     );
 
@@ -40,16 +42,16 @@ public interface SensorLocationApiDocs {
     @ApiResponse(responseCode = "200", description = "센서 위치 전체 목록 조회 성공")
     List<SensorLocationResponse> getSensorLocations(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 
     @Operation(operationId = "sensorLocationGet", summary = "센서 위치 상세 조회")
     @ApiResponse(responseCode = "200", description = "센서 위치 조회 성공")
     SensorLocationResponse getSensorLocation(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "센서 위치 ID", example = "1") Long sensorLocationId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "센서 위치 ID", example = "1") @Positive Long sensorLocationId
     );
 
     @Operation(
@@ -60,16 +62,16 @@ public interface SensorLocationApiDocs {
     @ApiResponse(responseCode = "200", description = "센서 위치 수정 성공")
     SensorLocationResponse updateSensorLocation(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "센서 위치 ID", example = "1") Long sensorLocationId,
-            SensorLocationUpdateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "센서 위치 ID", example = "1") @Positive Long sensorLocationId,
+            @Valid SensorLocationUpdateRequest request
     );
 
     @Operation(operationId = "sensorLocationDelete", summary = "센서 위치 삭제")
     @ApiResponse(responseCode = "204", description = "센서 위치 삭제 성공")
     ResponseEntity<Void> deleteSensorLocation(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "센서 위치 ID", example = "1") Long sensorLocationId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "센서 위치 ID", example = "1") @Positive Long sensorLocationId
     );
 }

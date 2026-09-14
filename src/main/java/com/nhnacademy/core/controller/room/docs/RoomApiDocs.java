@@ -11,6 +11,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -25,17 +29,17 @@ public interface RoomApiDocs {
     @ApiResponse(responseCode = "409", description = "같은 이름의 공간이 이미 존재함")
     ResponseEntity<RoomResponse> createRoom(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "건물 ID", example = "1") Long buildingId,
-            RoomCreateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "건물 ID", example = "1") @Positive Long buildingId,
+            @Valid RoomCreateRequest request
     );
 
     @Operation(operationId = "roomList", summary = "공간 목록 페이지 조회")
     @ApiResponse(responseCode = "200", description = "공간 목록 조회 성공")
     PageResponse<RoomResponse> getRooms(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "건물 ID", example = "1") Long buildingId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "건물 ID", example = "1") @Positive Long buildingId,
             @ParameterObject Pageable pageable
     );
 
@@ -43,33 +47,35 @@ public interface RoomApiDocs {
     @ApiResponse(responseCode = "200", description = "공간 전체 목록 조회 성공")
     List<RoomResponse> getRooms(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "건물 ID", example = "1") Long buildingId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "건물 ID", example = "1") @Positive Long buildingId
     );
 
     @Operation(operationId = "roomGet", summary = "공간 상세 조회")
     @ApiResponse(responseCode = "200", description = "공간 조회 성공")
     RoomDetailResponse getRoom(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 
     @Operation(operationId = "roomSearchInTeam", summary = "팀 내 공간 이름 검색")
     @ApiResponse(responseCode = "200", description = "공간 검색 성공")
     List<RoomMatchResponse> searchRoomsInTeam(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "검색할 공간 이름", example = "회의실") String roomName
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "검색할 공간 이름", example = "회의실")
+            @NotBlank @Size(max = 50) String roomName
     );
 
     @Operation(operationId = "roomSearchInBuilding", summary = "건물 내 공간 이름 검색")
     @ApiResponse(responseCode = "200", description = "공간 검색 성공")
     RoomMatchResponse searchRoomInBuilding(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "건물 ID", example = "1") Long buildingId,
-            @Parameter(description = "검색할 공간 이름", example = "회의실") String roomName
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "건물 ID", example = "1") @Positive Long buildingId,
+            @Parameter(description = "검색할 공간 이름", example = "회의실")
+            @NotBlank @Size(max = 50) String roomName
     );
 
     @Operation(
@@ -81,9 +87,9 @@ public interface RoomApiDocs {
     @ApiResponse(responseCode = "409", description = "같은 이름의 공간이 이미 존재함")
     RoomResponse updateRoom(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
-            RoomUpdateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
+            @Valid RoomUpdateRequest request
     );
 
     @Operation(operationId = "roomDelete", summary = "공간 삭제")
@@ -91,7 +97,7 @@ public interface RoomApiDocs {
     @ApiResponse(responseCode = "409", description = "공간에 기기 또는 센서 위치가 남아 있어 삭제할 수 없음")
     ResponseEntity<Void> deleteRoom(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 }

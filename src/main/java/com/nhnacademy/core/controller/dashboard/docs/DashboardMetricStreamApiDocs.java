@@ -8,6 +8,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -37,8 +40,10 @@ public interface DashboardMetricStreamApiDocs {
     @ApiResponse(responseCode = "429", description = "허용된 SSE 연결 수 초과")
     ResponseEntity<SseEmitter> streamDashboardMetrics(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "구독할 공간 ID 목록", required = true) List<Long> roomIds,
-            @Parameter(description = "구독할 측정 지표 코드 목록", required = true) List<String> metricCodes
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "구독할 공간 ID 목록", required = true)
+            @Size(min = 1, max = 50) List<@Positive Long> roomIds,
+            @Parameter(description = "구독할 측정 지표 코드 목록", required = true)
+            @Size(min = 1, max = 4) List<@NotBlank @Size(max = 50) String> metricCodes
     );
 }

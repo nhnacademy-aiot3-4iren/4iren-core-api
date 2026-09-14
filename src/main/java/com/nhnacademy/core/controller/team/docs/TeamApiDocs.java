@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +25,7 @@ public interface TeamApiDocs {
     @Operation(operationId = "teamCreate", summary = "팀 생성")
     @ApiResponse(responseCode = "201", description = "팀 생성 성공")
     @ApiResponse(responseCode = "403", description = "팀 생성 권한 없음")
-    ResponseEntity<TeamResponse> createTeam(AuthenticatedUser user, TeamCreateRequest request);
+    ResponseEntity<TeamResponse> createTeam(AuthenticatedUser user, @Valid TeamCreateRequest request);
 
     @Operation(operationId = "teamList", summary = "팀 목록 페이지 조회")
     @ApiResponse(responseCode = "200", description = "팀 목록 조회 성공")
@@ -40,7 +42,7 @@ public interface TeamApiDocs {
     @ApiResponse(responseCode = "200", description = "팀 조회 성공")
     TeamDetailResponse getTeam(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 
     @Operation(
@@ -51,8 +53,8 @@ public interface TeamApiDocs {
     @ApiResponse(responseCode = "200", description = "팀 수정 성공")
     TeamResponse updateTeam(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            TeamUpdateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Valid TeamUpdateRequest request
     );
 
     @Operation(operationId = "teamStatusUpdate", summary = "팀 상태 변경")
@@ -60,8 +62,8 @@ public interface TeamApiDocs {
     @ApiResponse(responseCode = "403", description = "팀 상태 변경 권한 없음")
     TeamResponse updateTeamStatus(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            TeamStatusUpdateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Valid TeamStatusUpdateRequest request
     );
 
     @Operation(operationId = "teamDelete", summary = "팀 삭제")
@@ -69,6 +71,6 @@ public interface TeamApiDocs {
     @ApiResponse(responseCode = "403", description = "팀 소유자 권한 없음")
     ResponseEntity<Void> deleteTeam(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 }

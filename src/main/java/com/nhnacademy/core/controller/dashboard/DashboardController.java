@@ -10,19 +10,13 @@ import com.nhnacademy.core.dto.dashboard.DashboardSubscriptionCandidatesResponse
 import com.nhnacademy.core.service.DashboardRoomMetricsService;
 import com.nhnacademy.core.service.DashboardSnapshotService;
 import com.nhnacademy.core.service.DashboardSubscriptionCandidateService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/teams/{team-id}/dashboard")
@@ -37,10 +31,9 @@ public class DashboardController implements DashboardApiDocs {
     @GetMapping("/snapshot")
     public DashboardSnapshotResponse getSnapshot(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @RequestParam(name = "query", defaultValue = "") @Size(max = 100) String query,
-            @RequestParam(name = "metricCode", required = false)
-            @Size(max = 4) List<@NotBlank @Size(max = 50) String> metricCodes,
+            @PathVariable("team-id") Long teamId,
+            @RequestParam(name = "query", defaultValue = "") String query,
+            @RequestParam(name = "metricCode", required = false) List<String> metricCodes,
             @PageableDefault(size = 10) Pageable pageable
     ) {
         return dashboardSnapshotService.getSnapshot(
@@ -58,8 +51,8 @@ public class DashboardController implements DashboardApiDocs {
     @GetMapping("/subscription-candidates")
     public DashboardSubscriptionCandidatesResponse getSubscriptionCandidates(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @RequestParam(name = "query", defaultValue = "") @Size(max = 50) String query,
+            @PathVariable("team-id") Long teamId,
+            @RequestParam(name = "query", defaultValue = "") String query,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         return subscriptionCandidateService.getCandidates(user.id(), teamId, query, pageable);
@@ -70,8 +63,8 @@ public class DashboardController implements DashboardApiDocs {
     @PostMapping("/room-metrics")
     public DashboardRoomMetricsResponse getRoomMetrics(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @Valid @RequestBody DashboardRoomMetricsRequest request
+            @PathVariable("team-id") Long teamId,
+            @RequestBody DashboardRoomMetricsRequest request
     ) {
         return dashboardRoomMetricsService.getRoomMetrics(user.id(), teamId, request);
     }

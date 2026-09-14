@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -19,22 +22,23 @@ public interface DashboardChartApiDocs {
     @ApiResponse(responseCode = "200", description = "대시보드 차트 목록 조회 성공")
     List<DashboardChartResponse> getCharts(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 
     @Operation(operationId = "dashboardChartOptionList", summary = "대시보드 차트 옵션 조회")
     @ApiResponse(responseCode = "200", description = "차트 옵션 조회 성공")
     DashboardChartOptionsResponse getOptions(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 
     @Operation(operationId = "dashboardChartSeriesGet", summary = "대시보드 차트 시계열 조회")
     @ApiResponse(responseCode = "200", description = "차트 시계열 조회 성공")
     DashboardChartSeriesResponse getChartSeries(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "클라이언트 차트 ID", example = "temperature-chart") String clientChartId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "클라이언트 차트 ID", example = "temperature-chart")
+            @Size(max = 64) String clientChartId
     );
 
     @Operation(
@@ -45,7 +49,7 @@ public interface DashboardChartApiDocs {
     @ApiResponse(responseCode = "200", description = "대시보드 차트 구성 교체 성공")
     List<DashboardChartResponse> replaceCharts(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            DashboardChartReplaceRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Valid DashboardChartReplaceRequest request
     );
 }

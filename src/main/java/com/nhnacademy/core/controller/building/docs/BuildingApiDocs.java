@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -24,15 +26,15 @@ public interface BuildingApiDocs {
     @ApiResponse(responseCode = "409", description = "같은 이름의 건물이 이미 존재함")
     ResponseEntity<BuildingResponse> createBuilding(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            BuildingCreateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Valid BuildingCreateRequest request
     );
 
     @Operation(operationId = "buildingList", summary = "건물 목록 페이지 조회")
     @ApiResponse(responseCode = "200", description = "건물 목록 조회 성공")
     PageResponse<BuildingResponse> getBuildings(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
             @ParameterObject Pageable pageable
     );
 
@@ -40,15 +42,15 @@ public interface BuildingApiDocs {
     @ApiResponse(responseCode = "200", description = "건물 전체 목록 조회 성공")
     List<BuildingResponse> getBuildings(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 
     @Operation(operationId = "buildingGet", summary = "건물 상세 조회")
     @ApiResponse(responseCode = "200", description = "건물 조회 성공")
     BuildingDetailResponse getBuilding(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "건물 ID", example = "1") Long buildingId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "건물 ID", example = "1") @Positive Long buildingId
     );
 
     @Operation(
@@ -60,9 +62,9 @@ public interface BuildingApiDocs {
     @ApiResponse(responseCode = "409", description = "같은 이름의 건물이 이미 존재함")
     BuildingResponse updateBuilding(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "건물 ID", example = "1") Long buildingId,
-            BuildingUpdateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "건물 ID", example = "1") @Positive Long buildingId,
+            @Valid BuildingUpdateRequest request
     );
 
     @Operation(operationId = "buildingDelete", summary = "건물 삭제")
@@ -70,7 +72,7 @@ public interface BuildingApiDocs {
     @ApiResponse(responseCode = "409", description = "건물에 공간이 남아 있어 삭제할 수 없음")
     ResponseEntity<Void> deleteBuilding(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "건물 ID", example = "1") Long buildingId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "건물 ID", example = "1") @Positive Long buildingId
     );
 }

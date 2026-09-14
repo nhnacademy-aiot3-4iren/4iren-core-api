@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -20,8 +22,8 @@ public interface TeamInvitationCodeApiDocs {
     @ApiResponse(responseCode = "403", description = "팀 관리 권한 없음")
     ResponseEntity<TeamInvitationCodeResponse> createInvitationCode(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            TeamInvitationCodeCreateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Valid TeamInvitationCodeCreateRequest request
     );
 
     @Operation(operationId = "teamInvitationCodeList", summary = "팀 초대 코드 목록 조회")
@@ -29,7 +31,7 @@ public interface TeamInvitationCodeApiDocs {
     @ApiResponse(responseCode = "403", description = "팀 관리 권한 없음")
     ResponseEntity<List<TeamInvitationCodeSummaryResponse>> getInvitationCodes(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 
     @Operation(operationId = "teamInvitationCodeDeactivate", summary = "팀 초대 코드 비활성화")
@@ -37,7 +39,7 @@ public interface TeamInvitationCodeApiDocs {
     @ApiResponse(responseCode = "403", description = "팀 관리 권한 없음")
     ResponseEntity<Void> deactivateInvitationCode(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "초대 코드 ID", example = "1") Long invitationCodeId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "초대 코드 ID", example = "1") @Positive Long invitationCodeId
     );
 }

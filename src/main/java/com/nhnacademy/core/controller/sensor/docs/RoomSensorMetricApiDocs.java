@@ -13,6 +13,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -27,33 +30,34 @@ public interface RoomSensorMetricApiDocs {
     @ApiResponse(responseCode = "200", description = "측정 지표 카탈로그 조회 성공")
     RoomMetricCatalogResponse getRoomMetricCatalog(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 
     @Operation(operationId = "roomSensorMetricSummaryGet", summary = "공간 측정값 요약 조회")
     @ApiResponse(responseCode = "200", description = "측정값 요약 조회 성공")
     RoomMetricSummaryResponse getRoomMetricSummary(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 
     @Operation(operationId = "roomSensorMetricLatestGet", summary = "공간의 최신 센서 측정값 조회")
     @ApiResponse(responseCode = "200", description = "최신 센서 측정값 조회 성공")
     RoomSensorMetricLatestResponse getLatestRoomSensorMetrics(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 
     @Operation(operationId = "roomMetricSeriesGet", summary = "공간 지표 시계열 조회")
     @ApiResponse(responseCode = "200", description = "공간 지표 시계열 조회 성공")
     RoomMetricSeriesResponse getRoomMetricSeries(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
-            @Parameter(description = "측정 지표 코드", example = "temperature") String metricCode,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
+            @Parameter(description = "측정 지표 코드", example = "temperature")
+            @NotBlank @Size(max = 50) String metricCode,
             @Parameter(description = "조회 시작 시각", example = "2026-09-14T00:00:00Z") Instant from,
             @Parameter(description = "조회 종료 시각", example = "2026-09-14T01:00:00Z") Instant to,
             @Parameter(description = "ISO-8601 집계 간격", example = "PT5M") Duration interval
@@ -63,8 +67,8 @@ public interface RoomSensorMetricApiDocs {
     @ApiResponse(responseCode = "200", description = "센서별 측정값 시계열 조회 성공")
     RoomSensorMetricSeriesResponse getRoomSensorMetricSeries(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
             @Parameter(description = "조회 시작 시각", example = "2026-09-14T00:00:00Z") Instant from,
             @Parameter(description = "조회 종료 시각", example = "2026-09-14T01:00:00Z") Instant to,
             @Parameter(description = "ISO-8601 집계 간격", example = "PT5M") Duration interval,
@@ -93,8 +97,8 @@ public interface RoomSensorMetricApiDocs {
     @ApiResponse(responseCode = "429", description = "허용된 SSE 연결 수 초과")
     ResponseEntity<SseEmitter> streamRoomSensorMetrics(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
             @Parameter(description = "구독할 센서 DevEUI 목록") List<String> devEuis,
             @Parameter(description = "구독할 측정 지표 코드 목록") List<String> metricCodes,
             @Parameter(description = "이 시각 이후 변경 이벤트 요청", example = "2026-09-14T00:00:00Z") Instant since,

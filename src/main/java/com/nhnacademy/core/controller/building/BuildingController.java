@@ -9,8 +9,6 @@ import com.nhnacademy.core.dto.building.BuildingDetailResponse;
 import com.nhnacademy.core.dto.building.BuildingResponse;
 import com.nhnacademy.core.dto.building.BuildingUpdateRequest;
 import com.nhnacademy.core.service.BuildingService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -32,8 +30,8 @@ public class BuildingController implements BuildingApiDocs {
     @PostMapping
     public ResponseEntity<BuildingResponse> createBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @Valid @RequestBody BuildingCreateRequest request
+            @PathVariable("team-id") Long teamId,
+            @RequestBody BuildingCreateRequest request
     ) {
         BuildingResponse response = buildingService.createBuilding(user.id(), user.role(), teamId, request);
 
@@ -51,7 +49,7 @@ public class BuildingController implements BuildingApiDocs {
     @GetMapping
     public PageResponse<BuildingResponse> getBuildings(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
+            @PathVariable("team-id") Long teamId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return buildingService.getBuildings(user.id(), teamId, pageable);
@@ -61,7 +59,7 @@ public class BuildingController implements BuildingApiDocs {
     @GetMapping("/all")
     public List<BuildingResponse> getBuildings(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId
+            @PathVariable("team-id") Long teamId
     ) {
         return buildingService.getBuildings(user.id(), teamId);
     }
@@ -70,8 +68,8 @@ public class BuildingController implements BuildingApiDocs {
     @GetMapping("/{building-id}")
     public BuildingDetailResponse getBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("building-id") @Positive Long buildingId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("building-id") Long buildingId
     ) {
         return buildingService.getBuilding(user.id(), teamId, buildingId);
     }
@@ -80,9 +78,9 @@ public class BuildingController implements BuildingApiDocs {
     @PatchMapping("/{building-id}")
     public BuildingResponse updateBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("building-id") @Positive Long buildingId,
-            @Valid @RequestBody BuildingUpdateRequest request
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("building-id") Long buildingId,
+            @RequestBody BuildingUpdateRequest request
     ) {
         return buildingService.updateBuilding(user.id(), user.role(), teamId, buildingId, request);
     }
@@ -91,8 +89,8 @@ public class BuildingController implements BuildingApiDocs {
     @DeleteMapping("/{building-id}")
     public ResponseEntity<Void> deleteBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("building-id") @Positive Long buildingId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("building-id") Long buildingId
     ) {
         buildingService.deleteBuilding(user.id(), user.role(), teamId, buildingId);
 

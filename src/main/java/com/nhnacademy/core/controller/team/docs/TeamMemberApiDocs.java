@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -20,14 +22,14 @@ public interface TeamMemberApiDocs {
     @ApiResponse(responseCode = "409", description = "이미 가입한 팀이거나 사용할 수 없는 초대 코드")
     ResponseEntity<TeamMemberResponse> joinTeam(
             AuthenticatedUser user,
-            TeamJoinRequest request
+            @Valid TeamJoinRequest request
     );
 
     @Operation(operationId = "teamMemberList", summary = "팀원 목록 페이지 조회")
     @ApiResponse(responseCode = "200", description = "팀원 목록 조회 성공")
     PageResponse<TeamMemberResponse> getTeamMembers(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
             @ParameterObject Pageable pageable
     );
 
@@ -36,8 +38,8 @@ public interface TeamMemberApiDocs {
     @ApiResponse(responseCode = "403", description = "팀원 관리 권한 없음")
     ResponseEntity<Void> removeTeamMember(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "팀원 ID", example = "10") Long teamMemberId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "팀원 ID", example = "10") @Positive Long teamMemberId
     );
 
     @Operation(operationId = "teamMemberLeave", summary = "팀 탈퇴")
@@ -45,6 +47,6 @@ public interface TeamMemberApiDocs {
     @ApiResponse(responseCode = "409", description = "팀 소유자는 탈퇴할 수 없음")
     ResponseEntity<Void> leaveTeam(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 }
