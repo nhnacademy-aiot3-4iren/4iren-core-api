@@ -6,8 +6,6 @@ import com.nhnacademy.core.controller.team.docs.TeamApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.team.*;
 import com.nhnacademy.core.service.TeamService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -29,7 +27,7 @@ public class TeamController implements TeamApiDocs {
     @PostMapping
     public ResponseEntity<TeamResponse> createTeam(
             @CurrentUser AuthenticatedUser user,
-            @Valid @RequestBody TeamCreateRequest request
+            @RequestBody TeamCreateRequest request
     ) {
         TeamResponse response = teamService.createTeam(user.id(), user.role(), request);
 
@@ -64,7 +62,7 @@ public class TeamController implements TeamApiDocs {
     @GetMapping("/{team-id}")
     public TeamDetailResponse getTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId
+            @PathVariable("team-id") Long teamId
     ) {
         return teamService.getTeam(user.id(), user.role(), teamId);
     }
@@ -73,8 +71,8 @@ public class TeamController implements TeamApiDocs {
     @PatchMapping("/{team-id}")
     public TeamResponse updateTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @Valid @RequestBody TeamUpdateRequest request
+            @PathVariable("team-id") Long teamId,
+            @RequestBody TeamUpdateRequest request
     ) {
         return teamService.updateTeam(user.id(), user.role(), teamId, request);
     }
@@ -83,8 +81,8 @@ public class TeamController implements TeamApiDocs {
     @PatchMapping("/{team-id}/status")
     public TeamResponse updateTeamStatus(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @Valid @RequestBody TeamStatusUpdateRequest request
+            @PathVariable("team-id") Long teamId,
+            @RequestBody TeamStatusUpdateRequest request
     ) {
         return teamService.updateTeamStatus(user.id(), user.role(), teamId, request);
     }
@@ -93,7 +91,7 @@ public class TeamController implements TeamApiDocs {
     @DeleteMapping("/{team-id}")
     public ResponseEntity<Void> deleteTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId
+            @PathVariable("team-id") Long teamId
     ) {
         teamService.deleteTeam(user.id(), user.role(), teamId);
 

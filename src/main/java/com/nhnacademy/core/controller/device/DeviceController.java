@@ -8,8 +8,6 @@ import com.nhnacademy.core.dto.device.DeviceCreateRequest;
 import com.nhnacademy.core.dto.device.DeviceResponse;
 import com.nhnacademy.core.dto.device.DeviceUpdateRequest;
 import com.nhnacademy.core.service.DeviceService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -31,9 +29,9 @@ public class DeviceController implements DeviceApiDocs {
     @PostMapping("/rooms/{room-id}/devices")
     public ResponseEntity<DeviceResponse> createDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId,
-            @Valid @RequestBody DeviceCreateRequest request
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId,
+            @RequestBody DeviceCreateRequest request
     ) {
         DeviceResponse response = deviceService.createDevice(user.id(), user.role(), teamId, roomId, request);
 
@@ -51,8 +49,8 @@ public class DeviceController implements DeviceApiDocs {
     @GetMapping("/rooms/{room-id}/devices")
     public PageResponse<DeviceResponse> getDevices(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId,
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return deviceService.getDevices(user.id(), teamId, roomId, pageable);
@@ -62,8 +60,8 @@ public class DeviceController implements DeviceApiDocs {
     @GetMapping("/rooms/{room-id}/devices/all")
     public List<DeviceResponse> getDevices(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId
     ) {
         return deviceService.getDevices(user.id(), teamId, roomId);
     }
@@ -72,8 +70,8 @@ public class DeviceController implements DeviceApiDocs {
     @GetMapping("/devices/{device-id}")
     public DeviceResponse getDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("device-id") @Positive Long deviceId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("device-id") Long deviceId
     ) {
         return deviceService.getDevice(user.id(), teamId, deviceId);
     }
@@ -82,9 +80,9 @@ public class DeviceController implements DeviceApiDocs {
     @PatchMapping("/devices/{device-id}")
     public DeviceResponse updateDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("device-id") @Positive Long deviceId,
-            @Valid @RequestBody DeviceUpdateRequest request
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("device-id") Long deviceId,
+            @RequestBody DeviceUpdateRequest request
     ) {
         return deviceService.updateDevice(user.id(), user.role(), teamId, deviceId, request);
     }
@@ -93,8 +91,8 @@ public class DeviceController implements DeviceApiDocs {
     @DeleteMapping("/devices/{device-id}")
     public ResponseEntity<Void> deleteDevice(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("device-id") @Positive Long deviceId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("device-id") Long deviceId
     ) {
         deviceService.deleteDevice(user.id(), user.role(), teamId, deviceId);
 

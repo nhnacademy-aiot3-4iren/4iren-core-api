@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
@@ -20,9 +22,9 @@ public interface DeviceActionHistoryApiDocs {
     @ApiResponse(responseCode = "204", description = "기기 동작 이력 등록 성공")
     ResponseEntity<Void> create(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "기기 ID", example = "1") Long deviceId,
-            DeviceActionHistoryRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "기기 ID", example = "1") @Positive Long deviceId,
+            @Valid DeviceActionHistoryRequest request
     );
 
     @Operation(
@@ -32,9 +34,9 @@ public interface DeviceActionHistoryApiDocs {
     )
     @ApiResponse(responseCode = "200", description = "기기 동작 이력 목록 조회 성공")
     List<DeviceActionHistoryResponse> getAll(
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
-            @Parameter(description = "기기 ID", example = "1") Long deviceId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
+            @Parameter(description = "기기 ID", example = "1") @Positive Long deviceId,
             @Parameter(description = "요일") Weekday dayOfWeek,
             @Parameter(description = "조회 시작 시각", example = "2026-09-01T00:00:00") LocalDateTime startAt,
             @Parameter(description = "조회 종료 시각", example = "2026-09-14T23:59:59") LocalDateTime endAt
@@ -43,7 +45,7 @@ public interface DeviceActionHistoryApiDocs {
     @Operation(operationId = "deviceActionHistoryGet", summary = "기기 동작 이력 상세 조회")
     @ApiResponse(responseCode = "200", description = "기기 동작 이력 조회 성공")
     DeviceActionHistoryResponse get(
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "동작 이력 ID", example = "1") Long historyId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "동작 이력 ID", example = "1") @Positive Long historyId
     );
 }

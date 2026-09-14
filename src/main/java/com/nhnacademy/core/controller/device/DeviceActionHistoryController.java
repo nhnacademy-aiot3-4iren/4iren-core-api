@@ -7,8 +7,6 @@ import com.nhnacademy.core.domain.device.Weekday;
 import com.nhnacademy.core.dto.device.DeviceActionHistoryRequest;
 import com.nhnacademy.core.dto.device.DeviceActionHistoryResponse;
 import com.nhnacademy.core.service.DeviceActionHistoryService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -28,9 +26,9 @@ public class DeviceActionHistoryController implements DeviceActionHistoryApiDocs
     @PostMapping("/devices/{device-id}/action-histories")
     public ResponseEntity<Void> create(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("device-id") @Positive Long deviceId,
-            @Valid @RequestBody DeviceActionHistoryRequest request
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("device-id") Long deviceId,
+            @RequestBody DeviceActionHistoryRequest request
     ) {
         historyService.create(user.id(), teamId, deviceId, request);
         return ResponseEntity.noContent().build();
@@ -39,9 +37,9 @@ public class DeviceActionHistoryController implements DeviceActionHistoryApiDocs
     @Override
     @GetMapping("/rooms/{room-id}/device-action-histories")
     public List<DeviceActionHistoryResponse> getAll(
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId,
-            @RequestParam(required = false) @Positive Long deviceId,
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId,
+            @RequestParam(required = false) Long deviceId,
             @RequestParam(required = false) Weekday dayOfWeek,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
@@ -54,8 +52,8 @@ public class DeviceActionHistoryController implements DeviceActionHistoryApiDocs
     @Override
     @GetMapping("/action-histories/{history-id}")
     public DeviceActionHistoryResponse get(
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("history-id") @Positive Long historyId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("history-id") Long historyId
     ) {
         return historyService.get(teamId, historyId);
     }

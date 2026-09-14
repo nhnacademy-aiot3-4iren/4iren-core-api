@@ -9,6 +9,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 
@@ -21,9 +25,10 @@ public interface DashboardApiDocs {
     @ApiResponse(responseCode = "200", description = "대시보드 스냅샷 조회 성공")
     DashboardSnapshotResponse getSnapshot(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 이름 검색어", example = "회의실") String query,
-            @Parameter(description = "표시할 측정 지표 코드 목록") List<String> metricCodes,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 이름 검색어", example = "회의실") @Size(max = 100) String query,
+            @Parameter(description = "표시할 측정 지표 코드 목록")
+            @Size(max = 4) List<@NotBlank @Size(max = 50) String> metricCodes,
             @ParameterObject Pageable pageable
     );
 
@@ -31,8 +36,8 @@ public interface DashboardApiDocs {
     @ApiResponse(responseCode = "200", description = "구독 후보 공간 조회 성공")
     DashboardSubscriptionCandidatesResponse getSubscriptionCandidates(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 이름 검색어", example = "회의실") String query,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 이름 검색어", example = "회의실") @Size(max = 50) String query,
             @ParameterObject Pageable pageable
     );
 
@@ -44,7 +49,7 @@ public interface DashboardApiDocs {
     @ApiResponse(responseCode = "200", description = "공간 측정값 일괄 조회 성공")
     DashboardRoomMetricsResponse getRoomMetrics(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            DashboardRoomMetricsRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Valid DashboardRoomMetricsRequest request
     );
 }

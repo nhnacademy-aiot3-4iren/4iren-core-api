@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +24,15 @@ public interface RoomSubscriptionApiDocs {
     @ApiResponse(responseCode = "409", description = "이미 구독한 공간")
     RoomSubscriptionResponse subscribeToRoom(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 
     @Operation(operationId = "roomSubscriptionList", summary = "공간 구독 목록 페이지 조회")
     @ApiResponse(responseCode = "200", description = "공간 구독 목록 조회 성공")
     PageResponse<RoomSubscriptionResponse> getSubscriptions(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
             @ParameterObject Pageable pageable
     );
 
@@ -38,23 +40,23 @@ public interface RoomSubscriptionApiDocs {
     @ApiResponse(responseCode = "200", description = "공간 구독 전체 목록 조회 성공")
     List<RoomSubscriptionResponse> getSubscriptions(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId
     );
 
     @Operation(operationId = "roomSubscriptionUpdate", summary = "공간 구독 설정 수정")
     @ApiResponse(responseCode = "200", description = "공간 구독 설정 수정 성공")
     RoomSubscriptionResponse updateSubscription(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId,
-            RoomSubscriptionUpdateRequest request
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId,
+            @Valid RoomSubscriptionUpdateRequest request
     );
 
     @Operation(operationId = "roomSubscriptionDelete", summary = "공간 구독 해제")
     @ApiResponse(responseCode = "204", description = "공간 구독 해제 성공")
     ResponseEntity<Void> unsubscribeFromRoom(
             AuthenticatedUser user,
-            @Parameter(description = "팀 ID", example = "1") Long teamId,
-            @Parameter(description = "공간 ID", example = "1") Long roomId
+            @Parameter(description = "팀 ID", example = "1") @Positive Long teamId,
+            @Parameter(description = "공간 ID", example = "1") @Positive Long roomId
     );
 }

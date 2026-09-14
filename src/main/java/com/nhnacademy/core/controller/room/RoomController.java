@@ -6,10 +6,6 @@ import com.nhnacademy.core.controller.room.docs.RoomApiDocs;
 import com.nhnacademy.core.dto.PageResponse;
 import com.nhnacademy.core.dto.room.*;
 import com.nhnacademy.core.service.RoomService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -31,9 +27,9 @@ public class RoomController implements RoomApiDocs {
     @PostMapping("/buildings/{building-id}/rooms")
     public ResponseEntity<RoomResponse> createRoom(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("building-id") @Positive Long buildingId,
-            @Valid @RequestBody RoomCreateRequest request
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("building-id") Long buildingId,
+            @RequestBody RoomCreateRequest request
     ) {
         RoomResponse response = roomService.createRoom(user.id(), user.role(), teamId, buildingId, request);
 
@@ -51,8 +47,8 @@ public class RoomController implements RoomApiDocs {
     @GetMapping("/buildings/{building-id}/rooms")
     public PageResponse<RoomResponse> getRooms(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("building-id") @Positive Long buildingId,
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("building-id") Long buildingId,
             @PageableDefault(size = 20, sort = "id") Pageable pageable
     ) {
         return roomService.getRooms(user.id(), teamId, buildingId, pageable);
@@ -62,8 +58,8 @@ public class RoomController implements RoomApiDocs {
     @GetMapping("/buildings/{building-id}/rooms/all")
     public List<RoomResponse> getRooms(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("building-id") @Positive Long buildingId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("building-id") Long buildingId
     ) {
         return roomService.getRooms(user.id(), teamId, buildingId);
     }
@@ -72,8 +68,8 @@ public class RoomController implements RoomApiDocs {
     @GetMapping("/rooms/{room-id}")
     public RoomDetailResponse getRoom(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId
     ) {
         return roomService.getRoom(user.id(), teamId, roomId);
     }
@@ -82,8 +78,8 @@ public class RoomController implements RoomApiDocs {
     @GetMapping("/rooms/by-name")
     public List<RoomMatchResponse> searchRoomsInTeam(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @RequestParam @NotBlank @Size(max = 50) String roomName
+            @PathVariable("team-id") Long teamId,
+            @RequestParam String roomName
     ) {
         return roomService.searchRoomsInTeam(user.id(), teamId, roomName);
     }
@@ -92,9 +88,9 @@ public class RoomController implements RoomApiDocs {
     @GetMapping("/buildings/{building-id}/rooms/by-name")
     public RoomMatchResponse searchRoomInBuilding(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("building-id") @Positive Long buildingId,
-            @RequestParam @NotBlank @Size(max = 50) String roomName
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("building-id") Long buildingId,
+            @RequestParam String roomName
     ) {
         return roomService.searchRoomInBuilding(user.id(), teamId, buildingId, roomName);
     }
@@ -103,9 +99,9 @@ public class RoomController implements RoomApiDocs {
     @PatchMapping("/rooms/{room-id}")
     public RoomResponse updateRoom(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId,
-            @Valid @RequestBody RoomUpdateRequest request
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId,
+            @RequestBody RoomUpdateRequest request
     ) {
         return roomService.updateRoom(user.id(), user.role(), teamId, roomId, request);
     }
@@ -114,8 +110,8 @@ public class RoomController implements RoomApiDocs {
     @DeleteMapping("/rooms/{room-id}")
     public ResponseEntity<Void> deleteRoom(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId
     ) {
         roomService.deleteRoom(user.id(), user.role(), teamId, roomId);
 

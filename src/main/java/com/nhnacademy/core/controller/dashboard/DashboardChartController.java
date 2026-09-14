@@ -10,9 +10,6 @@ import com.nhnacademy.core.dto.dashboard.DashboardChartSeriesResponse;
 import com.nhnacademy.core.service.DashboardChartOptionService;
 import com.nhnacademy.core.service.DashboardChartSeriesService;
 import com.nhnacademy.core.service.DashboardChartService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +29,7 @@ public class DashboardChartController implements DashboardChartApiDocs {
     @GetMapping
     public List<DashboardChartResponse> getCharts(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId
+            @PathVariable("team-id") Long teamId
     ) {
         return dashboardChartService.getCharts(user.id(), teamId);
     }
@@ -42,7 +39,7 @@ public class DashboardChartController implements DashboardChartApiDocs {
     @GetMapping("/options")
     public DashboardChartOptionsResponse getOptions(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId
+            @PathVariable("team-id") Long teamId
     ) {
         return dashboardChartOptionService.getOptions(user.id(), teamId);
     }
@@ -52,8 +49,8 @@ public class DashboardChartController implements DashboardChartApiDocs {
     @GetMapping("/series")
     public DashboardChartSeriesResponse getChartSeries(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @RequestParam(name = "clientChartId", required = false) @Size(max = 64) String clientChartId
+            @PathVariable("team-id") Long teamId,
+            @RequestParam(name = "clientChartId", required = false) String clientChartId
     ) {
         return dashboardChartSeriesService.getChartSeries(user.id(), teamId, clientChartId);
     }
@@ -63,8 +60,8 @@ public class DashboardChartController implements DashboardChartApiDocs {
     @PutMapping
     public List<DashboardChartResponse> replaceCharts(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @Valid @RequestBody DashboardChartReplaceRequest request
+            @PathVariable("team-id") Long teamId,
+            @RequestBody DashboardChartReplaceRequest request
     ) {
         return dashboardChartService.replaceCharts(user.id(), teamId, request);
     }

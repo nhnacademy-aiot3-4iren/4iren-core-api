@@ -6,9 +6,6 @@ import com.nhnacademy.core.controller.sensor.docs.RoomSensorMetricApiDocs;
 import com.nhnacademy.core.dto.sensor.metric.*;
 import com.nhnacademy.core.service.RoomSensorMetricService;
 import com.nhnacademy.core.service.stream.RoomSensorMetricStreamService;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -32,8 +29,8 @@ public class RoomSensorMetricController implements RoomSensorMetricApiDocs {
     @GetMapping("/catalog")
     public RoomMetricCatalogResponse getRoomMetricCatalog(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId
     ) {
         return roomSensorMetricService.getRoomMetricCatalog(
                 user.id(),
@@ -46,8 +43,8 @@ public class RoomSensorMetricController implements RoomSensorMetricApiDocs {
     @GetMapping("/summary")
     public RoomMetricSummaryResponse getRoomMetricSummary(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId
     ) {
         return roomSensorMetricService.getRoomMetricSummary(
                 user.id(),
@@ -60,8 +57,8 @@ public class RoomSensorMetricController implements RoomSensorMetricApiDocs {
     @GetMapping("/latest")
     public RoomSensorMetricLatestResponse getLatestRoomSensorMetrics(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId
     ) {
         return roomSensorMetricService.getLatestRoomSensorMetrics(
                 user.id(),
@@ -74,9 +71,9 @@ public class RoomSensorMetricController implements RoomSensorMetricApiDocs {
     @GetMapping("/series")
     public RoomMetricSeriesResponse getRoomMetricSeries(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId,
-            @RequestParam @NotBlank @Size(max = 50) String metricCode,
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId,
+            @RequestParam String metricCode,
             @RequestParam Instant from,
             @RequestParam Instant to,
             @RequestParam Duration interval
@@ -96,8 +93,8 @@ public class RoomSensorMetricController implements RoomSensorMetricApiDocs {
     @GetMapping("/sensors/series")
     public RoomSensorMetricSeriesResponse getRoomSensorMetricSeries(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId,
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId,
             @RequestParam Instant from,
             @RequestParam Instant to,
             @RequestParam Duration interval,
@@ -123,8 +120,8 @@ public class RoomSensorMetricController implements RoomSensorMetricApiDocs {
     )
     public ResponseEntity<SseEmitter> streamRoomSensorMetrics(
             @CurrentUser AuthenticatedUser user,
-            @PathVariable("team-id") @Positive Long teamId,
-            @PathVariable("room-id") @Positive Long roomId,
+            @PathVariable("team-id") Long teamId,
+            @PathVariable("room-id") Long roomId,
             @RequestParam(name = "devEui", required = false) List<String> devEuis,
             @RequestParam(name = "metricCode", required = false) List<String> metricCodes,
             @RequestParam(name = "since", required = false) Instant since,
